@@ -1,0 +1,12 @@
+specVersion: "v1"
+serviceId: "studio-9955473018-e374d-service"
+location: "us-east4"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "fdcdb"
+      cloudSql:
+        instanceId: "studio-9955473018-e374d-service-fdc"
+        schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]

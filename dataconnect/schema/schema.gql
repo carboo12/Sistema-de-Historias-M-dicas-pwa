@@ -1,0 +1,264 @@
+# Modelo inicial de SQL Connect para el primer vertical slice.
+# Los nombres de tablas y columnas se mapean al esquema PostgreSQL ya migrado.
+# Las tablas fuera del slice se incorporarán cuando se migren sus operaciones.
+
+type Clinic @table(name: "clinics", key: "id") {
+  id: UUID!
+  code: String!
+  name: String!
+  legalName: String
+  taxId: String
+  address: String
+  phone: String
+  email: String
+  website: String
+  timezone: String!
+  currency: String! @col(dataType: "char(3)")
+  logoUrl: String
+  settings: Any!
+  isActive: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type User @table(name: "users", key: "id") {
+  id: UUID!
+  clinic: Clinic!
+  firebaseUid: String
+  username: String!
+  email: String
+  fullName: String!
+  role: String!
+  permissions: Any!
+  isActive: Boolean!
+  mustChangePassword: Boolean!
+  lastLoginAt: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Specialty @table(name: "specialties", key: "id") {
+  id: UUID!
+  clinic: Clinic!
+  code: String!
+  name: String!
+  isActive: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Office @table(name: "offices", key: "id") {
+  id: UUID!
+  clinic: Clinic!
+  code: String!
+  name: String!
+  location: String
+  isActive: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Professional @table(name: "professionals", key: "id") {
+  id: UUID!
+  clinic: Clinic!
+  user: User @unique
+  employeeCode: String
+  fullName: String!
+  documentNumber: String
+  licenseNumber: String
+  ministryNumber: String
+  phone: String
+  mobile: String
+  email: String
+  photoUrl: String
+  signatureUrl: String
+  defaultOffice: Office
+  isActive: Boolean!
+  notes: String
+  metadata: Any!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type ConsultationReason @table(name: "consultation_reasons", key: "id") {
+  id: UUID!
+  clinic: Clinic!
+  code: String!
+  name: String!
+  isActive: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Patient @table(name: "patients", key: "id") {
+  id: UUID!
+  clinic: Clinic!
+  recordNumber: String!
+  documentType: String!
+  documentNumber: String
+  documentVerified: Boolean!
+  fullName: String!
+  firstName: String
+  lastName: String
+  birthDate: Date
+  birthDateEstimated: Boolean!
+  deceased: Boolean!
+  deathDate: Date
+  sex: String!
+  maritalStatus: String!
+  bloodType: String
+  nationality: String
+  birthPlace: String
+  address: String
+  city: String
+  state: String
+  country: String
+  phone: String
+  mobile: String
+  email: String
+  occupation: String
+  isPrivate: Boolean!
+  photoUrl: String
+  allergiesNotes: String
+  currentDiagnosisSummary: String
+  guardianName: String
+  guardianDocument: String
+  guardianAddress: String
+  guardianPhone: String
+  guardianEmail: String
+  religion: String
+  isSuspended: Boolean!
+  suspensionReason: String
+  notes: String
+  metadata: Any!
+  searchText: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type PatientHistory @table(name: "patient_history", key: "id") {
+  id: UUID!
+  patient: Patient!
+  category: String!
+  description: String!
+  details: Any!
+  onsetDate: Date
+  isActive: Boolean!
+  recordedAt: Timestamp!
+  recordedBy: User
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Cie10Code @table(name: "cie10_codes", key: "code") {
+  code: String!
+  description: String!
+  chapter: String
+  category: String
+  isBillable: Boolean!
+  searchText: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Appointment @table(name: "appointments", key: "id") {
+  id: UUID!
+  clinic: Clinic!
+  patient: Patient!
+  professional: Professional!
+  specialty: Specialty
+  office: Office
+  startsAt: Timestamp!
+  endsAt: Timestamp!
+  durationMinutes: Int!
+  reason: String
+  status: String!
+  notes: String
+  source: String!
+  legacyId: String
+  legacyStatus: String
+  metadata: Any!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Consultation @table(name: "consultations", key: "id") {
+  id: UUID!
+  clinic: Clinic!
+  patient: Patient!
+  professional: Professional!
+  appointment: Appointment @unique
+  specialty: Specialty
+  consultationType: String!
+  consultedAt: Timestamp!
+  nextVisitAt: Timestamp
+  reason: String
+  currentIllness: String
+  physicalExam: String
+  functionalExam: String
+  studies: String
+  diagnosisNotes: String
+  treatmentPlan: String
+  evolution: String
+  plan: String
+  notes: String
+  vitals: Any!
+  status: String!
+  signedAt: Timestamp
+  source: String!
+  legacyId: String
+  metadata: Any!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deletedAt: Timestamp
+}
+
+type ConsultationDiagnosis @table(name: "consultation_diagnoses", key: "id") {
+  id: UUID!
+  clinic: Clinic!
+  patient: Patient!
+  consultation: Consultation
+  professional: Professional
+  codeSystem: String!
+  cie10Code: String
+  diagnosisText: String!
+  diagnosisType: String!
+  notes: String
+  diagnosedAt: Timestamp!
+  legacyId: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Prescription @table(name: "prescriptions", key: "id") {
+  id: UUID!
+  clinic: Clinic!
+  patient: Patient!
+  consultation: Consultation
+  professional: Professional!
+  prescriptionNumber: String!
+  issuedAt: Timestamp!
+  status: String!
+  notes: String
+  legacyId: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type PrescriptionItem @table(name: "prescription_items", key: "id") {
+  id: UUID!
+  prescription: Prescription!
+  medicationName: String!
+  presentation: String
+  dose: String
+  frequency: String
+  route: String
+  duration: String
+  quantity: Float @col(dataType: "numeric(12,3)")
+  instructions: String
+  sortOrder: Int!
+  legacyId: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}

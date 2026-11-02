@@ -1,0 +1,5 @@
+connectorId: "historias"
+generated:
+  javascript:
+    outputDir: "../../src/services/firebase/dataconnect"
+    package: "@historias/dataconnect"

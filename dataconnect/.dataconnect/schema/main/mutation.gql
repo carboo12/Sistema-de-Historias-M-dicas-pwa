@@ -1,0 +1,1560 @@
+extend type Mutation {
+  """
+  ✨ Insert a single `Appointment` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  appointment_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Appointment_Data!
+  ): Appointment_KeyOutput! @fdc_generated(from: "Appointment", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Cie10Code` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  cie10Code_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Cie10Code_Data!
+  ): Cie10Code_KeyOutput! @fdc_generated(from: "Cie10Code", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Clinic` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  clinic_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Clinic_Data!
+  ): Clinic_KeyOutput! @fdc_generated(from: "Clinic", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Consultation` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  consultation_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Consultation_Data!
+  ): Consultation_KeyOutput! @fdc_generated(from: "Consultation", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `ConsultationDiagnosis` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  consultationDiagnosis_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ConsultationDiagnosis_Data!
+  ): ConsultationDiagnosis_KeyOutput! @fdc_generated(from: "ConsultationDiagnosis", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `ConsultationReason` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  consultationReason_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ConsultationReason_Data!
+  ): ConsultationReason_KeyOutput! @fdc_generated(from: "ConsultationReason", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Office` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  office_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Office_Data!
+  ): Office_KeyOutput! @fdc_generated(from: "Office", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Patient` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  patient_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Patient_Data!
+  ): Patient_KeyOutput! @fdc_generated(from: "Patient", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `PatientHistory` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  patientHistory_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: PatientHistory_Data!
+  ): PatientHistory_KeyOutput! @fdc_generated(from: "PatientHistory", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Prescription` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  prescription_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Prescription_Data!
+  ): Prescription_KeyOutput! @fdc_generated(from: "Prescription", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `PrescriptionItem` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  prescriptionItem_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: PrescriptionItem_Data!
+  ): PrescriptionItem_KeyOutput! @fdc_generated(from: "PrescriptionItem", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Professional` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  professional_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Professional_Data!
+  ): Professional_KeyOutput! @fdc_generated(from: "Professional", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Specialty` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  specialty_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Specialty_Data!
+  ): Specialty_KeyOutput! @fdc_generated(from: "Specialty", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `User` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert `Appointment` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  appointment_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Appointment_Data!]!
+  ): [Appointment_KeyOutput!]! @fdc_generated(from: "Appointment", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Cie10Code` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  cie10Code_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Cie10Code_Data!]!
+  ): [Cie10Code_KeyOutput!]! @fdc_generated(from: "Cie10Code", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Clinic` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  clinic_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Clinic_Data!]!
+  ): [Clinic_KeyOutput!]! @fdc_generated(from: "Clinic", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Consultation` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  consultation_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Consultation_Data!]!
+  ): [Consultation_KeyOutput!]! @fdc_generated(from: "Consultation", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `ConsultationDiagnosis` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  consultationDiagnosis_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ConsultationDiagnosis_Data!]!
+  ): [ConsultationDiagnosis_KeyOutput!]! @fdc_generated(from: "ConsultationDiagnosis", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `ConsultationReason` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  consultationReason_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ConsultationReason_Data!]!
+  ): [ConsultationReason_KeyOutput!]! @fdc_generated(from: "ConsultationReason", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Office` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  office_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Office_Data!]!
+  ): [Office_KeyOutput!]! @fdc_generated(from: "Office", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Patient` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  patient_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Patient_Data!]!
+  ): [Patient_KeyOutput!]! @fdc_generated(from: "Patient", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `PatientHistory` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  patientHistory_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [PatientHistory_Data!]!
+  ): [PatientHistory_KeyOutput!]! @fdc_generated(from: "PatientHistory", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Prescription` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  prescription_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Prescription_Data!]!
+  ): [Prescription_KeyOutput!]! @fdc_generated(from: "Prescription", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `PrescriptionItem` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  prescriptionItem_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [PrescriptionItem_Data!]!
+  ): [PrescriptionItem_KeyOutput!]! @fdc_generated(from: "PrescriptionItem", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Professional` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  professional_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Professional_Data!]!
+  ): [Professional_KeyOutput!]! @fdc_generated(from: "Professional", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Specialty` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  specialty_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Specialty_Data!]!
+  ): [Specialty_KeyOutput!]! @fdc_generated(from: "Specialty", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `User` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert or update a single `Appointment` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Appointment`.
+  """
+  appointment_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Appointment_Data!
+  ): Appointment_KeyOutput! @fdc_generated(from: "Appointment", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Cie10Code` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Cie10Code`.
+  """
+  cie10Code_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Cie10Code_Data!
+  ): Cie10Code_KeyOutput! @fdc_generated(from: "Cie10Code", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Clinic` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Clinic`.
+  """
+  clinic_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Clinic_Data!
+  ): Clinic_KeyOutput! @fdc_generated(from: "Clinic", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Consultation` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Consultation`.
+  """
+  consultation_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Consultation_Data!
+  ): Consultation_KeyOutput! @fdc_generated(from: "Consultation", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `ConsultationDiagnosis` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ConsultationDiagnosis`.
+  """
+  consultationDiagnosis_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ConsultationDiagnosis_Data!
+  ): ConsultationDiagnosis_KeyOutput! @fdc_generated(from: "ConsultationDiagnosis", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `ConsultationReason` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ConsultationReason`.
+  """
+  consultationReason_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ConsultationReason_Data!
+  ): ConsultationReason_KeyOutput! @fdc_generated(from: "ConsultationReason", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Office` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Office`.
+  """
+  office_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Office_Data!
+  ): Office_KeyOutput! @fdc_generated(from: "Office", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Patient` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Patient`.
+  """
+  patient_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Patient_Data!
+  ): Patient_KeyOutput! @fdc_generated(from: "Patient", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `PatientHistory` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PatientHistory`.
+  """
+  patientHistory_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: PatientHistory_Data!
+  ): PatientHistory_KeyOutput! @fdc_generated(from: "PatientHistory", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Prescription` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Prescription`.
+  """
+  prescription_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Prescription_Data!
+  ): Prescription_KeyOutput! @fdc_generated(from: "Prescription", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `PrescriptionItem` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PrescriptionItem`.
+  """
+  prescriptionItem_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: PrescriptionItem_Data!
+  ): PrescriptionItem_KeyOutput! @fdc_generated(from: "PrescriptionItem", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Professional` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Professional`.
+  """
+  professional_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Professional_Data!
+  ): Professional_KeyOutput! @fdc_generated(from: "Professional", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Specialty` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Specialty`.
+  """
+  specialty_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Specialty_Data!
+  ): Specialty_KeyOutput! @fdc_generated(from: "Specialty", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `User` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update `Appointment` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Appointment`.
+  """
+  appointment_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Appointment_Data!]!
+  ): [Appointment_KeyOutput!]! @fdc_generated(from: "Appointment", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Cie10Code` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Cie10Code`.
+  """
+  cie10Code_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Cie10Code_Data!]!
+  ): [Cie10Code_KeyOutput!]! @fdc_generated(from: "Cie10Code", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Clinic` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Clinic`.
+  """
+  clinic_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Clinic_Data!]!
+  ): [Clinic_KeyOutput!]! @fdc_generated(from: "Clinic", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Consultation` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Consultation`.
+  """
+  consultation_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Consultation_Data!]!
+  ): [Consultation_KeyOutput!]! @fdc_generated(from: "Consultation", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `ConsultationDiagnosis` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ConsultationDiagnosis`.
+  """
+  consultationDiagnosis_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ConsultationDiagnosis_Data!]!
+  ): [ConsultationDiagnosis_KeyOutput!]! @fdc_generated(from: "ConsultationDiagnosis", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `ConsultationReason` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ConsultationReason`.
+  """
+  consultationReason_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ConsultationReason_Data!]!
+  ): [ConsultationReason_KeyOutput!]! @fdc_generated(from: "ConsultationReason", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Office` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Office`.
+  """
+  office_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Office_Data!]!
+  ): [Office_KeyOutput!]! @fdc_generated(from: "Office", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Patient` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Patient`.
+  """
+  patient_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Patient_Data!]!
+  ): [Patient_KeyOutput!]! @fdc_generated(from: "Patient", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `PatientHistory` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PatientHistory`.
+  """
+  patientHistory_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [PatientHistory_Data!]!
+  ): [PatientHistory_KeyOutput!]! @fdc_generated(from: "PatientHistory", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Prescription` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Prescription`.
+  """
+  prescription_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Prescription_Data!]!
+  ): [Prescription_KeyOutput!]! @fdc_generated(from: "Prescription", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `PrescriptionItem` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PrescriptionItem`.
+  """
+  prescriptionItem_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [PrescriptionItem_Data!]!
+  ): [PrescriptionItem_KeyOutput!]! @fdc_generated(from: "PrescriptionItem", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Professional` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Professional`.
+  """
+  professional_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Professional_Data!]!
+  ): [Professional_KeyOutput!]! @fdc_generated(from: "Professional", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Specialty` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Specialty`.
+  """
+  specialty_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Specialty_Data!]!
+  ): [Specialty_KeyOutput!]! @fdc_generated(from: "Specialty", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `User` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Update a single `Appointment` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Appointment` or `null` if not found.
+  """
+  appointment_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Appointment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Appointment_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Appointment_Data!
+  ): Appointment_KeyOutput @fdc_generated(from: "Appointment", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Cie10Code` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Cie10Code` or `null` if not found.
+  """
+  cie10Code_update(
+    """
+    The key used to identify the object.
+    """
+    key: Cie10Code_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Cie10Code_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Cie10Code_Data!
+  ): Cie10Code_KeyOutput @fdc_generated(from: "Cie10Code", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Clinic` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Clinic` or `null` if not found.
+  """
+  clinic_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Clinic_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Clinic_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Clinic_Data!
+  ): Clinic_KeyOutput @fdc_generated(from: "Clinic", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Consultation` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Consultation` or `null` if not found.
+  """
+  consultation_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Consultation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Consultation_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Consultation_Data!
+  ): Consultation_KeyOutput @fdc_generated(from: "Consultation", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `ConsultationDiagnosis` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ConsultationDiagnosis` or `null` if not found.
+  """
+  consultationDiagnosis_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ConsultationDiagnosis_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ConsultationDiagnosis_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ConsultationDiagnosis_Data!
+  ): ConsultationDiagnosis_KeyOutput @fdc_generated(from: "ConsultationDiagnosis", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `ConsultationReason` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ConsultationReason` or `null` if not found.
+  """
+  consultationReason_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ConsultationReason_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ConsultationReason_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ConsultationReason_Data!
+  ): ConsultationReason_KeyOutput @fdc_generated(from: "ConsultationReason", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Office` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Office` or `null` if not found.
+  """
+  office_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Office_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Office_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Office_Data!
+  ): Office_KeyOutput @fdc_generated(from: "Office", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Patient` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Patient` or `null` if not found.
+  """
+  patient_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Patient_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Patient_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Patient_Data!
+  ): Patient_KeyOutput @fdc_generated(from: "Patient", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `PatientHistory` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `PatientHistory` or `null` if not found.
+  """
+  patientHistory_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PatientHistory_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PatientHistory_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: PatientHistory_Data!
+  ): PatientHistory_KeyOutput @fdc_generated(from: "PatientHistory", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Prescription` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Prescription` or `null` if not found.
+  """
+  prescription_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Prescription_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Prescription_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Prescription_Data!
+  ): Prescription_KeyOutput @fdc_generated(from: "Prescription", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `PrescriptionItem` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `PrescriptionItem` or `null` if not found.
+  """
+  prescriptionItem_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PrescriptionItem_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PrescriptionItem_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: PrescriptionItem_Data!
+  ): PrescriptionItem_KeyOutput @fdc_generated(from: "PrescriptionItem", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Professional` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Professional` or `null` if not found.
+  """
+  professional_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Professional_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Professional_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Professional_Data!
+  ): Professional_KeyOutput @fdc_generated(from: "Professional", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Specialty` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Specialty` or `null` if not found.
+  """
+  specialty_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Specialty_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Specialty_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Specialty_Data!
+  ): Specialty_KeyOutput @fdc_generated(from: "Specialty", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `User` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `User` or `null` if not found.
+  """
+  user_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: User_Data!
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update `Appointment` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  appointment_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Appointment_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Appointment_Data!
+  ): Int! @fdc_generated(from: "Appointment", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Cie10Code` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  cie10Code_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Cie10Code_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Cie10Code_Data!
+  ): Int! @fdc_generated(from: "Cie10Code", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Clinic` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  clinic_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Clinic_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Clinic_Data!
+  ): Int! @fdc_generated(from: "Clinic", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Consultation` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  consultation_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Consultation_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Consultation_Data!
+  ): Int! @fdc_generated(from: "Consultation", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `ConsultationDiagnosis` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  consultationDiagnosis_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ConsultationDiagnosis_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ConsultationDiagnosis_Data!
+  ): Int! @fdc_generated(from: "ConsultationDiagnosis", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `ConsultationReason` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  consultationReason_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ConsultationReason_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ConsultationReason_Data!
+  ): Int! @fdc_generated(from: "ConsultationReason", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Office` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  office_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Office_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Office_Data!
+  ): Int! @fdc_generated(from: "Office", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Patient` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  patient_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Patient_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Patient_Data!
+  ): Int! @fdc_generated(from: "Patient", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `PatientHistory` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  patientHistory_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: PatientHistory_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: PatientHistory_Data!
+  ): Int! @fdc_generated(from: "PatientHistory", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Prescription` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  prescription_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Prescription_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Prescription_Data!
+  ): Int! @fdc_generated(from: "Prescription", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `PrescriptionItem` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  prescriptionItem_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: PrescriptionItem_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: PrescriptionItem_Data!
+  ): Int! @fdc_generated(from: "PrescriptionItem", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Professional` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  professional_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Professional_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Professional_Data!
+  ): Int! @fdc_generated(from: "Professional", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Specialty` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  specialty_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Specialty_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Specialty_Data!
+  ): Int! @fdc_generated(from: "Specialty", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `User` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  user_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: User_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: User_Data!
+  ): Int! @fdc_generated(from: "User", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Delete a single `Appointment` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  appointment_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Appointment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Appointment_FirstRow
+  ): Appointment_KeyOutput @fdc_generated(from: "Appointment", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Cie10Code` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  cie10Code_delete(
+    """
+    The key used to identify the object.
+    """
+    key: Cie10Code_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Cie10Code_FirstRow
+  ): Cie10Code_KeyOutput @fdc_generated(from: "Cie10Code", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Clinic` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  clinic_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Clinic_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Clinic_FirstRow
+  ): Clinic_KeyOutput @fdc_generated(from: "Clinic", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Consultation` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  consultation_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Consultation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Consultation_FirstRow
+  ): Consultation_KeyOutput @fdc_generated(from: "Consultation", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `ConsultationDiagnosis` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  consultationDiagnosis_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ConsultationDiagnosis_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ConsultationDiagnosis_FirstRow
+  ): ConsultationDiagnosis_KeyOutput @fdc_generated(from: "ConsultationDiagnosis", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `ConsultationReason` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  consultationReason_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ConsultationReason_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ConsultationReason_FirstRow
+  ): ConsultationReason_KeyOutput @fdc_generated(from: "ConsultationReason", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Office` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  office_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Office_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Office_FirstRow
+  ): Office_KeyOutput @fdc_generated(from: "Office", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Patient` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  patient_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Patient_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Patient_FirstRow
+  ): Patient_KeyOutput @fdc_generated(from: "Patient", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `PatientHistory` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  patientHistory_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PatientHistory_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PatientHistory_FirstRow
+  ): PatientHistory_KeyOutput @fdc_generated(from: "PatientHistory", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Prescription` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  prescription_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Prescription_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Prescription_FirstRow
+  ): Prescription_KeyOutput @fdc_generated(from: "Prescription", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `PrescriptionItem` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  prescriptionItem_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PrescriptionItem_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PrescriptionItem_FirstRow
+  ): PrescriptionItem_KeyOutput @fdc_generated(from: "PrescriptionItem", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Professional` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  professional_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Professional_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Professional_FirstRow
+  ): Professional_KeyOutput @fdc_generated(from: "Professional", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Specialty` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  specialty_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Specialty_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Specialty_FirstRow
+  ): Specialty_KeyOutput @fdc_generated(from: "Specialty", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `User` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  user_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete `Appointment` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  appointment_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Appointment_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Appointment", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Cie10Code` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  cie10Code_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Cie10Code_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Cie10Code", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Clinic` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  clinic_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Clinic_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Clinic", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Consultation` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  consultation_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Consultation_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Consultation", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `ConsultationDiagnosis` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  consultationDiagnosis_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ConsultationDiagnosis_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ConsultationDiagnosis", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `ConsultationReason` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  consultationReason_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ConsultationReason_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ConsultationReason", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Office` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  office_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Office_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Office", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Patient` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  patient_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Patient_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Patient", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `PatientHistory` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  patientHistory_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: PatientHistory_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "PatientHistory", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Prescription` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  prescription_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Prescription_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Prescription", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `PrescriptionItem` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  prescriptionItem_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: PrescriptionItem_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "PrescriptionItem", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Professional` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  professional_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Professional_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Professional", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Specialty` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  specialty_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Specialty_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Specialty", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `User` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  user_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: User_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "User", purpose: DELETE_MULTIPLE)
+}

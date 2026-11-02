@@ -1,0 +1,140 @@
+extend type Appointment {
+  """
+  ✨ Implicit foreign key field based on `Appointment`.`clinic`. It must match the value of `Clinic`.`id`. See `@ref` for how to customize it.
+  """
+  clinicId: UUID! @fdc_generated(from: "Appointment.clinic", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Appointment`.`office`. It must match the value of `Office`.`id`. See `@ref` for how to customize it.
+  """
+  officeId: UUID @fdc_generated(from: "Appointment.office", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Appointment`.`patient`. It must match the value of `Patient`.`id`. See `@ref` for how to customize it.
+  """
+  patientId: UUID! @fdc_generated(from: "Appointment.patient", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Appointment`.`professional`. It must match the value of `Professional`.`id`. See `@ref` for how to customize it.
+  """
+  professionalId: UUID! @fdc_generated(from: "Appointment.professional", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Appointment`.`specialty`. It must match the value of `Specialty`.`id`. See `@ref` for how to customize it.
+  """
+  specialtyId: UUID @fdc_generated(from: "Appointment.specialty", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Consultation {
+  """
+  ✨ Implicit foreign key field based on `Consultation`.`appointment`. It must match the value of `Appointment`.`id`. See `@ref` for how to customize it.
+  """
+  appointmentId: UUID @fdc_generated(from: "Consultation.appointment", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Consultation`.`clinic`. It must match the value of `Clinic`.`id`. See `@ref` for how to customize it.
+  """
+  clinicId: UUID! @fdc_generated(from: "Consultation.clinic", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Consultation`.`patient`. It must match the value of `Patient`.`id`. See `@ref` for how to customize it.
+  """
+  patientId: UUID! @fdc_generated(from: "Consultation.patient", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Consultation`.`professional`. It must match the value of `Professional`.`id`. See `@ref` for how to customize it.
+  """
+  professionalId: UUID! @fdc_generated(from: "Consultation.professional", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Consultation`.`specialty`. It must match the value of `Specialty`.`id`. See `@ref` for how to customize it.
+  """
+  specialtyId: UUID @fdc_generated(from: "Consultation.specialty", purpose: IMPLICIT_REF_FIELD)
+}
+extend type ConsultationDiagnosis {
+  """
+  ✨ Implicit foreign key field based on `ConsultationDiagnosis`.`clinic`. It must match the value of `Clinic`.`id`. See `@ref` for how to customize it.
+  """
+  clinicId: UUID! @fdc_generated(from: "ConsultationDiagnosis.clinic", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ConsultationDiagnosis`.`consultation`. It must match the value of `Consultation`.`id`. See `@ref` for how to customize it.
+  """
+  consultationId: UUID @fdc_generated(from: "ConsultationDiagnosis.consultation", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ConsultationDiagnosis`.`patient`. It must match the value of `Patient`.`id`. See `@ref` for how to customize it.
+  """
+  patientId: UUID! @fdc_generated(from: "ConsultationDiagnosis.patient", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ConsultationDiagnosis`.`professional`. It must match the value of `Professional`.`id`. See `@ref` for how to customize it.
+  """
+  professionalId: UUID @fdc_generated(from: "ConsultationDiagnosis.professional", purpose: IMPLICIT_REF_FIELD)
+}
+extend type ConsultationReason {
+  """
+  ✨ Implicit foreign key field based on `ConsultationReason`.`clinic`. It must match the value of `Clinic`.`id`. See `@ref` for how to customize it.
+  """
+  clinicId: UUID! @fdc_generated(from: "ConsultationReason.clinic", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Office {
+  """
+  ✨ Implicit foreign key field based on `Office`.`clinic`. It must match the value of `Clinic`.`id`. See `@ref` for how to customize it.
+  """
+  clinicId: UUID! @fdc_generated(from: "Office.clinic", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Patient {
+  """
+  ✨ Implicit foreign key field based on `Patient`.`clinic`. It must match the value of `Clinic`.`id`. See `@ref` for how to customize it.
+  """
+  clinicId: UUID! @fdc_generated(from: "Patient.clinic", purpose: IMPLICIT_REF_FIELD)
+}
+extend type PatientHistory {
+  """
+  ✨ Implicit foreign key field based on `PatientHistory`.`patient`. It must match the value of `Patient`.`id`. See `@ref` for how to customize it.
+  """
+  patientId: UUID! @fdc_generated(from: "PatientHistory.patient", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `PatientHistory`.`recordedBy`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  recordedById: UUID @fdc_generated(from: "PatientHistory.recordedBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Prescription {
+  """
+  ✨ Implicit foreign key field based on `Prescription`.`clinic`. It must match the value of `Clinic`.`id`. See `@ref` for how to customize it.
+  """
+  clinicId: UUID! @fdc_generated(from: "Prescription.clinic", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Prescription`.`consultation`. It must match the value of `Consultation`.`id`. See `@ref` for how to customize it.
+  """
+  consultationId: UUID @fdc_generated(from: "Prescription.consultation", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Prescription`.`patient`. It must match the value of `Patient`.`id`. See `@ref` for how to customize it.
+  """
+  patientId: UUID! @fdc_generated(from: "Prescription.patient", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Prescription`.`professional`. It must match the value of `Professional`.`id`. See `@ref` for how to customize it.
+  """
+  professionalId: UUID! @fdc_generated(from: "Prescription.professional", purpose: IMPLICIT_REF_FIELD)
+}
+extend type PrescriptionItem {
+  """
+  ✨ Implicit foreign key field based on `PrescriptionItem`.`prescription`. It must match the value of `Prescription`.`id`. See `@ref` for how to customize it.
+  """
+  prescriptionId: UUID! @fdc_generated(from: "PrescriptionItem.prescription", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Professional {
+  """
+  ✨ Implicit foreign key field based on `Professional`.`clinic`. It must match the value of `Clinic`.`id`. See `@ref` for how to customize it.
+  """
+  clinicId: UUID! @fdc_generated(from: "Professional.clinic", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Professional`.`defaultOffice`. It must match the value of `Office`.`id`. See `@ref` for how to customize it.
+  """
+  defaultOfficeId: UUID @fdc_generated(from: "Professional.defaultOffice", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Professional`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: UUID @fdc_generated(from: "Professional.user", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Specialty {
+  """
+  ✨ Implicit foreign key field based on `Specialty`.`clinic`. It must match the value of `Clinic`.`id`. See `@ref` for how to customize it.
+  """
+  clinicId: UUID! @fdc_generated(from: "Specialty.clinic", purpose: IMPLICIT_REF_FIELD)
+}
+extend type User {
+  """
+  ✨ Implicit foreign key field based on `User`.`clinic`. It must match the value of `Clinic`.`id`. See `@ref` for how to customize it.
+  """
+  clinicId: UUID! @fdc_generated(from: "User.clinic", purpose: IMPLICIT_REF_FIELD)
+}

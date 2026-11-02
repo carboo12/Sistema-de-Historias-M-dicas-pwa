@@ -1,0 +1,23 @@
+query GetSession @auth(level: USER) {
+  users(where: { firebaseUid: { eq_expr: "auth.uid" } }) {
+    id
+    username
+    email
+    fullName
+    role
+    mustChangePassword
+    isActive
+    clinic {
+      id
+      code
+      name
+      timezone
+      currency
+    }
+    professional_on_user {
+      id
+      fullName
+      licenseNumber
+    }
+  }
+}
