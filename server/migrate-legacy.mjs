@@ -76,9 +76,14 @@ const json = v => JSON.stringify(v ?? {});
 const stableUuid = value => { const h=createHash('md5').update(value).digest('hex'); return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20,32)}`; };
 const id = stableUuid;
 const copyCsv = async (client, table, columns, rows) => {
-  const stream=client.query(copyFrom(`COPY public.${table} (${columns.join(',')}) FROM STDIN WITH (FORMAT csv, NULL '\\N')`));
+  const stage=`migration_stage_${table}`;
+  await client.query(`create temporary table ${stage} (like public.${table}) on commit drop`);
+  const stream=client.query(copyFrom(`COPY ${stage} (${columns.join(',')}) FROM STDIN WITH (FORMAT csv, NULL '\\N')`));
   async function* csvRows(){ for(const row of rows){yield Buffer.from(row.map(value=>{if(value===null||value===undefined)return '\\N';if(typeof value==='object')value=JSON.stringify(value);return '"'+String(value).replaceAll('"','""')+'"';}).join(',')+'\n');}}
   await pipeline(csvRows(),stream);
+  const insertColumns=columns.join(',');
+  const updates=columns.filter(column=>!['id','created_at'].includes(column)).map(column=>`${column}=excluded.${column}`).join(',');
+  await client.query(`insert into public.${table} (${insertColumns}) select distinct on (id) ${insertColumns} from ${stage} order by id on conflict do update set ${updates}`);
 };
 const splitName = v => { const p=(clean(v)||'').split(/\s+/); return [p.shift()||null,p.join(' ')||null]; };
 const byBatches = async (rows, batchSize, callback) => {
@@ -94,7 +99,8 @@ function timestamp(d, value) {
   return new Date(Date.UTC(year,month-1,day,hour+6,minute)).toISOString();
 }
 const patientRows=readInserts('pacientes'), appointmentRows=readInserts('citas');
-const consultationRows=[...readInserts('consulta'),...readInserts('consultamv')];
+const consultationRows=[...readInserts('consulta').map(x=>({...x,__legacySource:'consulta'})),...readInserts('consultamv').map(x=>({...x,__legacySource:'consultamv'}))];
+const consultationLegacyIds=new Map(consultationRows.map((row,index)=>[row,`consulta-${index}`]));
 const answerRows=[], diagRows=readInserts('diag_hist');
 const answerStatementCount=[...dump.matchAll(/INSERT INTO `pac_cuest`/g)].length;
 const answerCount=Number((dump.match(/INSERT INTO `pac_cuest`/g)||[]).length); // statement counts shown separately; dry-run count is computed by --count-anamnesis
@@ -157,9 +163,9 @@ try {
       patientCopyRows.push([stableUuid('patient:'+record),cl,record,clean(x.cedula)?'cedula':'sin_documento',clean(x.cedula),clean(x.nombre)||record,first,last,date(x.fec_nac),truth(x.fallecido),sex,marital,clean(x.sangre),clean(x.lugarnac),clean(x.estado),clean(x.pais),clean(x.dirhab),clean(x.telfhab),clean(x.email),clean(x.profesion),truth(x.particular),clean(x.rutafoto),clean(x.alergicoa),clean(x.diag),clean(x.represen),clean(x.cedrepresentante),clean(x.dirrepresentante),clean(x.telfrepresentante),clean(x.emailrepresentante),clean(x.religion),truth(x.suspendido),clean(x.motivosuspend),clean(x.nota),user.id,json({legacyReference:x.referencia,ageAtImport:x.edad,skinColor:x.color,race:x.raza,referral:x.refiere,habits:x.habitos,vaccines:x.vacunas,legacyInsurance:x.seguro}),new Date().toISOString(),new Date().toISOString()]);
     }
     await copyCsv(client,'patients',['id','clinic_id','record_number','document_type','document_number','full_name','first_name','last_name','birth_date','deceased','sex','marital_status','blood_type','birth_place','state','country','address','phone','email','occupation','is_private','photo_url','allergies_notes','current_diagnosis_summary','guardian_name','guardian_document','guardian_address','guardian_phone','guardian_email','religion','is_suspended','suspension_reason','notes','created_by_id','metadata','created_at','updated_at'],patientCopyRows);
-    const patientProbe=await client.query(`select id,record_number from public.patients where id=$1 or record_number='002' limit 3`,[stableUuid('patient:002')]);console.log('DEBUG dbPatients='+JSON.stringify(patientProbe.rows));
     console.log(`Pacientes cargados: ${uniquePatientRows.length}.`);
-    const patientIds=new Map(uniquePatientRows.filter(x=>clean(x.historia)).map(x=>[clean(x.historia),stableUuid('patient:'+clean(x.historia))]));
+    const persistedPatients=await client.query('select id,record_number from public.patients where clinic_id=$1',[cl]);
+    const patientIds=new Map(persistedPatients.rows.map(x=>[clean(x.record_number),x.id]));
     const patientId=async rec=>patientIds.get(rec);
     const patientUuid=record=>stableUuid('patient:'+record);
     const specialtyIds=new Map(specialtyRows.map(x=>[clean(x.codigo),stableUuid('specialty:'+clean(x.codigo))]));
@@ -174,15 +180,14 @@ try {
       const legacyId=`cita-${baseIndex+localIndex}`;
       appointmentCopyRows.push([stableUuid(`appointment:${legacyId}`),cl,p,professional.id,specialtyIds.get(clean(x.especial))||null,officeIds.get(clean(x.consultori))||null,stamp,end,30,clean(x.motivo)||'Consulta',aStatuses[String(Number(x.statuscons))]||'programada',clean(x.comentario),'legacy',legacyId,clean(x.statuscons),user.id,json({legacyIdFromDump:clean(x.idcita),legacyProfessional:x.medico,legacyClinic:x.empresa}),new Date().toISOString(),new Date().toISOString()]);
     }});
-    console.log('DEBUG patient 002 expected='+patientIds.get('002')+' copy='+patientCopyRows.find(r=>r[2]==='002')?.[0]+' appointment='+appointmentCopyRows.find(r=>r[2]===patientIds.get('002'))?.[2]);
     await copyCsv(client,'appointments',['id','clinic_id','patient_id','professional_id','specialty_id','office_id','duration_minutes','starts_at','ends_at','legacy_id','legacy_status','metadata','notes','reason','source','status','created_by_id','created_at','updated_at'],appointmentCopyRows.map(r=>[r[0],r[1],r[2],r[3],r[4],r[5],r[8],r[6],r[7],r[13],r[14],r[16],r[11],r[9],'legacy',r[10],r[15],r[17],r[18]]));
     console.log('Citas importadas.');
     // Consulta principal y móvil se conservan ambas; pid/fecha forman clave heredada.
     let ci=0; const consultationCopyRows=[];
     await byBatches(consultationRows, 250, async (batch,baseIndex) => { for (let localIndex=0;localIndex<batch.length;localIndex++) { const x=batch[localIndex];
-      const p=patientIds.get(clean(x.historia)); const d=date(x.fecha); if(!p||!d) {ci++;continue;}
+      const p=patientIds.get(clean(x.historia)); const d=date(x.fecha); if(!p||!d) continue;
       const stamp=timestamp(d,clean(x.hora)||'09:00 AM');
-      const legacyId=`consulta-${ci++}`;
+      const legacyId=consultationLegacyIds.get(x);
       const current=x.enfermac||x.enfermedad||''; const physical=x.exfisico||x.examfisico||''; const studies=x.estudios||''; const diagnosis=x.concdiag||''; const treatment=x.tratamient||'';
       const type='consulta';
       const cstatus='borrador'; // El volcado no contiene firma electrónica ni autoriza afirmar las notas.
@@ -190,20 +195,21 @@ try {
     }});
     await copyCsv(client,'consultations',['id','clinic_id','patient_id','professional_id','consultation_type','consulted_at','next_visit_at','reason','current_illness','physical_exam','studies','diagnosis_notes','treatment_plan','evolution','plan','status','source','legacy_id','metadata','created_by_id','created_at','updated_at'],consultationCopyRows.map(r=>[r[0],r[1],r[2],r[3],r[5],r[6],r[7],r[8],r[9],r[10],r[11],r[12],r[13],r[14],r[15],r[16],r[17],r[18],r[20],r[19],new Date().toISOString(),new Date().toISOString()]));
     console.log('Consultas importadas.');
+    const persistedConsultations=await client.query("select id,patient_id,consulted_at::date as consultation_date from public.consultations where clinic_id=$1 and source='legacy'",[cl]);
+    for(const row of persistedConsultations.rows) consultationMap.set(`${row.patient_id}|${date(row.consultation_date)}`,row.id);
     // Antecedentes textuales completos en detalles; CIE-10 oficiales van separados.
     const cieEntries=[...new Map(cieRows.map(x=>[clean(x.codigo)?.replace(/\s+/g,''),clean(x.descriptor)]).filter(([code,description])=>code&&description))];
     await byBatches(cieEntries, 1000, async batch=>{const args=[];const values=batch.map(([code,description],i)=>{const n=i*4;args.push(code,description,new Date().toISOString(),new Date().toISOString());return `($${n+1},$${n+2},true,$${n+3},$${n+4})`;});await client.query(`insert into public.cie10_codes(code,description,is_billable,created_at,updated_at) values ${values.join(',')} on conflict(code) do update set description=excluded.description,updated_at=now()`,args);});
     for(let di=0;di<diagRows.length+mobileDiagRows.length;di++){const x=[...diagRows,...mobileDiagRows][di],p=patientIds.get(clean(x.historia)); if(!p||!clean(x.descrip||x.nomprocoms)) continue; const rawCode=clean(x.codigo), code=rawCode?.replace(/\s+/g,''); const cie=code&&(await client.query('select code from public.cie10_codes where code=$1',[code])).rows[0]?.code; const text=clean(x.descrip||x.nomprocoms); await client.query(`insert into public.patient_history(id,patient_id,category,description,details,is_active,recorded_at,recorded_by_id,created_at,updated_at) values($1,$2,'otro',$3,$4::jsonb,true,coalesce($5::date,now()),$6,now(),now()) on conflict(id) do update set details=excluded.details,recorded_at=excluded.recorded_at,recorded_by_id=excluded.recorded_by_id,updated_at=now()`,[id(`history-${di}`),p,text,json({legacyCode:rawCode,notes:x.notas,professionalCode:x.medico,cie10Code:cie}),date(x.fecha),user.id]);}
     const consultationMap=new Map();
-    for(let i=0;i<consultationRows.length;i++){const x=consultationRows[i],p=patientIds.get(clean(x.historia)),d=date(x.fecha);if(p&&d)consultationMap.set(`${p}|${d}`,id(`consultation:${cl}:consulta-${i}`));}
+    for(const x of consultationRows){const p=patientIds.get(clean(x.historia)),d=date(x.fecha),legacyId=consultationLegacyIds.get(x);if(p&&d)consultationMap.set(`${p}|${d}`,id(`consultation:${cl}:${legacyId}`));}
     let ai=0; const answerColumns=['id','clinic_id','patient_id','consultation_id','item_code','prompt_snapshot','answer','details','recorded_at','source','legacy_id','created_at','updated_at'];
     const copyAnswerRows=async function*(source){for(const x of source){const i=ai++,p=patientIds.get(clean(x.historia));if(!p)continue;const legacyId=`anamnesis-${i}`,consultationId=consultationMap.get(`${p}|${date(x.fecha)}`)||null;yield [stableUuid(legacyId),cl,p,consultationId,clean(x.idline),clean(x.descrip),clean(x.respuesta),clean(x.detalles),date(x.fecha),'legacy',legacyId,new Date().toISOString(),new Date().toISOString()];}};
     const answerStream=client.query(copyFrom(`COPY public.patient_anamnesis_answers (${answerColumns.join(',')}) FROM STDIN WITH (FORMAT csv, NULL '\\N')`));
     async function* answerCsv(){for await(const row of copyAnswerRows(iterateInsertRows('pac_cuest')))yield Buffer.from(row.map(value=>{if(value===null||value===undefined)return '\\N';return '"'+String(value).replaceAll('"','""')+'"';}).join(',')+'\n');}
     await pipeline(answerCsv(),answerStream);
     console.log('Anamnesis importada.');
-    const consultationIds=new Map();
-    for(let i=0;i<consultationRows.length;i++){const x=consultationRows[i],p=patientIds.get(clean(x.historia)),d=date(x.fecha);if(p&&d)consultationIds.set(`${p}|${d}`,id(`consultation:${cl}:consulta-${i}`));}
+    const consultationIds=consultationMap;
     let ri=0;
     for(const x of recipeRows){const idx=ri++,p=patientIds.get(clean(x.historia)); if(!p||!date(x.fecha)||!clean(x.nombre)) continue; const legacyId=`recipe-${idx}`, when=date(x.fecha); const con=consultationIds.get(`${p}|${when}`)||null; const num=clean(x.nrorecipe)||legacyId; const rxId=stableUuid(legacyId); await client.query(`insert into public.prescriptions(id,clinic_id,patient_id,consultation_id,professional_id,prescription_number,issued_at,status,notes,legacy_id,created_at,updated_at) values($1,$2,$3,$4,$5,$6,$7,'emitida',$8,$9,now(),now()) on conflict(id) do update set consultation_id=excluded.consultation_id,issued_at=excluded.issued_at,notes=excluded.notes,updated_at=now()`,[rxId,cl,p,con,professional.id,num,when,clean(x.coddoc),legacyId]); const itemLegacy=`recipe-item-${idx}`; await client.query(`insert into public.prescription_items(id,prescription_id,medication_name,presentation,dose,frequency,quantity,instructions,sort_order,legacy_id,created_at,updated_at) values($1,$2,$3,$4,null,nullif($5,''),$6,$7,0,$8,now(),now()) on conflict(id) do update set medication_name=excluded.medication_name,presentation=excluded.presentation,frequency=excluded.frequency,quantity=excluded.quantity,instructions=excluded.instructions,updated_at=now()`,[stableUuid(itemLegacy),rxId,clean(x.nombre),clean(x.present),clean(x.indicacion)||'',Number(x.cantidad)||null,clean(x.indicacion),itemLegacy]);}
     const tables=['patients','appointments','consultations','patient_history','patient_anamnesis_answers','cie10_codes','consultation_diagnoses','prescriptions','prescription_items'];

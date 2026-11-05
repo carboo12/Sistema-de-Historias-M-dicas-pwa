@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, GuestOnly, RequireAuth } from './auth/AuthProvider';
 import { AppShell } from './components/AppShell';
 import { AgendaPage } from './pages/AgendaPage';
+import { HelpPage } from './pages/HelpPage';
 import { ConsultationPage } from './pages/ConsultationPage';
 import { ConsultationsPage } from './pages/ConsultationsPage';
 import { LoginPage } from './pages/LoginPage';
@@ -10,6 +11,7 @@ import { NewConsultationPage } from './pages/NewConsultationPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PatientDetailPage } from './pages/PatientDetailPage';
 import { PatientsPage } from './pages/PatientsPage';
+import { SettingsPage } from './pages/SettingsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,6 +51,8 @@ export default function App() {
               <Route path="/consultas" element={<ConsultationsPage />} />
               <Route path="/consultas/nueva" element={<NewConsultationPage />} />
               <Route path="/consultas/:id" element={<ConsultationPage />} />
+              <Route path="/configuracion" element={<SettingsPage />} />
+              <Route path="/ayuda" element={<HelpPage />} />
             </Route>
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

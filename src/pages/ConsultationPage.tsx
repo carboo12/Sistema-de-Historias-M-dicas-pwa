@@ -121,6 +121,7 @@ export function ConsultationPage() {
   const [nextVisitAt, setNextVisitAt] = useState('');
   const [savedSnapshot, setSavedSnapshot] = useState('');
   const [savedNextVisit, setSavedNextVisit] = useState('');
+  const [savedPrescriptionSnapshot, setSavedPrescriptionSnapshot] = useState('');
   const [initialized, setInitialized] = useState(false);
   const [justSigned, setJustSigned] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -149,7 +150,10 @@ export function ConsultationPage() {
     if (!detail.data || initialized) return;
     const nextForm = toForm(detail.data.consultation);
     const nextDate = toDateInput(detail.data.consultation.nextVisitAt);
+    const storedItems = detail.data.consultation.prescriptionItems ?? [];
     setForm(nextForm);
+    setPrescriptionItems(storedItems.length ? storedItems : [emptyPrescriptionItem()]);
+    setSavedPrescriptionSnapshot(JSON.stringify(storedItems));
     setNextVisitAt(nextDate);
     setSavedSnapshot(JSON.stringify(nextForm));
     setSavedNextVisit(nextDate);
@@ -159,11 +163,13 @@ export function ConsultationPage() {
   const currentDiagnoses = detail.data?.diagnoses ?? [];
   const hasPrincipal = currentDiagnoses.some((diagnosis) => diagnosis.type === 'principal');
   const existingCodes = new Set(currentDiagnoses.map((diagnosis) => diagnosis.code));
-  const isDirty = form !== null && (JSON.stringify(form) !== savedSnapshot || nextVisitAt !== savedNextVisit);
+  const serializedPrescription = JSON.stringify(prescriptionItems.filter((item) => Object.values(item).some((value) => value.trim())));
+  const isDirty = form !== null && (JSON.stringify(form) !== savedSnapshot || nextVisitAt !== savedNextVisit || serializedPrescription !== savedPrescriptionSnapshot);
 
   const buildPayload = () => ({
     ...(form ?? {}),
-    nextVisitAt: nextVisitAt ? `${nextVisitAt}T12:00:00.000Z` : null
+    nextVisitAt: nextVisitAt ? `${nextVisitAt}T12:00:00.000Z` : null,
+    prescriptionItems: prescriptionItems.filter((item) => Object.values(item).some((value) => value.trim()))
   });
 
   const saveMutation = useMutation({
@@ -171,6 +177,7 @@ export function ConsultationPage() {
     onSuccess: () => {
       setSavedSnapshot(JSON.stringify(form));
       setSavedNextVisit(nextVisitAt);
+      setSavedPrescriptionSnapshot(serializedPrescription);
       setSaveMessage('Guardado');
       setError(null);
       void queryClient.invalidateQueries({ queryKey: ['consultation', id] });
@@ -244,6 +251,17 @@ export function ConsultationPage() {
 
   const { consultation, diagnoses } = detail.data;
   const readOnly = justSigned || consultation.status !== 'borrador';
+  const legacyPrescriptionText = [consultation.plan, consultation.treatmentPlan, consultation.evolution]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value))
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .join('\n\n');
+  const legacyStudiesText = [consultation.studies, consultation.evolution]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value))
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .join('\n\n');
+  const hasStructuredPrescription = prescriptionItems.some((item) => Object.values(item).some((value) => value.trim()));
   const age = ageFromBirthDate(consultation.birthDate);
   const localCanSign = !readOnly && Boolean(form.reason.trim()) && diagnoses.length > 0;
 
@@ -386,6 +404,13 @@ export function ConsultationPage() {
               <div className="sm:col-span-2"><Field label="Indicaciones"><Textarea value={item.instructions} readOnly={readOnly} placeholder="Indicaciones para el paciente" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, instructions: e.target.value} : row))} /></Field></div>
             </div>)}
           </div>
+          {!hasStructuredPrescription && legacyPrescriptionText ? (
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
+              <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-amber-900">Texto de receta / plan importado</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-amber-950">{legacyPrescriptionText}</p>
+              {!readOnly ? <p className="mt-3 text-xs text-amber-800">El respaldo legacy no tenía medicamentos separados por campos. Conservamos aquí el texto original.</p> : null}
+            </div>
+          ) : null}
           {!readOnly && <Button className="no-print mt-4" variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={() => setPrescriptionItems(rows => [...rows, emptyPrescriptionItem()])}>Agregar medicamento</Button>}
           <div className="mt-12 grid grid-cols-2 gap-12 text-center text-xs"><div className="border-t border-ink/40 pt-2">Firma y sello del médico<br/>{consultation.professionalName}</div><div className="border-t border-ink/40 pt-2">Paciente<br/>{consultation.patientName}</div></div>
         </section>
@@ -487,6 +512,13 @@ export function ConsultationPage() {
                 />
               </Field>
             </div>
+            {!form.studies.trim() && legacyStudiesText ? (
+              <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-amber-900">Nota histórica de evolución</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-amber-950">{legacyStudiesText}</p>
+                <p className="mt-3 text-xs text-amber-800">El sistema anterior guardaba esta información dentro de un texto único; se muestra aquí para conservarla.</p>
+              </div>
+            ) : null}
           </section> : null}
 
           {activeSection === 'evolution' ? <>

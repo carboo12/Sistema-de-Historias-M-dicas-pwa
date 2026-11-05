@@ -24,8 +24,8 @@ const primaryNavigation = [
 ];
 
 const secondaryNavigation = [
-  { label: 'Configuración', icon: Settings, soon: true },
-  { label: 'Ayuda', icon: CircleHelp, soon: true }
+  { to: '/configuracion', label: 'Configuración', icon: Settings },
+  { to: '/ayuda', label: 'Ayuda', icon: CircleHelp }
 ];
 
 function sectionTitle(pathname: string) {
@@ -34,6 +34,8 @@ function sectionTitle(pathname: string) {
   if (pathname.startsWith('/consultas/')) return 'Consulta médica';
   if (pathname.startsWith('/consultas')) return 'Consultas';
   if (pathname.startsWith('/agenda')) return 'Agenda';
+  if (pathname.startsWith('/configuracion')) return 'Configuración';
+  if (pathname.startsWith('/ayuda')) return 'Ayuda y soporte';
   return 'Historias Médicas';
 }
 
@@ -67,19 +69,14 @@ export function AppShell() {
           <p className="px-3 text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/35">Sistema</p>
           <nav className="mt-2 space-y-1">
             {secondaryNavigation.map((item) => (
-              <button
+              <NavLink
                 key={item.label}
-                type="button"
-                disabled
-                className="nav-link w-full cursor-not-allowed opacity-45"
-                title="Disponible en la siguiente fase"
+                to={item.to}
+                className={({ isActive }) => cn('nav-link', isActive && 'nav-link-active')}
               >
                 <item.icon className="h-[18px] w-[18px]" />
                 {item.label}
-                <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[9px] uppercase tracking-wider">
-                  Pronto
-                </span>
-              </button>
+              </NavLink>
             ))}
           </nav>
         </div>
@@ -148,15 +145,15 @@ export function AppShell() {
       </main>
 
       <nav className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-line/70 bg-surface/95 px-2 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-xl lg:hidden">
-        <div className="mx-auto flex max-w-md items-center justify-around">
-          {primaryNavigation.map((item) => (
+          <div className="mx-auto flex max-w-xl items-center justify-around">
+          {[...primaryNavigation, ...secondaryNavigation].map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) => cn('mobile-nav-link', isActive && 'mobile-nav-link-active')}
             >
               <item.icon className="h-5 w-5" />
-              {item.label}
+              <span className="max-w-[4.5rem] truncate">{item.label}</span>
             </NavLink>
           ))}
           <NavLink to="/consultas/nueva" className="mobile-nav-link">

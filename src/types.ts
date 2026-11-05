@@ -109,6 +109,15 @@ export interface Consultation {
   evolution: string | null;
   plan: string | null;
   notes: string | null;
+  prescriptionItems?: {
+    medication: string;
+    presentation: string;
+    dose: string;
+    frequency: string;
+    duration: string;
+    quantity: string;
+    instructions: string;
+  }[];
   vitals: Record<string, string>;
   status: 'borrador' | 'firmada' | 'anulada';
   signedAt: string | null;

@@ -219,6 +219,19 @@ export interface GetConsultationData {
       notes?: string | null;
       diagnosedAt: TimestampString;
     } & ConsultationDiagnosis_Key)[];
+    prescriptions_on_consultation: ({
+      legacyId?: string | null;
+      prescriptionItems_on_prescription: ({
+        medicationName: string;
+        presentation?: string | null;
+        dose?: string | null;
+        frequency?: string | null;
+        duration?: string | null;
+        quantity?: number | null;
+        instructions?: string | null;
+        sortOrder: number;
+      })[];
+    })[];
   } & Consultation_Key)[];
 }
 

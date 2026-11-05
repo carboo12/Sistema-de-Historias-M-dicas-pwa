@@ -133,6 +133,35 @@ function mapConsultationSummary(record: Record<string, any>): ConsultationSummar
 }
 
 function mapConsultation(record: Record<string, any>): Consultation {
+  const storedNotes = String(record.notes ?? '');
+  const rxMarker = '__HM_RX_V1__';
+  let notes = storedNotes || null;
+  let prescriptionItems: Consultation['prescriptionItems'] = [];
+  if (storedNotes.startsWith(rxMarker)) {
+    try {
+      const structured = JSON.parse(storedNotes.slice(rxMarker.length)) as {
+        notes?: string | null;
+        prescriptionItems?: Consultation['prescriptionItems'];
+      };
+      notes = structured.notes ?? null;
+      prescriptionItems = structured.prescriptionItems ?? [];
+    } catch {
+      // Malformed/older notes remain visible as plain text.
+    }
+  }
+  if (!prescriptionItems.length) {
+    prescriptionItems = (record.prescriptions_on_consultation ?? []).flatMap((prescription: Record<string, any>) =>
+      (prescription.prescriptionItems_on_prescription ?? []).map((item: Record<string, any>) => ({
+        medication: item.medicationName ?? '',
+        presentation: item.presentation ?? '',
+        dose: item.dose ?? '',
+        frequency: item.frequency ?? '',
+        duration: item.duration ?? '',
+        quantity: item.quantity == null ? '' : String(item.quantity),
+        instructions: item.instructions ?? ''
+      }))
+    );
+  }
   return {
     id: record.id,
     patientId: record.patientId,
@@ -157,7 +186,8 @@ function mapConsultation(record: Record<string, any>): Consultation {
     treatmentPlan: record.treatmentPlan ?? null,
     evolution: record.evolution ?? null,
     plan: record.plan ?? null,
-    notes: record.notes ?? null,
+    notes,
+    prescriptionItems,
     vitals: (record.vitals ?? {}) as Record<string, string>,
     status: record.status,
     signedAt: iso(record.signedAt),
@@ -476,6 +506,9 @@ export const firebaseApi = {
       };
     },
     async update(id: string, payload: Record<string, unknown>) {
+      const notes = payload.prescriptionItems
+        ? `__HM_RX_V1__${JSON.stringify({ notes: payload.notes ?? null, prescriptionItems: payload.prescriptionItems })}`
+        : (payload.notes as string | null) ?? null;
       await updateConsultation(dc(), {
         id,
         nextVisitAt: (payload.nextVisitAt as string | null) ?? null,
@@ -488,7 +521,7 @@ export const firebaseApi = {
         treatmentPlan: (payload.treatmentPlan as string | null) ?? null,
         evolution: (payload.evolution as string | null) ?? null,
         plan: (payload.plan as string | null) ?? null,
-        notes: (payload.notes as string | null) ?? null,
+        notes,
         vitals: payload.vitals ?? {}
       });
       const record = await fetchConsultation(id);

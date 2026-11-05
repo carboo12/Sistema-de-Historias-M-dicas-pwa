@@ -323,6 +323,19 @@ query GetConsultation($id: UUID!) @auth(level: USER) {
       notes
       diagnosedAt
     }
+    prescriptions_on_consultation(orderBy: [{ issuedAt: ASC }]) {
+      legacyId
+      prescriptionItems_on_prescription(orderBy: [{ sortOrder: ASC }]) {
+        medicationName
+        presentation
+        dose
+        frequency
+        duration
+        quantity
+        instructions
+        sortOrder
+      }
+    }
   }
 }
 
