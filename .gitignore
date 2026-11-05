@@ -7,3 +7,4 @@ servicekey.json
 DATARESPALDO*
 *.log
 db/*.log
+opencode.json
