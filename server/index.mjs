@@ -12,6 +12,7 @@ import { patientRoutes } from './routes/patients.mjs';
 import { agendaRoutes } from './routes/agenda.mjs';
 import { consultationRoutes } from './routes/consultations.mjs';
 import { catalogRoutes } from './routes/catalogs.mjs';
+import { reportRoutes } from './routes/reports.mjs';
 
 const app = Fastify({
   logger: {
@@ -55,6 +56,7 @@ await app.register(patientRoutes);
 await app.register(agendaRoutes);
 await app.register(consultationRoutes);
 await app.register(catalogRoutes);
+await app.register(reportRoutes);
 
 if (process.env.NODE_ENV === 'production') {
   await app.register(fastifyStatic, {

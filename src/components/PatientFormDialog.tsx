@@ -8,11 +8,13 @@ import { Button, Field, Input, Modal, Select, Textarea } from './ui';
 export function PatientFormDialog({
   open,
   onClose,
-  onCreated
+  onCreated,
+  patient = null
 }: {
   open: boolean;
   onClose: () => void;
   onCreated?: (patient: Patient) => void;
+  patient?: Patient | null;
 }) {
   const queryClient = useQueryClient();
   const [fullName, setFullName] = useState('');
@@ -27,20 +29,20 @@ export function PatientFormDialog({
 
   useEffect(() => {
     if (!open) return;
-    setFullName('');
-    setDocumentType('cedula');
-    setDocumentNumber('');
-    setBirthDate('');
-    setSex('U');
-    setPhone('');
-    setEmail('');
-    setAllergies('');
+    setFullName(patient?.fullName ?? '');
+    setDocumentType(patient?.documentType ?? 'cedula');
+    setDocumentNumber(patient?.documentNumber ?? '');
+    setBirthDate(patient?.birthDate?.slice(0, 10) ?? '');
+    setSex(patient?.sex ?? 'U');
+    setPhone(patient?.phone ?? '');
+    setEmail(patient?.email ?? '');
+    setAllergies(patient?.allergiesNotes ?? '');
     setError(null);
-  }, [open]);
+  }, [open, patient]);
 
   const mutation = useMutation({
-    mutationFn: () =>
-      api.patients.create({
+    mutationFn: () => {
+      const payload = {
         fullName,
         documentType,
         documentNumber,
@@ -49,13 +51,18 @@ export function PatientFormDialog({
         phone,
         email,
         allergiesNotes: allergies
-      }),
+      };
+      return patient ? api.patients.update(patient.id, payload) : api.patients.create(payload);
+    },
     onSuccess: async (response) => {
-      await queryClient.invalidateQueries({ queryKey: ['patients'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['patients'] }),
+        queryClient.invalidateQueries({ queryKey: ['patient', patient?.id] })
+      ]);
       onCreated?.(response.patient);
       onClose();
     },
-    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo crear el paciente')
+      onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo guardar el paciente')
   });
 
   function onSubmit(event: FormEvent) {
@@ -72,15 +79,15 @@ export function PatientFormDialog({
     <Modal
       open={open}
       onClose={onClose}
-      title="Nuevo paciente"
-      description="Crea la ficha base. Podrás completar el resto del expediente después."
+      title={patient ? 'Editar paciente' : 'Nuevo paciente'}
+      description={patient ? 'Actualiza los datos de identificación y contacto.' : 'Crea la ficha base. Podrás completar el resto del expediente después.'}
       footer={
         <>
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
           <Button type="submit" form="patient-form" loading={mutation.isPending} icon={<UserPlus className="h-4 w-4" />}>
-            Crear paciente
+            {patient ? 'Guardar cambios' : 'Crear paciente'}
           </Button>
         </>
       }

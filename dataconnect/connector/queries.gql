@@ -380,3 +380,48 @@ query GetCatalogs @auth(level: USER) {
     }
   }
 }
+
+query ClinicReports($from: Timestamp!, $to: Timestamp!, $limit: Int!, $offset: Int!) @auth(level: USER) {
+  consultations(
+    where: {
+      _and: [
+        { clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } } }
+        { deletedAt: { isNull: true } }
+        { consultedAt: { ge: $from } }
+        { consultedAt: { le: $to } }
+      ]
+    }
+    orderBy: [{ consultedAt: DESC }]
+    limit: $limit
+    offset: $offset
+  ) {
+    id
+    consultedAt
+    reason
+    professional { fullName }
+    patient { fullName recordNumber sex birthDate }
+    consultationDiagnoses_on_consultation(orderBy: [{ diagnosedAt: ASC }]) {
+      cie10Code
+      diagnosisText
+      diagnosisType
+    }
+  }
+  patients(
+    where: {
+      _and: [
+        { clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } } }
+        { deletedAt: { isNull: true } }
+        { createdAt: { ge: $from } }
+        { createdAt: { le: $to } }
+      ]
+    }
+    orderBy: [{ createdAt: DESC }]
+    limit: $limit
+    offset: $offset
+  ) {
+    id
+    createdAt
+    sex
+    birthDate
+  }
+}

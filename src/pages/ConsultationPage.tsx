@@ -10,6 +10,7 @@ import {
   FileText,
   HeartPulse,
   Lock,
+  Pencil,
   Plus,
   Printer,
   Save,
@@ -43,6 +44,7 @@ import {
   statusBadgeClass
 } from '../lib/format';
 import type { Consultation } from '../types';
+import type { Diagnosis } from '../types';
 
 interface ConsultationForm {
   reason: string;
@@ -128,6 +130,13 @@ export function ConsultationPage() {
   const [error, setError] = useState<string | null>(null);
   const [signOpen, setSignOpen] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [diagnosisDeleteTarget, setDiagnosisDeleteTarget] = useState<Diagnosis | null>(null);
+  const [diagnosisEditTarget, setDiagnosisEditTarget] = useState<Diagnosis | null>(null);
+  const [diagnosisDescription, setDiagnosisDescription] = useState('');
+  const [diagnosisTypeEdit, setDiagnosisTypeEdit] = useState('secundario');
+  const [diagnosisNotesEdit, setDiagnosisNotesEdit] = useState('');
+  const [prescriptionDeleteTarget, setPrescriptionDeleteTarget] = useState<number | null>(null);
   const [dxQuery, setDxQuery] = useState('');
   const [dxType, setDxType] = useState('principal');
   const [dxError, setDxError] = useState<string | null>(null);
@@ -204,6 +213,16 @@ export function ConsultationPage() {
     onError: (cause) => setSignError(cause instanceof ApiError ? cause.message : 'No se pudo firmar la consulta')
   });
 
+  const archiveConsultation = useMutation({
+    mutationFn: () => api.consultations.delete(id as string),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      await queryClient.invalidateQueries({ queryKey: ['patient'] });
+      navigate(`/pacientes/${consultation.patientId}`);
+    },
+    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo archivar la consulta')
+  });
+
   const addDiagnosis = useMutation({
     mutationFn: (code: string) =>
       api.consultations.addDiagnosis(id as string, {
@@ -225,6 +244,19 @@ export function ConsultationPage() {
       void queryClient.invalidateQueries({ queryKey: ['consultation', id] });
     },
     onError: (cause) => setDxError(cause instanceof ApiError ? cause.message : 'No se pudo quitar el diagnóstico')
+  });
+
+  const editDiagnosis = useMutation({
+    mutationFn: () => api.consultations.updateDiagnosis(id as string, diagnosisEditTarget!.id, {
+      description: diagnosisDescription,
+      type: diagnosisTypeEdit,
+      notes: diagnosisNotesEdit
+    }),
+    onSuccess: async () => {
+      setDiagnosisEditTarget(null);
+      await queryClient.invalidateQueries({ queryKey: ['consultation', id] });
+    },
+    onError: (cause) => setDxError(cause instanceof ApiError ? cause.message : 'No se pudo actualizar el diagnóstico')
   });
 
   if (detail.isLoading || (!detail.isError && !initialized)) {
@@ -318,6 +350,7 @@ export function ConsultationPage() {
           <Button variant="secondary" onClick={() => window.print()} icon={<Printer className="h-4 w-4" />}>
             Imprimir
           </Button>
+          {!readOnly ? <Button variant="danger" onClick={() => setDeleteOpen(true)} icon={<Trash2 className="h-4 w-4" />}>Eliminar borrador</Button> : null}
           {!readOnly ? (
             <>
               <Button
@@ -395,6 +428,7 @@ export function ConsultationPage() {
           <p className="mb-4 text-xs text-ink/50">Fecha: {formatDate(consultation.consultedAt, timezone)}{consultation.specialtyId ? ` · Especialidad registrada` : ''}</p>
           <div className="space-y-3">
             {prescriptionItems.map((item, index) => <div key={index} className="grid gap-3 rounded-xl border border-line/70 p-4 sm:grid-cols-2">
+              {!readOnly ? <div className="flex items-center justify-between sm:col-span-2"><p className="text-xs font-extrabold uppercase tracking-wider text-ink/45">Medicamento {index + 1}</p><button type="button" onClick={() => setPrescriptionDeleteTarget(index)} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-red-600 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" />Eliminar</button></div> : null}
               <Field label={`Medicamento ${index + 1}`}><Input value={item.medication} readOnly={readOnly} placeholder="Nombre del medicamento" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, medication: e.target.value} : row))} /></Field>
               <Field label="Presentación"><Input value={item.presentation} readOnly={readOnly} placeholder="Tabletas, solución…" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, presentation: e.target.value} : row))} /></Field>
               <Field label="Dosis"><Input value={item.dose} readOnly={readOnly} placeholder="Dosis" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, dose: e.target.value} : row))} /></Field>
@@ -653,19 +687,10 @@ export function ConsultationPage() {
                         <p className="mt-1.5 text-xs font-bold leading-snug text-ink/70">{diagnosis.description}</p>
                       </div>
                       {!readOnly ? (
-                        <button
-                          type="button"
-                          onClick={() => deleteDiagnosis.mutate(diagnosis.id)}
-                          disabled={deleteDiagnosis.isPending && deleteDiagnosis.variables === diagnosis.id}
-                          className="focus-ring shrink-0 rounded-lg p-1.5 text-ink/25 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
-                          aria-label={`Quitar ${diagnosis.code}`}
-                        >
-                          {deleteDiagnosis.isPending && deleteDiagnosis.variables === diagnosis.id ? (
-                            <Spinner className="h-3.5 w-3.5" />
-                          ) : (
-                            <Trash2 className="h-3.5 w-3.5" />
-                          )}
-                        </button>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button type="button" onClick={() => { setDiagnosisEditTarget(diagnosis); setDiagnosisDescription(diagnosis.description); setDiagnosisTypeEdit(diagnosis.type); setDiagnosisNotesEdit(diagnosis.notes ?? ''); }} className="focus-ring rounded-lg p-1.5 text-ink/35 transition hover:bg-teal-50 hover:text-teal-700" aria-label={`Editar ${diagnosis.code}`}><Pencil className="h-3.5 w-3.5" /></button>
+                          <button type="button" onClick={() => setDiagnosisDeleteTarget(diagnosis)} disabled={deleteDiagnosis.isPending && deleteDiagnosis.variables === diagnosis.id} className="focus-ring rounded-lg p-1.5 text-ink/25 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-40" aria-label={`Eliminar ${diagnosis.code}`}><Trash2 className="h-3.5 w-3.5" /></button>
+                        </div>
                       ) : null}
                     </div>
                   </div>
@@ -848,6 +873,23 @@ export function ConsultationPage() {
             </p>
           ) : null}
         </div>
+      </Modal>
+      <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Archivar consulta" description="Solo es posible archivar borradores. La nota firmada no se puede modificar ni eliminar." footer={<><Button variant="secondary" onClick={() => setDeleteOpen(false)}>Volver</Button><Button variant="danger" loading={archiveConsultation.isPending} onClick={() => archiveConsultation.mutate()}>Archivar borrador</Button></>}>
+        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Estás seguro de archivar este borrador? Se ocultará de las consultas activas, conservando el registro de auditoría.</p>
+      </Modal>
+      <Modal open={Boolean(diagnosisDeleteTarget)} onClose={() => setDiagnosisDeleteTarget(null)} title="Eliminar diagnóstico" description="El diagnóstico se retirará de este borrador." footer={<><Button variant="secondary" onClick={() => setDiagnosisDeleteTarget(null)}>Cancelar</Button><Button variant="danger" loading={deleteDiagnosis.isPending} onClick={() => { if (diagnosisDeleteTarget) { deleteDiagnosis.mutate(diagnosisDeleteTarget.id); setDiagnosisDeleteTarget(null); } }}>Eliminar diagnóstico</Button></>}>
+        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Estás seguro de eliminar {diagnosisDeleteTarget?.code} · {diagnosisDeleteTarget?.description}?</p>
+      </Modal>
+      <Modal open={Boolean(diagnosisEditTarget)} onClose={() => setDiagnosisEditTarget(null)} title="Editar diagnóstico" description="Actualiza la descripción y clasificación del diagnóstico." footer={<><Button variant="secondary" onClick={() => setDiagnosisEditTarget(null)}>Cancelar</Button><Button loading={editDiagnosis.isPending} onClick={() => editDiagnosis.mutate()}>Guardar cambios</Button></>}>
+        <div className="space-y-4">
+          <Field label="Código CIE-10"><Input value={diagnosisEditTarget?.code ?? ''} readOnly /></Field>
+          <Field label="Descripción"><Input value={diagnosisDescription} onChange={(event) => setDiagnosisDescription(event.target.value)} /></Field>
+          <Field label="Tipo"><Select value={diagnosisTypeEdit} onChange={(event) => setDiagnosisTypeEdit(event.target.value)}>{diagnosisTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</Select></Field>
+          <Field label="Notas"><Textarea value={diagnosisNotesEdit} onChange={(event) => setDiagnosisNotesEdit(event.target.value)} /></Field>
+        </div>
+      </Modal>
+      <Modal open={prescriptionDeleteTarget !== null} onClose={() => setPrescriptionDeleteTarget(null)} title="Eliminar medicamento" description="El medicamento se quitará de la receta al guardar la consulta." footer={<><Button variant="secondary" onClick={() => setPrescriptionDeleteTarget(null)}>Cancelar</Button><Button variant="danger" onClick={() => { const index = prescriptionDeleteTarget; if (index !== null) setPrescriptionItems((items) => items.filter((_, itemIndex) => itemIndex !== index)); setPrescriptionDeleteTarget(null); }}>Eliminar medicamento</Button></>}>
+        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Estás seguro de eliminar {prescriptionDeleteTarget === null ? 'este medicamento' : prescriptionItems[prescriptionDeleteTarget]?.medication || 'este medicamento'} de la receta?</p>
       </Modal>
     </div>
   );

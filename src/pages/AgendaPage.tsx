@@ -13,7 +13,9 @@ import {
   Sparkles,
   Stethoscope,
   UserRound,
-  XCircle
+  XCircle,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { AppointmentDialog } from '../components/AppointmentDialog';
@@ -23,6 +25,7 @@ import {
   EmptyState,
   ErrorState,
   IconButton,
+  Modal,
   PageHeader,
   SkeletonRows
 } from '../components/ui';
@@ -45,6 +48,8 @@ export function AgendaPage() {
   const timezone = user?.timezone ?? 'America/Managua';
   const [date, setDate] = useState(() => todayInTimeZone(timezone));
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const agenda = useQuery({
@@ -74,6 +79,15 @@ export function AgendaPage() {
       }
       setActionError(cause instanceof ApiError ? cause.message : 'No se pudo iniciar la consulta');
     }
+  });
+
+  const cancelAppointment = useMutation({
+    mutationFn: (appointment: Appointment) => api.agenda.updateStatus(appointment.id, 'cancelada'),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['agenda'] });
+      setCancelTarget(null);
+    },
+    onError: (cause) => setActionError(cause instanceof ApiError ? cause.message : 'No se pudo cancelar la cita')
   });
 
   const stats = agenda.data?.stats;
@@ -230,6 +244,10 @@ export function AgendaPage() {
                   </div>
 
                   <div className="flex shrink-0 items-center gap-2 sm:opacity-0 sm:transition sm:group-hover:opacity-100">
+                    {!['cancelada', 'atendida', 'no_asistio'].includes(appointment.status) ? <>
+                      <IconButton label="Editar cita" onClick={() => setEditingAppointment(appointment)}><Pencil className="h-4 w-4" /></IconButton>
+                      <IconButton label="Cancelar cita" onClick={() => setCancelTarget(appointment)}><Trash2 className="h-4 w-4 text-red-600" /></IconButton>
+                    </> : null}
                     <Button
                       variant="secondary"
                       size="sm"
@@ -334,11 +352,15 @@ export function AgendaPage() {
       </div>
 
       <AppointmentDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        open={dialogOpen || Boolean(editingAppointment)}
+        onClose={() => { setDialogOpen(false); setEditingAppointment(null); }}
         defaultDate={date}
+        appointment={editingAppointment}
         onCreated={() => setActionError(null)}
       />
+      <Modal open={Boolean(cancelTarget)} onClose={() => setCancelTarget(null)} title="Cancelar cita" description="La cita quedará en el historial como cancelada; no se borrarán sus datos." footer={<><Button variant="secondary" onClick={() => setCancelTarget(null)}>Volver</Button><Button variant="danger" loading={cancelAppointment.isPending} onClick={() => cancelTarget && cancelAppointment.mutate(cancelTarget)}>Cancelar cita</Button></>}>
+        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">¿Estás seguro de cancelar la cita de {cancelTarget?.patientName}?</p>
+      </Modal>
     </div>
   );
 }

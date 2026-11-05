@@ -1,9 +1,11 @@
 import {
   addDiagnosis,
   countPatients,
+  clinicReports,
   createAppointment,
   createConsultation,
   createPatient,
+  deletePatient,
   deleteDiagnosis,
   getCatalogs,
   getConsultation,
@@ -15,8 +17,11 @@ import {
   searchCie10,
   signConsultation,
   updateAppointmentStatus,
+  updateAppointment,
   updateConsultation,
-  updatePatient
+  updatePatient,
+  deleteConsultation,
+  updateDiagnosis
 } from '@historias/dataconnect';
 import { ApiError } from '../../lib/api';
 import type {
@@ -29,7 +34,8 @@ import type {
   Diagnosis,
   Patient,
   PatientDetail,
-  Summary
+  Summary,
+  ReportsDataset
 } from '../../types';
 import { getFirebaseSession, signInWithFirebase, signOutFromFirebase } from './auth';
 import { requireFirebase } from './client';
@@ -137,6 +143,7 @@ function mapConsultation(record: Record<string, any>): Consultation {
   const rxMarker = '__HM_RX_V1__';
   let notes = storedNotes || null;
   let prescriptionItems: Consultation['prescriptionItems'] = [];
+  let hasStructuredPrescriptionPayload = false;
   if (storedNotes.startsWith(rxMarker)) {
     try {
       const structured = JSON.parse(storedNotes.slice(rxMarker.length)) as {
@@ -145,11 +152,12 @@ function mapConsultation(record: Record<string, any>): Consultation {
       };
       notes = structured.notes ?? null;
       prescriptionItems = structured.prescriptionItems ?? [];
+      hasStructuredPrescriptionPayload = Array.isArray(structured.prescriptionItems);
     } catch {
       // Malformed/older notes remain visible as plain text.
     }
   }
-  if (!prescriptionItems.length) {
+  if (!hasStructuredPrescriptionPayload) {
     prescriptionItems = (record.prescriptions_on_consultation ?? []).flatMap((prescription: Record<string, any>) =>
       (prescription.prescriptionItems_on_prescription ?? []).map((item: Record<string, any>) => ({
         medication: item.medicationName ?? '',
@@ -356,6 +364,10 @@ export const firebaseApi = {
       });
       const updated = await fetchPatientDetail(id);
       return { patient: updated.patient };
+    },
+    async delete(id: string) {
+      await deletePatient(dc(), { id });
+      return { id };
     }
   },
   agenda: {
@@ -450,6 +462,21 @@ export const firebaseApi = {
     async updateStatus(id: string, status: string) {
       await updateAppointmentStatus(dc(), { id, status });
       return { appointment: { id, status } as Pick<Appointment, 'id' | 'status' | 'startsAt' | 'endsAt'> };
+    },
+    async update(id: string, payload: Record<string, unknown>) {
+      const startsAt = String(payload.startsAt);
+      const durationMinutes = Number(payload.durationMinutes ?? 30);
+      const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60_000).toISOString();
+      await updateAppointment(dc(), {
+        id,
+        startsAt,
+        endsAt,
+        durationMinutes,
+        reason: (payload.reason as string | null) ?? null,
+        notes: (payload.notes as string | null) ?? null,
+        status: String(payload.status ?? 'programada')
+      });
+      return { appointment: { id, startsAt, endsAt, durationMinutes, ...payload } };
     }
   },
   consultations: {
@@ -527,6 +554,10 @@ export const firebaseApi = {
       const record = await fetchConsultation(id);
       return { consultation: mapConsultation(record) };
     },
+    async delete(id: string) {
+      await deleteConsultation(dc(), { id });
+      return { id };
+    },
     async sign(id: string) {
       await signConsultation(dc(), { id });
       const record = await fetchConsultation(id);
@@ -561,6 +592,14 @@ export const firebaseApi = {
     },
     async deleteDiagnosis(_id: string, diagnosisId: string) {
       await deleteDiagnosis(dc(), { id: diagnosisId });
+    },
+    async updateDiagnosis(_id: string, diagnosisId: string, payload: { description: string; type: string; notes?: string | null }) {
+      await updateDiagnosis(dc(), {
+        id: diagnosisId,
+        diagnosisText: payload.description,
+        diagnosisType: payload.type,
+        notes: payload.notes ?? null
+      });
     }
   },
   cie10: {
@@ -574,6 +613,41 @@ export const firebaseApi = {
           category: item.category ?? null
         }))
       };
+    }
+  },
+  reports: {
+    async get(from: string, to: string): Promise<ReportsDataset> {
+      const limit = 250;
+      const consultations: ReportsDataset['consultations'] = [];
+      const patients: ReportsDataset['patients'] = [];
+      for (let offset = 0; ; offset += limit) {
+        const fromTimestamp = `${from.slice(0, 10)}T00:00:00.000Z`;
+        const toTimestamp = `${to.slice(0, 10)}T23:59:59.999Z`;
+        const { data } = await clinicReports(dc(), { from: fromTimestamp, to: toTimestamp, limit, offset });
+        consultations.push(...data.consultations.map((record) => ({
+          id: record.id,
+          consultedAt: record.consultedAt,
+          reason: record.reason ?? null,
+          patientName: record.patient.fullName,
+          recordNumber: record.patient.recordNumber,
+          sex: record.patient.sex,
+          birthDate: record.patient.birthDate ?? null,
+          professionalName: record.professional.fullName,
+          diagnoses: record.consultationDiagnoses_on_consultation.map((diagnosis) => ({
+            code: diagnosis.cie10Code ?? 'Sin código',
+            description: diagnosis.diagnosisText,
+            type: diagnosis.diagnosisType
+          }))
+        })));
+        patients.push(...data.patients.map((patient) => ({
+          id: patient.id,
+          createdAt: patient.createdAt,
+          sex: patient.sex,
+          birthDate: patient.birthDate ?? null
+        })));
+        if (data.consultations.length < limit && data.patients.length < limit) break;
+      }
+      return { consultations, patients };
     }
   },
   async catalogs(): Promise<Catalogs> {

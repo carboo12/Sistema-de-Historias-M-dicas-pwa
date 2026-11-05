@@ -4,7 +4,7 @@ import { CalendarPlus } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { api, ApiError } from '../lib/data';
 import { dateTimeToIso, todayInTimeZone } from '../lib/format';
-import type { Patient } from '../types';
+import type { Appointment, Patient } from '../types';
 import { PatientPicker } from './PatientPicker';
 import { Button, Field, Input, Modal, Select, Textarea } from './ui';
 
@@ -13,12 +13,14 @@ export function AppointmentDialog({
   onClose,
   defaultPatient,
   defaultDate,
+  appointment = null,
   onCreated
 }: {
   open: boolean;
   onClose: () => void;
   defaultPatient?: Patient | null;
   defaultDate?: string;
+  appointment?: Appointment | null;
   onCreated?: () => void;
 }) {
   const { user } = useAuth();
@@ -32,6 +34,7 @@ export function AppointmentDialog({
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const patientQuery = useQuery({ queryKey: ['patient', appointment?.patientId], queryFn: () => api.patients.get(appointment!.patientId), enabled: open && Boolean(appointment) });
 
   const catalogs = useQuery({
     queryKey: ['catalogs'],
@@ -41,14 +44,14 @@ export function AppointmentDialog({
 
   useEffect(() => {
     if (!open) return;
-    setPatient(defaultPatient ?? null);
-    setDate(defaultDate ?? todayInTimeZone(timezone));
-    setTime('09:00');
-    setDuration('30');
-    setReason('');
-    setNotes('');
+    setPatient(defaultPatient ?? patientQuery.data?.patient ?? null);
+    setDate(appointment ? new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(appointment.startsAt)) : defaultDate ?? todayInTimeZone(timezone));
+    setTime(appointment ? new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(appointment.startsAt)) : '09:00');
+    setDuration(String(appointment?.durationMinutes ?? 30));
+    setReason(appointment?.reason ?? '');
+    setNotes(appointment?.notes ?? '');
     setError(null);
-  }, [open, defaultPatient, defaultDate, timezone]);
+  }, [open, defaultPatient, defaultDate, timezone, appointment, patientQuery.data]);
 
   useEffect(() => {
     if (professionalId) return;
@@ -58,14 +61,20 @@ export function AppointmentDialog({
 
   const mutation = useMutation({
     mutationFn: () =>
-      api.agenda.create({
+      (appointment ? api.agenda.update(appointment.id, {
+        startsAt: dateTimeToIso(date, time),
+        durationMinutes: Number(duration),
+        reason,
+        notes,
+        status: appointment.status
+      }) : api.agenda.create({
         patientId: patient?.id,
         professionalId,
         startsAt: dateTimeToIso(date, time),
         durationMinutes: Number(duration),
         reason,
         notes
-      }),
+      })),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['agenda'] }),
@@ -96,8 +105,8 @@ export function AppointmentDialog({
     <Modal
       open={open}
       onClose={onClose}
-      title="Agendar nueva cita"
-      description="Reserva un espacio en la agenda del profesional."
+      title={appointment ? 'Editar cita' : 'Agendar nueva cita'}
+      description={appointment ? 'Corrige el horario, duración o información de la cita.' : 'Reserva un espacio en la agenda del profesional.'}
       footer={
         <>
           <Button type="button" variant="secondary" onClick={onClose}>
@@ -109,7 +118,7 @@ export function AppointmentDialog({
             loading={mutation.isPending}
             icon={<CalendarPlus className="h-4 w-4" />}
           >
-            Agendar cita
+            {appointment ? 'Guardar cambios' : 'Agendar cita'}
           </Button>
         </>
       }

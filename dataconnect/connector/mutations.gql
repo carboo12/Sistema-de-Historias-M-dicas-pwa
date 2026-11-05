@@ -1,4 +1,4 @@
-﻿mutation LinkCurrentUser @auth(level: USER_EMAIL_VERIFIED) @transaction {
+mutation LinkCurrentUser @auth(level: USER_EMAIL_VERIFIED) @transaction {
   user_update(
     first: {
       where: {
@@ -149,6 +149,19 @@ mutation UpdatePatient(
   ) @check(message: "No se encontró el paciente en esta clínica")
 }
 
+mutation DeletePatient($id: UUID!) @auth(level: USER) @transaction {
+  patient_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+        deletedAt: { isNull: true }
+      }
+    }
+    data: { deletedAt_expr: "request.time" }
+  ) @check(message: "No se encontró el paciente activo en esta clínica")
+}
+
 mutation CreateAppointment(
   $clinicId: UUID!
   $patientId: UUID!
@@ -192,6 +205,34 @@ mutation UpdateAppointmentStatus($id: UUID!, $status: String!) @auth(level: USER
     }
     data: { status: $status }
   ) @check(message: "No se encontró la cita en esta clínica")
+}
+
+mutation UpdateAppointment(
+  $id: UUID!
+  $startsAt: Timestamp!
+  $endsAt: Timestamp!
+  $durationMinutes: Int!
+  $reason: String
+  $notes: String
+  $status: String!
+) @auth(level: USER) @transaction {
+  appointment_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+        status: { ne: "cancelada" }
+      }
+    }
+    data: {
+      startsAt: $startsAt
+      endsAt: $endsAt
+      durationMinutes: $durationMinutes
+      reason: $reason
+      notes: $notes
+      status: $status
+    }
+  ) @check(message: "No se encontró la cita activa en esta clínica")
 }
 
 mutation CreateConsultation(
@@ -245,6 +286,7 @@ mutation UpdateConsultation(
       where: {
         id: { eq: $id }
         clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+        status: { eq: "borrador" }
         deletedAt: { isNull: true }
       }
     }
@@ -263,6 +305,20 @@ mutation UpdateConsultation(
       vitals: $vitals
     }
   ) @check(message: "No se encontró la consulta en esta clínica")
+}
+
+mutation DeleteConsultation($id: UUID!) @auth(level: USER) @transaction {
+  consultation_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+        status: { eq: "borrador" }
+        deletedAt: { isNull: true }
+      }
+    }
+    data: { deletedAt_expr: "request.time" }
+  ) @check(message: "Solo se pueden eliminar consultas en borrador")
 }
 
 mutation SignConsultation($id: UUID!) @auth(level: USER) @transaction {
@@ -314,7 +370,21 @@ mutation DeleteDiagnosis($id: UUID!) @auth(level: USER) @transaction {
       where: {
         id: { eq: $id }
         clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+        consultation: { status: { eq: "borrador" } }
       }
     }
   ) @check(message: "No se encontró el diagnóstico en esta clínica")
+}
+
+mutation UpdateDiagnosis($id: UUID!, $diagnosisText: String!, $diagnosisType: String!, $notes: String) @auth(level: USER) @transaction {
+  consultationDiagnosis_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+        consultation: { status: { eq: "borrador" } }
+      }
+    }
+    data: { diagnosisText: $diagnosisText, diagnosisType: $diagnosisType, notes: $notes }
+  ) @check(message: "No se encontró un diagnóstico editable en esta clínica")
 }

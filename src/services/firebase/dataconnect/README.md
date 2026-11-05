@@ -17,17 +17,22 @@ This README will guide you through the process of using the generated JavaScript
   - [*GetConsultation*](#getconsultation)
   - [*SearchCie10*](#searchcie10)
   - [*GetCatalogs*](#getcatalogs)
+  - [*ClinicReports*](#clinicreports)
 - [**Mutations**](#mutations)
   - [*LinkCurrentUser*](#linkcurrentuser)
   - [*CreatePatient*](#createpatient)
   - [*UpdatePatient*](#updatepatient)
+  - [*DeletePatient*](#deletepatient)
   - [*CreateAppointment*](#createappointment)
   - [*UpdateAppointmentStatus*](#updateappointmentstatus)
+  - [*UpdateAppointment*](#updateappointment)
   - [*CreateConsultation*](#createconsultation)
   - [*UpdateConsultation*](#updateconsultation)
+  - [*DeleteConsultation*](#deleteconsultation)
   - [*SignConsultation*](#signconsultation)
   - [*AddDiagnosis*](#adddiagnosis)
   - [*DeleteDiagnosis*](#deletediagnosis)
+  - [*UpdateDiagnosis*](#updatediagnosis)
 
 # Accessing the connector
 A connector is a collection of Queries and Mutations. One SDK is generated for each connector - this SDK is generated for the connector `historias`. You can find more information about connectors in the [Data Connect documentation](https://firebase.google.com/docs/data-connect#how-does).
@@ -1281,6 +1286,152 @@ executeQuery(ref).then((response) => {
 });
 ```
 
+## ClinicReports
+You can execute the `ClinicReports` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+clinicReports(vars: ClinicReportsVariables, options?: ExecuteQueryOptions): QueryPromise<ClinicReportsData, ClinicReportsVariables>;
+
+interface ClinicReportsRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ClinicReportsVariables): QueryRef<ClinicReportsData, ClinicReportsVariables>;
+}
+export const clinicReportsRef: ClinicReportsRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+clinicReports(dc: DataConnect, vars: ClinicReportsVariables, options?: ExecuteQueryOptions): QueryPromise<ClinicReportsData, ClinicReportsVariables>;
+
+interface ClinicReportsRef {
+  ...
+  (dc: DataConnect, vars: ClinicReportsVariables): QueryRef<ClinicReportsData, ClinicReportsVariables>;
+}
+export const clinicReportsRef: ClinicReportsRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the clinicReportsRef:
+```typescript
+const name = clinicReportsRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `ClinicReports` query requires an argument of type `ClinicReportsVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface ClinicReportsVariables {
+  from: TimestampString;
+  to: TimestampString;
+  limit: number;
+  offset: number;
+}
+```
+### Return Type
+Recall that executing the `ClinicReports` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `ClinicReportsData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface ClinicReportsData {
+  consultations: ({
+    id: UUIDString;
+    consultedAt: TimestampString;
+    reason?: string | null;
+    professional: {
+      fullName: string;
+    };
+    patient: {
+      fullName: string;
+      recordNumber: string;
+      sex: string;
+      birthDate?: DateString | null;
+    };
+    consultationDiagnoses_on_consultation: ({
+      cie10Code?: string | null;
+      diagnosisText: string;
+      diagnosisType: string;
+    })[];
+  } & Consultation_Key)[];
+  patients: ({
+    id: UUIDString;
+    createdAt: TimestampString;
+    sex: string;
+    birthDate?: DateString | null;
+  } & Patient_Key)[];
+}
+```
+### Using `ClinicReports`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, clinicReports, ClinicReportsVariables } from '@historias/dataconnect';
+
+// The `ClinicReports` query requires an argument of type `ClinicReportsVariables`:
+const clinicReportsVars: ClinicReportsVariables = {
+  from: ..., 
+  to: ..., 
+  limit: ..., 
+  offset: ..., 
+};
+
+// Call the `clinicReports()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await clinicReports(clinicReportsVars);
+// Variables can be defined inline as well.
+const { data } = await clinicReports({ from: ..., to: ..., limit: ..., offset: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await clinicReports(dataConnect, clinicReportsVars);
+
+console.log(data.consultations);
+console.log(data.patients);
+
+// Or, you can use the `Promise` API.
+clinicReports(clinicReportsVars).then((response) => {
+  const data = response.data;
+  console.log(data.consultations);
+  console.log(data.patients);
+});
+```
+
+### Using `ClinicReports`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, clinicReportsRef, ClinicReportsVariables } from '@historias/dataconnect';
+
+// The `ClinicReports` query requires an argument of type `ClinicReportsVariables`:
+const clinicReportsVars: ClinicReportsVariables = {
+  from: ..., 
+  to: ..., 
+  limit: ..., 
+  offset: ..., 
+};
+
+// Call the `clinicReportsRef()` function to get a reference to the query.
+const ref = clinicReportsRef(clinicReportsVars);
+// Variables can be defined inline as well.
+const ref = clinicReportsRef({ from: ..., to: ..., limit: ..., offset: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = clinicReportsRef(dataConnect, clinicReportsVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.consultations);
+console.log(data.patients);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.consultations);
+  console.log(data.patients);
+});
+```
+
 # Mutations
 
 There are two ways to execute a Data Connect Mutation using the generated Web SDK:
@@ -1770,6 +1921,115 @@ executeMutation(ref).then((response) => {
 });
 ```
 
+## DeletePatient
+You can execute the `DeletePatient` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+deletePatient(vars: DeletePatientVariables): MutationPromise<DeletePatientData, DeletePatientVariables>;
+
+interface DeletePatientRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeletePatientVariables): MutationRef<DeletePatientData, DeletePatientVariables>;
+}
+export const deletePatientRef: DeletePatientRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deletePatient(dc: DataConnect, vars: DeletePatientVariables): MutationPromise<DeletePatientData, DeletePatientVariables>;
+
+interface DeletePatientRef {
+  ...
+  (dc: DataConnect, vars: DeletePatientVariables): MutationRef<DeletePatientData, DeletePatientVariables>;
+}
+export const deletePatientRef: DeletePatientRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deletePatientRef:
+```typescript
+const name = deletePatientRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeletePatient` mutation requires an argument of type `DeletePatientVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeletePatientVariables {
+  id: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeletePatient` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeletePatientData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeletePatientData {
+  patient_update?: Patient_Key | null;
+}
+```
+### Using `DeletePatient`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deletePatient, DeletePatientVariables } from '@historias/dataconnect';
+
+// The `DeletePatient` mutation requires an argument of type `DeletePatientVariables`:
+const deletePatientVars: DeletePatientVariables = {
+  id: ..., 
+};
+
+// Call the `deletePatient()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deletePatient(deletePatientVars);
+// Variables can be defined inline as well.
+const { data } = await deletePatient({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deletePatient(dataConnect, deletePatientVars);
+
+console.log(data.patient_update);
+
+// Or, you can use the `Promise` API.
+deletePatient(deletePatientVars).then((response) => {
+  const data = response.data;
+  console.log(data.patient_update);
+});
+```
+
+### Using `DeletePatient`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deletePatientRef, DeletePatientVariables } from '@historias/dataconnect';
+
+// The `DeletePatient` mutation requires an argument of type `DeletePatientVariables`:
+const deletePatientVars: DeletePatientVariables = {
+  id: ..., 
+};
+
+// Call the `deletePatientRef()` function to get a reference to the mutation.
+const ref = deletePatientRef(deletePatientVars);
+// Variables can be defined inline as well.
+const ref = deletePatientRef({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deletePatientRef(dataConnect, deletePatientVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.patient_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.patient_update);
+});
+```
+
 ## CreateAppointment
 You can execute the `CreateAppointment` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
 ```typescript
@@ -2010,6 +2270,133 @@ const ref = updateAppointmentStatusRef({ id: ..., status: ..., });
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
 const ref = updateAppointmentStatusRef(dataConnect, updateAppointmentStatusVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.appointment_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.appointment_update);
+});
+```
+
+## UpdateAppointment
+You can execute the `UpdateAppointment` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+updateAppointment(vars: UpdateAppointmentVariables): MutationPromise<UpdateAppointmentData, UpdateAppointmentVariables>;
+
+interface UpdateAppointmentRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateAppointmentVariables): MutationRef<UpdateAppointmentData, UpdateAppointmentVariables>;
+}
+export const updateAppointmentRef: UpdateAppointmentRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateAppointment(dc: DataConnect, vars: UpdateAppointmentVariables): MutationPromise<UpdateAppointmentData, UpdateAppointmentVariables>;
+
+interface UpdateAppointmentRef {
+  ...
+  (dc: DataConnect, vars: UpdateAppointmentVariables): MutationRef<UpdateAppointmentData, UpdateAppointmentVariables>;
+}
+export const updateAppointmentRef: UpdateAppointmentRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateAppointmentRef:
+```typescript
+const name = updateAppointmentRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateAppointment` mutation requires an argument of type `UpdateAppointmentVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateAppointmentVariables {
+  id: UUIDString;
+  startsAt: TimestampString;
+  endsAt: TimestampString;
+  durationMinutes: number;
+  reason?: string | null;
+  notes?: string | null;
+  status: string;
+}
+```
+### Return Type
+Recall that executing the `UpdateAppointment` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateAppointmentData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateAppointmentData {
+  appointment_update?: Appointment_Key | null;
+}
+```
+### Using `UpdateAppointment`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateAppointment, UpdateAppointmentVariables } from '@historias/dataconnect';
+
+// The `UpdateAppointment` mutation requires an argument of type `UpdateAppointmentVariables`:
+const updateAppointmentVars: UpdateAppointmentVariables = {
+  id: ..., 
+  startsAt: ..., 
+  endsAt: ..., 
+  durationMinutes: ..., 
+  reason: ..., // optional
+  notes: ..., // optional
+  status: ..., 
+};
+
+// Call the `updateAppointment()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateAppointment(updateAppointmentVars);
+// Variables can be defined inline as well.
+const { data } = await updateAppointment({ id: ..., startsAt: ..., endsAt: ..., durationMinutes: ..., reason: ..., notes: ..., status: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateAppointment(dataConnect, updateAppointmentVars);
+
+console.log(data.appointment_update);
+
+// Or, you can use the `Promise` API.
+updateAppointment(updateAppointmentVars).then((response) => {
+  const data = response.data;
+  console.log(data.appointment_update);
+});
+```
+
+### Using `UpdateAppointment`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateAppointmentRef, UpdateAppointmentVariables } from '@historias/dataconnect';
+
+// The `UpdateAppointment` mutation requires an argument of type `UpdateAppointmentVariables`:
+const updateAppointmentVars: UpdateAppointmentVariables = {
+  id: ..., 
+  startsAt: ..., 
+  endsAt: ..., 
+  durationMinutes: ..., 
+  reason: ..., // optional
+  notes: ..., // optional
+  status: ..., 
+};
+
+// Call the `updateAppointmentRef()` function to get a reference to the mutation.
+const ref = updateAppointmentRef(updateAppointmentVars);
+// Variables can be defined inline as well.
+const ref = updateAppointmentRef({ id: ..., startsAt: ..., endsAt: ..., durationMinutes: ..., reason: ..., notes: ..., status: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateAppointmentRef(dataConnect, updateAppointmentVars);
 
 // Call `executeMutation()` on the reference to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.
@@ -2294,6 +2681,115 @@ const ref = updateConsultationRef({ id: ..., nextVisitAt: ..., reason: ..., curr
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
 const ref = updateConsultationRef(dataConnect, updateConsultationVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.consultation_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.consultation_update);
+});
+```
+
+## DeleteConsultation
+You can execute the `DeleteConsultation` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+deleteConsultation(vars: DeleteConsultationVariables): MutationPromise<DeleteConsultationData, DeleteConsultationVariables>;
+
+interface DeleteConsultationRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteConsultationVariables): MutationRef<DeleteConsultationData, DeleteConsultationVariables>;
+}
+export const deleteConsultationRef: DeleteConsultationRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteConsultation(dc: DataConnect, vars: DeleteConsultationVariables): MutationPromise<DeleteConsultationData, DeleteConsultationVariables>;
+
+interface DeleteConsultationRef {
+  ...
+  (dc: DataConnect, vars: DeleteConsultationVariables): MutationRef<DeleteConsultationData, DeleteConsultationVariables>;
+}
+export const deleteConsultationRef: DeleteConsultationRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteConsultationRef:
+```typescript
+const name = deleteConsultationRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteConsultation` mutation requires an argument of type `DeleteConsultationVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteConsultationVariables {
+  id: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeleteConsultation` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteConsultationData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteConsultationData {
+  consultation_update?: Consultation_Key | null;
+}
+```
+### Using `DeleteConsultation`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteConsultation, DeleteConsultationVariables } from '@historias/dataconnect';
+
+// The `DeleteConsultation` mutation requires an argument of type `DeleteConsultationVariables`:
+const deleteConsultationVars: DeleteConsultationVariables = {
+  id: ..., 
+};
+
+// Call the `deleteConsultation()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteConsultation(deleteConsultationVars);
+// Variables can be defined inline as well.
+const { data } = await deleteConsultation({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteConsultation(dataConnect, deleteConsultationVars);
+
+console.log(data.consultation_update);
+
+// Or, you can use the `Promise` API.
+deleteConsultation(deleteConsultationVars).then((response) => {
+  const data = response.data;
+  console.log(data.consultation_update);
+});
+```
+
+### Using `DeleteConsultation`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteConsultationRef, DeleteConsultationVariables } from '@historias/dataconnect';
+
+// The `DeleteConsultation` mutation requires an argument of type `DeleteConsultationVariables`:
+const deleteConsultationVars: DeleteConsultationVariables = {
+  id: ..., 
+};
+
+// Call the `deleteConsultationRef()` function to get a reference to the mutation.
+const ref = deleteConsultationRef(deleteConsultationVars);
+// Variables can be defined inline as well.
+const ref = deleteConsultationRef({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteConsultationRef(dataConnect, deleteConsultationVars);
 
 // Call `executeMutation()` on the reference to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.
@@ -2653,6 +3149,124 @@ console.log(data.consultationDiagnosis_delete);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.consultationDiagnosis_delete);
+});
+```
+
+## UpdateDiagnosis
+You can execute the `UpdateDiagnosis` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+updateDiagnosis(vars: UpdateDiagnosisVariables): MutationPromise<UpdateDiagnosisData, UpdateDiagnosisVariables>;
+
+interface UpdateDiagnosisRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateDiagnosisVariables): MutationRef<UpdateDiagnosisData, UpdateDiagnosisVariables>;
+}
+export const updateDiagnosisRef: UpdateDiagnosisRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateDiagnosis(dc: DataConnect, vars: UpdateDiagnosisVariables): MutationPromise<UpdateDiagnosisData, UpdateDiagnosisVariables>;
+
+interface UpdateDiagnosisRef {
+  ...
+  (dc: DataConnect, vars: UpdateDiagnosisVariables): MutationRef<UpdateDiagnosisData, UpdateDiagnosisVariables>;
+}
+export const updateDiagnosisRef: UpdateDiagnosisRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateDiagnosisRef:
+```typescript
+const name = updateDiagnosisRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateDiagnosis` mutation requires an argument of type `UpdateDiagnosisVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateDiagnosisVariables {
+  id: UUIDString;
+  diagnosisText: string;
+  diagnosisType: string;
+  notes?: string | null;
+}
+```
+### Return Type
+Recall that executing the `UpdateDiagnosis` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateDiagnosisData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateDiagnosisData {
+  consultationDiagnosis_update?: ConsultationDiagnosis_Key | null;
+}
+```
+### Using `UpdateDiagnosis`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateDiagnosis, UpdateDiagnosisVariables } from '@historias/dataconnect';
+
+// The `UpdateDiagnosis` mutation requires an argument of type `UpdateDiagnosisVariables`:
+const updateDiagnosisVars: UpdateDiagnosisVariables = {
+  id: ..., 
+  diagnosisText: ..., 
+  diagnosisType: ..., 
+  notes: ..., // optional
+};
+
+// Call the `updateDiagnosis()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateDiagnosis(updateDiagnosisVars);
+// Variables can be defined inline as well.
+const { data } = await updateDiagnosis({ id: ..., diagnosisText: ..., diagnosisType: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateDiagnosis(dataConnect, updateDiagnosisVars);
+
+console.log(data.consultationDiagnosis_update);
+
+// Or, you can use the `Promise` API.
+updateDiagnosis(updateDiagnosisVars).then((response) => {
+  const data = response.data;
+  console.log(data.consultationDiagnosis_update);
+});
+```
+
+### Using `UpdateDiagnosis`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateDiagnosisRef, UpdateDiagnosisVariables } from '@historias/dataconnect';
+
+// The `UpdateDiagnosis` mutation requires an argument of type `UpdateDiagnosisVariables`:
+const updateDiagnosisVars: UpdateDiagnosisVariables = {
+  id: ..., 
+  diagnosisText: ..., 
+  diagnosisType: ..., 
+  notes: ..., // optional
+};
+
+// Call the `updateDiagnosisRef()` function to get a reference to the mutation.
+const ref = updateDiagnosisRef(updateDiagnosisVars);
+// Variables can be defined inline as well.
+const ref = updateDiagnosisRef({ id: ..., diagnosisText: ..., diagnosisType: ..., notes: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateDiagnosisRef(dataConnect, updateDiagnosisVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.consultationDiagnosis_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.consultationDiagnosis_update);
 });
 ```
 

@@ -226,3 +226,18 @@ export interface Summary {
   signed: number;
   upcomingAppointments: number;
 }
+
+export interface ReportsDataset {
+  consultations: {
+    id: string;
+    consultedAt: string;
+    reason: string | null;
+    patientName: string;
+    recordNumber: string;
+    sex: string;
+    birthDate: string | null;
+    professionalName: string;
+    diagnoses: { code: string; description: string; type: string }[];
+  }[];
+  patients: { id: string; createdAt: string; sex: string; birthDate: string | null }[];
+}

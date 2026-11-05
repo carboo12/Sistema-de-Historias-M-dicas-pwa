@@ -282,6 +282,21 @@ export async function consultationRoutes(app) {
     }
   );
 
+  app.delete(
+    '/api/consultations/:id',
+    { preHandler: [app.authenticate, requireClinician] },
+    async (request, reply) => {
+      const id = uuid(request.params.id, 'consulta');
+      const consultation = await loadConsultation(request, id);
+      if (consultation.status !== 'borrador') throw new HttpError(409, 'consultation_signed', 'Solo se pueden archivar consultas en borrador');
+      await transaction(async (client) => {
+        await client.query('update public.consultations set deleted_at=now(),updated_at=now() where id=$1 and clinic_id=$2', [id, request.user.clinicId]);
+        await audit(client, request, 'archive', 'consultation', id, { status: consultation.status }, { deletedAt: new Date().toISOString() });
+      });
+      return reply.code(204).send();
+    }
+  );
+
   app.post(
     '/api/consultations/:id/sign',
     { preHandler: [app.authenticate, requireClinician] },
@@ -432,6 +447,26 @@ export async function consultationRoutes(app) {
       });
 
       return reply.code(204).send(result);
+    }
+  );
+
+  app.patch(
+    '/api/consultations/:id/diagnoses/:diagnosisId',
+    { preHandler: [app.authenticate, requireClinician] },
+    async (request) => {
+      const id = uuid(request.params.id, 'consulta');
+      const diagnosisId = uuid(request.params.diagnosisId, 'diagnóstico');
+      const consultation = await loadConsultation(request, id);
+      if (consultation.status !== 'borrador') throw new HttpError(409, 'consultation_signed', 'No se pueden editar diagnósticos de una consulta firmada');
+      const type = DIAGNOSIS_TYPES.includes(request.body?.type) ? request.body.type : 'secundario';
+      const description = requiredText(request.body?.description, 'Descripción', 500);
+      const result = await transaction(async (client) => {
+        const updated = await client.query('update public.consultation_diagnoses set diagnosis_text=$1,diagnosis_type=$2,notes=$3,updated_at=now() where id=$4 and consultation_id=$5 and clinic_id=$6 returning *', [description,type,text(request.body?.notes,1000),diagnosisId,id,request.user.clinicId]);
+        if (!updated.rowCount) throw new HttpError(404, 'not_found', 'Diagnóstico no encontrado');
+        await audit(client, request, 'update', 'diagnosis', diagnosisId, null, updated.rows[0]);
+        return updated.rows[0];
+      });
+      return { diagnosis: { id: result.id, code: result.cie10_code, description: result.diagnosis_text, type: result.diagnosis_type, notes: result.notes } };
     }
   );
 

@@ -13,19 +13,23 @@ import {
   HeartPulse,
   Mail,
   MapPin,
+  Pencil,
   Phone,
   ShieldAlert,
   Stethoscope,
+  Trash2,
   UserRound
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { AppointmentDialog } from '../components/AppointmentDialog';
+import { PatientFormDialog } from '../components/PatientFormDialog';
 import {
   Avatar,
   Badge,
   Button,
   EmptyState,
   ErrorState,
+  Modal,
   PageHeader,
   SkeletonRows
 } from '../components/ui';
@@ -61,6 +65,8 @@ export function PatientDetailPage() {
   const queryClient = useQueryClient();
   const timezone = user?.timezone ?? 'America/Managua';
   const [appointmentOpen, setAppointmentOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const detail = useQuery({
@@ -80,6 +86,15 @@ export function PatientDetailPage() {
       navigate(`/consultas/${response.consultation.id}`);
     },
     onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo abrir la consulta')
+  });
+
+  const deletePatient = useMutation({
+    mutationFn: () => api.patients.delete(id as string),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['patients'] });
+      navigate('/pacientes');
+    },
+    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo archivar el paciente')
   });
 
   if (detail.isLoading) {
@@ -131,6 +146,8 @@ export function PatientDetailPage() {
         description="Expediente clínico, antecedentes y evolución en una sola vista."
         actions={
           <>
+            <Button variant="secondary" icon={<Pencil className="h-4 w-4" />} onClick={() => setEditOpen(true)}>Editar</Button>
+            <Button variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={() => setDeleteOpen(true)}>Eliminar</Button>
             <Button
               variant="secondary"
               icon={<CalendarPlus className="h-4 w-4" />}
@@ -381,6 +398,16 @@ export function PatientDetailPage() {
         defaultPatient={patient}
         onCreated={() => void queryClient.invalidateQueries({ queryKey: ['patient', id] })}
       />
+      <PatientFormDialog open={editOpen} onClose={() => setEditOpen(false)} patient={patient} onCreated={() => void queryClient.invalidateQueries({ queryKey: ['patient', id] })} />
+      <Modal
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        title="Archivar paciente"
+        description="Se ocultará del directorio activo. El expediente y sus relaciones clínicas se conservarán en el historial."
+        footer={<><Button variant="secondary" onClick={() => setDeleteOpen(false)}>Cancelar</Button><Button variant="danger" loading={deletePatient.isPending} onClick={() => deletePatient.mutate()}>Archivar paciente</Button></>}
+      >
+        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Estás seguro de archivar a {patient.fullName}? No aparecerá en el directorio activo, pero se conservarán sus datos clínicos.</p>
+      </Modal>
     </div>
   );
 }

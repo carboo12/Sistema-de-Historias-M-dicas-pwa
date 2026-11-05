@@ -35,6 +35,41 @@ export interface Cie10Code_Key {
   __typename?: 'Cie10Code_Key';
 }
 
+export interface ClinicReportsData {
+  consultations: ({
+    id: UUIDString;
+    consultedAt: TimestampString;
+    reason?: string | null;
+    professional: {
+      fullName: string;
+    };
+    patient: {
+      fullName: string;
+      recordNumber: string;
+      sex: string;
+      birthDate?: DateString | null;
+    };
+    consultationDiagnoses_on_consultation: ({
+      cie10Code?: string | null;
+      diagnosisText: string;
+      diagnosisType: string;
+    })[];
+  } & Consultation_Key)[];
+  patients: ({
+    id: UUIDString;
+    createdAt: TimestampString;
+    sex: string;
+    birthDate?: DateString | null;
+  } & Patient_Key)[];
+}
+
+export interface ClinicReportsVariables {
+  from: TimestampString;
+  to: TimestampString;
+  limit: number;
+  offset: number;
+}
+
 export interface Clinic_Key {
   id: UUIDString;
   __typename?: 'Clinic_Key';
@@ -138,11 +173,27 @@ export interface CreatePatientVariables {
   suspensionReason?: string | null;
 }
 
+export interface DeleteConsultationData {
+  consultation_update?: Consultation_Key | null;
+}
+
+export interface DeleteConsultationVariables {
+  id: UUIDString;
+}
+
 export interface DeleteDiagnosisData {
   consultationDiagnosis_delete?: ConsultationDiagnosis_Key | null;
 }
 
 export interface DeleteDiagnosisVariables {
+  id: UUIDString;
+}
+
+export interface DeletePatientData {
+  patient_update?: Patient_Key | null;
+}
+
+export interface DeletePatientVariables {
   id: UUIDString;
 }
 
@@ -522,12 +573,26 @@ export interface Specialty_Key {
   __typename?: 'Specialty_Key';
 }
 
+export interface UpdateAppointmentData {
+  appointment_update?: Appointment_Key | null;
+}
+
 export interface UpdateAppointmentStatusData {
   appointment_update?: Appointment_Key | null;
 }
 
 export interface UpdateAppointmentStatusVariables {
   id: UUIDString;
+  status: string;
+}
+
+export interface UpdateAppointmentVariables {
+  id: UUIDString;
+  startsAt: TimestampString;
+  endsAt: TimestampString;
+  durationMinutes: number;
+  reason?: string | null;
+  notes?: string | null;
   status: string;
 }
 
@@ -549,6 +614,17 @@ export interface UpdateConsultationVariables {
   plan?: string | null;
   notes?: string | null;
   vitals: unknown;
+}
+
+export interface UpdateDiagnosisData {
+  consultationDiagnosis_update?: ConsultationDiagnosis_Key | null;
+}
+
+export interface UpdateDiagnosisVariables {
+  id: UUIDString;
+  diagnosisText: string;
+  diagnosisType: string;
+  notes?: string | null;
 }
 
 export interface UpdatePatientData {
@@ -627,6 +703,18 @@ export const updatePatientRef: UpdatePatientRef;
 export function updatePatient(vars: UpdatePatientVariables): MutationPromise<UpdatePatientData, UpdatePatientVariables>;
 export function updatePatient(dc: DataConnect, vars: UpdatePatientVariables): MutationPromise<UpdatePatientData, UpdatePatientVariables>;
 
+interface DeletePatientRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeletePatientVariables): MutationRef<DeletePatientData, DeletePatientVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeletePatientVariables): MutationRef<DeletePatientData, DeletePatientVariables>;
+  operationName: string;
+}
+export const deletePatientRef: DeletePatientRef;
+
+export function deletePatient(vars: DeletePatientVariables): MutationPromise<DeletePatientData, DeletePatientVariables>;
+export function deletePatient(dc: DataConnect, vars: DeletePatientVariables): MutationPromise<DeletePatientData, DeletePatientVariables>;
+
 interface CreateAppointmentRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: CreateAppointmentVariables): MutationRef<CreateAppointmentData, CreateAppointmentVariables>;
@@ -651,6 +739,18 @@ export const updateAppointmentStatusRef: UpdateAppointmentStatusRef;
 export function updateAppointmentStatus(vars: UpdateAppointmentStatusVariables): MutationPromise<UpdateAppointmentStatusData, UpdateAppointmentStatusVariables>;
 export function updateAppointmentStatus(dc: DataConnect, vars: UpdateAppointmentStatusVariables): MutationPromise<UpdateAppointmentStatusData, UpdateAppointmentStatusVariables>;
 
+interface UpdateAppointmentRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateAppointmentVariables): MutationRef<UpdateAppointmentData, UpdateAppointmentVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateAppointmentVariables): MutationRef<UpdateAppointmentData, UpdateAppointmentVariables>;
+  operationName: string;
+}
+export const updateAppointmentRef: UpdateAppointmentRef;
+
+export function updateAppointment(vars: UpdateAppointmentVariables): MutationPromise<UpdateAppointmentData, UpdateAppointmentVariables>;
+export function updateAppointment(dc: DataConnect, vars: UpdateAppointmentVariables): MutationPromise<UpdateAppointmentData, UpdateAppointmentVariables>;
+
 interface CreateConsultationRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: CreateConsultationVariables): MutationRef<CreateConsultationData, CreateConsultationVariables>;
@@ -674,6 +774,18 @@ export const updateConsultationRef: UpdateConsultationRef;
 
 export function updateConsultation(vars: UpdateConsultationVariables): MutationPromise<UpdateConsultationData, UpdateConsultationVariables>;
 export function updateConsultation(dc: DataConnect, vars: UpdateConsultationVariables): MutationPromise<UpdateConsultationData, UpdateConsultationVariables>;
+
+interface DeleteConsultationRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteConsultationVariables): MutationRef<DeleteConsultationData, DeleteConsultationVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteConsultationVariables): MutationRef<DeleteConsultationData, DeleteConsultationVariables>;
+  operationName: string;
+}
+export const deleteConsultationRef: DeleteConsultationRef;
+
+export function deleteConsultation(vars: DeleteConsultationVariables): MutationPromise<DeleteConsultationData, DeleteConsultationVariables>;
+export function deleteConsultation(dc: DataConnect, vars: DeleteConsultationVariables): MutationPromise<DeleteConsultationData, DeleteConsultationVariables>;
 
 interface SignConsultationRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -710,6 +822,18 @@ export const deleteDiagnosisRef: DeleteDiagnosisRef;
 
 export function deleteDiagnosis(vars: DeleteDiagnosisVariables): MutationPromise<DeleteDiagnosisData, DeleteDiagnosisVariables>;
 export function deleteDiagnosis(dc: DataConnect, vars: DeleteDiagnosisVariables): MutationPromise<DeleteDiagnosisData, DeleteDiagnosisVariables>;
+
+interface UpdateDiagnosisRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateDiagnosisVariables): MutationRef<UpdateDiagnosisData, UpdateDiagnosisVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateDiagnosisVariables): MutationRef<UpdateDiagnosisData, UpdateDiagnosisVariables>;
+  operationName: string;
+}
+export const updateDiagnosisRef: UpdateDiagnosisRef;
+
+export function updateDiagnosis(vars: UpdateDiagnosisVariables): MutationPromise<UpdateDiagnosisData, UpdateDiagnosisVariables>;
+export function updateDiagnosis(dc: DataConnect, vars: UpdateDiagnosisVariables): MutationPromise<UpdateDiagnosisData, UpdateDiagnosisVariables>;
 
 interface GetSessionRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -818,4 +942,16 @@ export const getCatalogsRef: GetCatalogsRef;
 
 export function getCatalogs(options?: ExecuteQueryOptions): QueryPromise<GetCatalogsData, undefined>;
 export function getCatalogs(dc: DataConnect, options?: ExecuteQueryOptions): QueryPromise<GetCatalogsData, undefined>;
+
+interface ClinicReportsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ClinicReportsVariables): QueryRef<ClinicReportsData, ClinicReportsVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: ClinicReportsVariables): QueryRef<ClinicReportsData, ClinicReportsVariables>;
+  operationName: string;
+}
+export const clinicReportsRef: ClinicReportsRef;
+
+export function clinicReports(vars: ClinicReportsVariables, options?: ExecuteQueryOptions): QueryPromise<ClinicReportsData, ClinicReportsVariables>;
+export function clinicReports(dc: DataConnect, vars: ClinicReportsVariables, options?: ExecuteQueryOptions): QueryPromise<ClinicReportsData, ClinicReportsVariables>;
 

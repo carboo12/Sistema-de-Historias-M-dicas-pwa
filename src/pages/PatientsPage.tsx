@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -8,7 +8,9 @@ import {
   Search,
   UserPlus,
   Users,
-  X
+  X,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { PatientFormDialog } from '../components/PatientFormDialog';
@@ -20,6 +22,7 @@ import {
   ErrorState,
   IconButton,
   Input,
+  Modal,
   PageHeader,
   SkeletonRows
 } from '../components/ui';
@@ -41,6 +44,9 @@ export function PatientsPage() {
   const [q, setQ] = useState('');
   const [page, setPage] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<import('../types').Patient | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<import('../types').Patient | null>(null);
+  const queryClient = useQueryClient();
 
   const patients = useQuery({
     queryKey: ['patients', q, page],
@@ -50,6 +56,13 @@ export function PatientsPage() {
   const total = patients.data?.total ?? 0;
   const pages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
   const rows = patients.data?.patients ?? [];
+  const archivePatient = useMutation({
+    mutationFn: (patientId: string) => api.patients.delete(patientId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['patients'] });
+      setDeleteTarget(null);
+    }
+  });
 
   return (
     <div className="space-y-6">
@@ -142,7 +155,7 @@ export function PatientsPage() {
                     <th>Contacto</th>
                     <th>Ãšltima visita</th>
                     <th>PrÃ³xima cita</th>
-                    <th aria-label="Abrir" />
+                    <th aria-label="Acciones" />
                   </tr>
                 </thead>
                 <tbody>
@@ -187,7 +200,11 @@ export function PatientsPage() {
                             : 'â€”'}
                         </td>
                         <td>
-                          <ChevronRight className="h-4 w-4 text-ink/25" />
+                          <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
+                            <IconButton label={`Editar ${patient.fullName}`} onClick={() => setEditingPatient(patient)}><Pencil className="h-4 w-4" /></IconButton>
+                            <IconButton label={`Archivar ${patient.fullName}`} onClick={() => setDeleteTarget(patient)}><Trash2 className="h-4 w-4 text-red-600" /></IconButton>
+                            <ChevronRight className="h-4 w-4 text-ink/25" />
+                          </div>
                         </td>
                       </tr>
                     );
@@ -201,8 +218,9 @@ export function PatientsPage() {
             {rows.map((patient) => {
               const age = ageFromBirthDate(patient.birthDate);
               return (
-                <Link key={patient.id} to={`/pacientes/${patient.id}`} className="card-flat block p-4 transition active:scale-[0.99]">
+                <article key={patient.id} className="card-flat p-4">
                   <div className="flex items-start gap-3">
+                    <Link to={`/pacientes/${patient.id}`} className="flex min-w-0 flex-1 items-start gap-3">
                     <Avatar name={patient.fullName} size="md" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
@@ -226,8 +244,13 @@ export function PatientsPage() {
                         {patient.mobile || patient.phone || 'Sin telÃ©fono'}
                       </p>
                     </div>
+                    </Link>
+                    <div className="flex shrink-0 flex-col gap-1">
+                      <IconButton label={`Editar ${patient.fullName}`} onClick={() => setEditingPatient(patient)}><Pencil className="h-4 w-4" /></IconButton>
+                      <IconButton label={`Archivar ${patient.fullName}`} onClick={() => setDeleteTarget(patient)}><Trash2 className="h-4 w-4 text-red-600" /></IconButton>
+                    </div>
                   </div>
-                </Link>
+                </article>
               );
             })}
           </div>
@@ -253,10 +276,14 @@ export function PatientsPage() {
       )}
 
       <PatientFormDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        onCreated={(patient) => navigate(`/pacientes/${patient.id}`)}
+        open={dialogOpen || Boolean(editingPatient)}
+        patient={editingPatient}
+        onClose={() => { setDialogOpen(false); setEditingPatient(null); }}
+        onCreated={(patient) => { setEditingPatient(null); if (dialogOpen) navigate(`/pacientes/${patient.id}`); }}
       />
+      <Modal open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Archivar paciente" description="El expediente y sus relaciones se conservarán; el paciente dejará de aparecer en el directorio activo." footer={<><Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancelar</Button><Button variant="danger" loading={archivePatient.isPending} onClick={() => deleteTarget && archivePatient.mutate(deleteTarget.id)}>Archivar paciente</Button></>}>
+        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Estás seguro de archivar a {deleteTarget?.fullName}? Sus datos clínicos permanecerán asociados al historial.</p>
+      </Modal>
     </div>
   );
 }

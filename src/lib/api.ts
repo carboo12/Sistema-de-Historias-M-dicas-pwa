@@ -8,6 +8,7 @@ import type {
   Diagnosis,
   Patient,
   PatientDetail,
+  ReportsDataset,
   Summary,
   User
 } from '../types';
@@ -88,7 +89,8 @@ export const api = {
       request<{ patient: Patient }>(`/api/patients/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(payload)
-      })
+      }),
+    delete: (id: string) => request<void>(`/api/patients/${id}`, { method: 'DELETE' })
   },
   agenda: {
     get: (date: string) => request<AgendaResponse>(`/api/agenda${queryString({ date })}`),
@@ -103,7 +105,10 @@ export const api = {
       request<{ appointment: Pick<Appointment, 'id' | 'status' | 'startsAt' | 'endsAt'> }>(
         `/api/appointments/${id}/status`,
         { method: 'PATCH', body: JSON.stringify({ status }) }
-      )
+      ),
+    update: (id: string, payload: Record<string, unknown>) => request<{ appointment: Appointment }>(`/api/appointments/${id}`, {
+      method: 'PATCH', body: JSON.stringify(payload)
+    })
   },
   consultations: {
     list: (patientId?: string) =>
@@ -127,6 +132,7 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify(payload)
       }),
+    delete: (id: string) => request<void>(`/api/consultations/${id}`, { method: 'DELETE' }),
     sign: (id: string) =>
       request<{ consultation: Consultation; signedAt: string }>(`/api/consultations/${id}/sign`, {
         method: 'POST'
@@ -137,11 +143,16 @@ export const api = {
         body: JSON.stringify(payload)
       }),
     deleteDiagnosis: (id: string, diagnosisId: string) =>
-      request<void>(`/api/consultations/${id}/diagnoses/${diagnosisId}`, { method: 'DELETE' })
+      request<void>(`/api/consultations/${id}/diagnoses/${diagnosisId}`, { method: 'DELETE' }),
+    updateDiagnosis: (id: string, diagnosisId: string, payload: { description: string; type: string; notes?: string | null }) =>
+      request<void>(`/api/consultations/${id}/diagnoses/${diagnosisId}`, { method: 'PATCH', body: JSON.stringify(payload) })
   },
   cie10: {
     search: (q: string) => request<{ codes: Cie10Code[] }>(`/api/cie10${queryString({ q })}`)
   },
   catalogs: () => request<Catalogs>('/api/catalogs'),
+  reports: {
+    get: (from: string, to: string) => request<ReportsDataset>(`/api/reports${queryString({ from, to })}`)
+  },
   summary: () => request<Summary>('/api/summary')
 };

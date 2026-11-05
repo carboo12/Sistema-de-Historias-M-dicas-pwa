@@ -204,9 +204,16 @@
 }
 
 @media print {
+  @page { size: landscape; margin: 12mm; }
   .no-print {
     display: none !important;
   }
+
+  body:has(table) { background: white; }
+  table { break-inside: auto; }
+  tr { break-inside: avoid; }
+  thead { display: table-header-group; }
+  .card { box-shadow: none !important; break-inside: avoid; }
 
   body {
     background: white;

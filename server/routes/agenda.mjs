@@ -204,6 +204,37 @@ export async function agendaRoutes(app) {
   );
 
   app.patch(
+    '/api/appointments/:id',
+    { preHandler: [app.authenticate, requireAgendaAccess] },
+    async (request) => {
+      const id = uuid(request.params.id, 'cita');
+      const body = request.body ?? {};
+      const startsAt = isoDate(body.startsAt, 'fecha de cita');
+      const duration = positiveInt(body.durationMinutes, 'duración', 30);
+      const endsAt = new Date(new Date(startsAt).getTime() + duration * 60_000).toISOString();
+      const status = body.status ?? 'programada';
+      if (!APPOINTMENT_STATUSES.includes(status)) throw new HttpError(400, 'validation_error', 'Estado de cita inválido');
+      const before = await one('select * from public.appointments where id = $1 and clinic_id = $2', [id, request.user.clinicId]);
+      if (!before) throw new HttpError(404, 'not_found', 'Cita no encontrada');
+      try {
+        const updated = await transaction(async (client) => {
+          const result = await client.query(
+            `update public.appointments set starts_at=$3,ends_at=$4,duration_minutes=$5,reason=$6,notes=$7,status=$8,updated_at=now()
+             where id=$1 and clinic_id=$2 returning *`,
+            [id, request.user.clinicId, startsAt, endsAt, duration, text(body.reason, 500), text(body.notes, 2000), status]
+          );
+          await audit(client, request, 'update', 'appointment', id, before, result.rows[0]);
+          return result.rows[0];
+        });
+        return { appointment: { id: updated.id, startsAt: updated.starts_at, endsAt: updated.ends_at, durationMinutes: updated.duration_minutes, status: updated.status, reason: updated.reason, notes: updated.notes } };
+      } catch (error) {
+        if (error.code === '23P01') throw new HttpError(409, 'appointment_overlap', 'El profesional ya tiene una cita en ese horario');
+        throw error;
+      }
+    }
+  );
+
+  app.patch(
     '/api/appointments/:id/status',
     { preHandler: [app.authenticate, requireAgendaAccess] },
     async (request) => {

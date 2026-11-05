@@ -320,6 +320,25 @@ export async function patientRoutes(app) {
       return { patient: mapPatient(updated) };
     }
   );
+
+  app.delete(
+    '/api/patients/:id',
+    { preHandler: [app.authenticate, requireClinicalOrReception] },
+    async (request, reply) => {
+      const id = uuid(request.params.id, 'paciente');
+      const clinicId = request.user.clinicId;
+      const before = await one(
+        'select * from public.patients where id = $1 and clinic_id = $2 and deleted_at is null',
+        [id, clinicId]
+      );
+      if (!before) throw new HttpError(404, 'not_found', 'Paciente no encontrado');
+      await transaction(async (client) => {
+        await client.query('update public.patients set deleted_at = now(), updated_at = now() where id = $1 and clinic_id = $2', [id, clinicId]);
+        await audit(client, request, 'archive', 'patient', id, mapPatient(before), { deletedAt: new Date().toISOString() });
+      });
+      return reply.code(204).send();
+    }
+  );
 }
 
 async function requireClinicalOrReception(request) {

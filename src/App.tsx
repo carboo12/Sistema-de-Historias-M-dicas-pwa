@@ -11,6 +11,7 @@ import { NewConsultationPage } from './pages/NewConsultationPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PatientDetailPage } from './pages/PatientDetailPage';
 import { PatientsPage } from './pages/PatientsPage';
+import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 const queryClient = new QueryClient({
@@ -51,6 +52,7 @@ export default function App() {
               <Route path="/consultas" element={<ConsultationsPage />} />
               <Route path="/consultas/nueva" element={<NewConsultationPage />} />
               <Route path="/consultas/:id" element={<ConsultationPage />} />
+              <Route path="/reportes" element={<ReportsPage />} />
               <Route path="/configuracion" element={<SettingsPage />} />
               <Route path="/ayuda" element={<HelpPage />} />
             </Route>
