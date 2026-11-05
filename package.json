@@ -9,7 +9,7 @@
     "dev:api": "node --watch server/index.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "start": "node server/index.mjs",
+    "start": "node server/static.mjs",
     "seed": "node server/seed.mjs",
     "migrate:legacy": "node server/migrate-legacy.mjs",
     "firebase:compile": "firebase dataconnect:compile --service studio-9955473018-e374d-service --location us-east4",
@@ -31,7 +31,8 @@
     "pg-copy-streams": "^7.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.1.0"
+    "react-router-dom": "^7.1.0",
+    "serve": "^14.2.6"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

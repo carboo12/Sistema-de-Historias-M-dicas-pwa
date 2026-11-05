@@ -1,3 +1,7 @@
+scripts:
+  buildCommand: npm run build
+  runCommand: npm start
+
 runConfig:
   cpu: 1
   memoryMiB: 512
