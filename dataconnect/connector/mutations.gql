@@ -1,0 +1,320 @@
+﻿mutation LinkCurrentUser @auth(level: USER_EMAIL_VERIFIED) @transaction {
+  user_update(
+    first: {
+      where: {
+        email: { eq_expr: "auth.token.email" }
+        firebaseUid: { isNull: true }
+        isActive: { eq: true }
+      }
+      orderBy: [{ createdAt: ASC }]
+    }
+    data: { firebaseUid_expr: "auth.uid" }
+  ) @check(message: "No se encontró un usuario activo con este correo")
+}
+
+mutation CreatePatient(
+  $clinicId: UUID!
+  $recordNumber: String!
+  $documentType: String!
+  $documentNumber: String
+  $documentVerified: Boolean!
+  $fullName: String!
+  $firstName: String
+  $lastName: String
+  $birthDate: Date
+  $birthDateEstimated: Boolean!
+  $sex: String!
+  $maritalStatus: String!
+  $bloodType: String
+  $nationality: String
+  $birthPlace: String
+  $address: String
+  $city: String
+  $state: String
+  $country: String
+  $phone: String
+  $mobile: String
+  $email: String
+  $occupation: String
+  $isPrivate: Boolean!
+  $allergiesNotes: String
+  $currentDiagnosisSummary: String
+  $notes: String
+  $isSuspended: Boolean!
+  $suspensionReason: String
+) @auth(level: USER) @transaction {
+  patient_insert(
+    data: {
+      clinicId: $clinicId
+      recordNumber: $recordNumber
+      documentType: $documentType
+      documentNumber: $documentNumber
+      documentVerified: $documentVerified
+      fullName: $fullName
+      firstName: $firstName
+      lastName: $lastName
+      birthDate: $birthDate
+      birthDateEstimated: $birthDateEstimated
+      sex: $sex
+      maritalStatus: $maritalStatus
+      bloodType: $bloodType
+      nationality: $nationality
+      birthPlace: $birthPlace
+      address: $address
+      city: $city
+      state: $state
+      country: $country
+      phone: $phone
+      mobile: $mobile
+      email: $email
+      occupation: $occupation
+      isPrivate: $isPrivate
+      allergiesNotes: $allergiesNotes
+      currentDiagnosisSummary: $currentDiagnosisSummary
+      notes: $notes
+      isSuspended: $isSuspended
+      suspensionReason: $suspensionReason
+      createdById_expr: "auth.uid"
+    }
+  )
+}
+
+mutation UpdatePatient(
+  $id: UUID!
+  $documentType: String!
+  $documentNumber: String
+  $documentVerified: Boolean!
+  $fullName: String!
+  $firstName: String
+  $lastName: String
+  $birthDate: Date
+  $birthDateEstimated: Boolean!
+  $sex: String!
+  $maritalStatus: String!
+  $bloodType: String
+  $nationality: String
+  $birthPlace: String
+  $address: String
+  $city: String
+  $state: String
+  $country: String
+  $phone: String
+  $mobile: String
+  $email: String
+  $occupation: String
+  $isPrivate: Boolean!
+  $allergiesNotes: String
+  $currentDiagnosisSummary: String
+  $notes: String
+  $isSuspended: Boolean!
+  $suspensionReason: String
+) @auth(level: USER) @transaction {
+  patient_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+        deletedAt: { isNull: true }
+      }
+    }
+    data: {
+      documentType: $documentType
+      documentNumber: $documentNumber
+      documentVerified: $documentVerified
+      fullName: $fullName
+      firstName: $firstName
+      lastName: $lastName
+      birthDate: $birthDate
+      birthDateEstimated: $birthDateEstimated
+      sex: $sex
+      maritalStatus: $maritalStatus
+      bloodType: $bloodType
+      nationality: $nationality
+      birthPlace: $birthPlace
+      address: $address
+      city: $city
+      state: $state
+      country: $country
+      phone: $phone
+      mobile: $mobile
+      email: $email
+      occupation: $occupation
+      isPrivate: $isPrivate
+      allergiesNotes: $allergiesNotes
+      currentDiagnosisSummary: $currentDiagnosisSummary
+      notes: $notes
+      isSuspended: $isSuspended
+      suspensionReason: $suspensionReason
+    }
+  ) @check(message: "No se encontró el paciente en esta clínica")
+}
+
+mutation CreateAppointment(
+  $clinicId: UUID!
+  $patientId: UUID!
+  $professionalId: UUID!
+  $specialtyId: UUID
+  $officeId: UUID
+  $startsAt: Timestamp!
+  $endsAt: Timestamp!
+  $durationMinutes: Int!
+  $reason: String
+  $notes: String
+  $status: String!
+  $source: String!
+) @auth(level: USER) @transaction {
+  appointment_insert(
+    data: {
+      clinicId: $clinicId
+      patientId: $patientId
+      professionalId: $professionalId
+      specialtyId: $specialtyId
+      officeId: $officeId
+      startsAt: $startsAt
+      endsAt: $endsAt
+      durationMinutes: $durationMinutes
+      reason: $reason
+      notes: $notes
+      status: $status
+      source: $source
+      createdById_expr: "auth.uid"
+    }
+  )
+}
+
+mutation UpdateAppointmentStatus($id: UUID!, $status: String!) @auth(level: USER) @transaction {
+  appointment_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+      }
+    }
+    data: { status: $status }
+  ) @check(message: "No se encontró la cita en esta clínica")
+}
+
+mutation CreateConsultation(
+  $clinicId: UUID!
+  $patientId: UUID!
+  $professionalId: UUID!
+  $appointmentId: UUID
+  $specialtyId: UUID
+  $consultationType: String!
+  $consultedAt: Timestamp!
+  $reason: String
+  $notes: String
+  $status: String!
+  $source: String!
+) @auth(level: USER) @transaction {
+  consultation_insert(
+    data: {
+      clinicId: $clinicId
+      patientId: $patientId
+      professionalId: $professionalId
+      appointmentId: $appointmentId
+      specialtyId: $specialtyId
+      consultationType: $consultationType
+      consultedAt: $consultedAt
+      reason: $reason
+      notes: $notes
+      status: $status
+      source: $source
+      createdById_expr: "auth.uid"
+    }
+  )
+}
+
+mutation UpdateConsultation(
+  $id: UUID!
+  $nextVisitAt: Timestamp
+  $reason: String
+  $currentIllness: String
+  $physicalExam: String
+  $functionalExam: String
+  $studies: String
+  $diagnosisNotes: String
+  $treatmentPlan: String
+  $evolution: String
+  $plan: String
+  $notes: String
+  $vitals: Any!
+) @auth(level: USER) @transaction {
+  consultation_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+        deletedAt: { isNull: true }
+      }
+    }
+    data: {
+      nextVisitAt: $nextVisitAt
+      reason: $reason
+      currentIllness: $currentIllness
+      physicalExam: $physicalExam
+      functionalExam: $functionalExam
+      studies: $studies
+      diagnosisNotes: $diagnosisNotes
+      treatmentPlan: $treatmentPlan
+      evolution: $evolution
+      plan: $plan
+      notes: $notes
+      vitals: $vitals
+    }
+  ) @check(message: "No se encontró la consulta en esta clínica")
+}
+
+mutation SignConsultation($id: UUID!) @auth(level: USER) @transaction {
+  consultation_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+        status: { eq: "borrador" }
+        deletedAt: { isNull: true }
+      }
+    }
+    data: {
+      status: "firmada"
+      signedAt_expr: "request.time"
+      signedById_expr: "auth.uid"
+    }
+  ) @check(message: "No se encontró una consulta en borrador para firmar")
+}
+
+mutation AddDiagnosis(
+  $clinicId: UUID!
+  $patientId: UUID!
+  $consultationId: UUID!
+  $professionalId: UUID
+  $cie10Code: String
+  $diagnosisText: String!
+  $diagnosisType: String!
+  $notes: String
+) @auth(level: USER) @transaction {
+  consultationDiagnosis_insert(
+    data: {
+      clinicId: $clinicId
+      patientId: $patientId
+      consultationId: $consultationId
+      professionalId: $professionalId
+      cie10Code: $cie10Code
+      diagnosisText: $diagnosisText
+      diagnosisType: $diagnosisType
+      notes: $notes
+      createdById_expr: "auth.uid"
+    }
+  )
+}
+
+mutation DeleteDiagnosis($id: UUID!) @auth(level: USER) @transaction {
+  consultationDiagnosis_delete(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+      }
+    }
+  ) @check(message: "No se encontró el diagnóstico en esta clínica")
+}

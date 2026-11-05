@@ -1,6 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { api } from '../lib/api';
+import {
+  getFirebaseSession,
+  signInWithFirebase,
+  signOutFromFirebase
+} from '../services/firebase/auth';
+import { useFirebaseBackend } from '../services/firebase/client';
 import type { User } from '../types';
 
 type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
@@ -21,8 +27,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const response = await api.auth.me();
-      setUser(response.user);
+      const session = useFirebaseBackend
+        ? await getFirebaseSession()
+        : (await api.auth.me()).user;
+      setUser(session);
       setStatus('authenticated');
     } catch {
       setUser(null);
@@ -35,15 +43,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const login = useCallback(async (identifier: string, password: string) => {
-    const response = await api.auth.login(identifier, password);
-    setUser(response.user);
+    const session = useFirebaseBackend
+      ? await signInWithFirebase(identifier, password)
+      : (await api.auth.login(identifier, password)).user;
+    setUser(session);
     setStatus('authenticated');
-    return response.user;
+    return session;
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      await api.auth.logout();
+      if (useFirebaseBackend) await signOutFromFirebase();
+      else await api.auth.logout();
     } finally {
       setUser(null);
       setStatus('anonymous');

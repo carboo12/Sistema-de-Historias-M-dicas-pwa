@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search, X } from 'lucide-react';
-import { api } from '../lib/api';
+import { api } from '../lib/data';
 import { useDebouncedValue } from '../lib/hooks';
 import { ageFromBirthDate, patientDocument } from '../lib/format';
 import type { Patient } from '../types';

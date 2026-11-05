@@ -21,7 +21,7 @@ import {
   PageHeader,
   SkeletonRows
 } from '../components/ui';
-import { api } from '../lib/api';
+import { api } from '../lib/data';
 import {
   consultationStatusLabel,
   formatDate,

@@ -1,6 +1,7 @@
 query GetSession @auth(level: USER) {
-  users(where: { firebaseUid: { eq_expr: "auth.uid" } }) {
+  users(where: { firebaseUid: { eq_expr: "auth.uid" }, isActive: { eq: true } }) {
     id
+    firebaseUid
     username
     email
     fullName
@@ -18,6 +19,351 @@ query GetSession @auth(level: USER) {
       id
       fullName
       licenseNumber
+    }
+  }
+}
+
+query ListPatients($q: String!, $limit: Int!, $offset: Int!) @auth(level: USER) {
+  patients(
+    where: {
+      _and: [
+        { clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } } }
+        { deletedAt: { isNull: true } }
+        {
+          _or: [
+            { fullName: { contains: $q } }
+            { documentNumber: { contains: $q } }
+            { recordNumber: { contains: $q } }
+          ]
+        }
+      ]
+    }
+    orderBy: [{ updatedAt: DESC }]
+    limit: $limit
+    offset: $offset
+  ) {
+    id
+    recordNumber
+    documentType
+    documentNumber
+    documentVerified
+    fullName
+    firstName
+    lastName
+    birthDate
+    birthDateEstimated
+    deceased
+    sex
+    maritalStatus
+    bloodType
+    nationality
+    birthPlace
+    address
+    city
+    state
+    country
+    phone
+    mobile
+    email
+    occupation
+    isPrivate
+    photoUrl
+    allergiesNotes
+    currentDiagnosisSummary
+    isSuspended
+    suspensionReason
+    notes
+    createdAt
+    updatedAt
+    appointments_on_patient(
+      where: { status: { in: ["programada", "confirmada", "en_espera"] }, startsAt: { ge_expr: "request.time" } }
+      orderBy: [{ startsAt: ASC }]
+      limit: 1
+    ) {
+      startsAt
+    }
+  }
+}
+
+query CountPatients($q: String!) @auth(level: USER) {
+  patients(
+    where: {
+      _and: [
+        { clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } } }
+        { deletedAt: { isNull: true } }
+        {
+          _or: [
+            { fullName: { contains: $q } }
+            { documentNumber: { contains: $q } }
+            { recordNumber: { contains: $q } }
+          ]
+        }
+      ]
+    }
+    limit: 1
+  ) {
+    _count
+  }
+}
+
+query GetPatient($id: UUID!) @auth(level: USER) {
+  patients(
+    where: {
+      id: { eq: $id }
+      clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+      deletedAt: { isNull: true }
+    }
+    limit: 1
+  ) {
+    id
+    recordNumber
+    documentType
+    documentNumber
+    documentVerified
+    fullName
+    firstName
+    lastName
+    birthDate
+    birthDateEstimated
+    deceased
+    deathDate
+    sex
+    maritalStatus
+    bloodType
+    nationality
+    birthPlace
+    address
+    city
+    state
+    country
+    phone
+    mobile
+    email
+    occupation
+    isPrivate
+    photoUrl
+    allergiesNotes
+    currentDiagnosisSummary
+    guardianName
+    guardianPhone
+    religion
+    isSuspended
+    suspensionReason
+    notes
+    createdAt
+    updatedAt
+    patientHistories_on_patient(orderBy: [{ recordedAt: DESC }]) {
+      id
+      category
+      description
+      details
+      onsetDate
+      isActive
+      recordedAt
+    }
+    consultations_on_patient(
+      where: { deletedAt: { isNull: true } }
+      orderBy: [{ consultedAt: DESC }]
+      limit: 10000
+    ) {
+      id
+      consultedAt
+      status
+      reason
+      currentIllness
+      treatmentPlan
+      signedAt
+      updatedAt
+      professional {
+        fullName
+      }
+      consultationDiagnoses_on_consultation {
+        id
+        cie10Code
+        diagnosisText
+        diagnosisType
+      }
+    }
+    appointments_on_patient(
+      where: { status: { in: ["programada", "confirmada", "en_espera"] }, startsAt: { ge_expr: "request.time" } }
+      orderBy: [{ startsAt: ASC }]
+      limit: 5
+    ) {
+      id
+      startsAt
+      endsAt
+      status
+      reason
+      professional {
+        fullName
+      }
+    }
+  }
+}
+
+query ListAgenda($start: Timestamp!, $end: Timestamp!) @auth(level: USER) {
+  appointments(
+    where: {
+      clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+      startsAt: { ge: $start, lt: $end }
+    }
+    orderBy: [{ startsAt: ASC }]
+    limit: 200
+  ) {
+    id
+    patientId
+    professionalId
+    startsAt
+    endsAt
+    durationMinutes
+    reason
+    status
+    notes
+    patient {
+      fullName
+      recordNumber
+      phone
+    }
+    professional {
+      fullName
+    }
+    specialty {
+      name
+    }
+    office {
+      name
+    }
+    consultation_on_appointment {
+      id
+    }
+  }
+}
+
+query ListConsultations @auth(level: USER) {
+  consultations(
+    where: {
+      clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+      deletedAt: { isNull: true }
+    }
+    orderBy: [{ consultedAt: DESC }]
+    limit: 60
+  ) {
+    id
+    consultedAt
+    status
+    reason
+    currentIllness
+    treatmentPlan
+    signedAt
+    updatedAt
+    patient {
+      fullName
+      recordNumber
+    }
+    professional {
+      fullName
+    }
+    consultationDiagnoses_on_consultation {
+      id
+      cie10Code
+      diagnosisText
+      diagnosisType
+    }
+  }
+}
+
+query GetConsultation($id: UUID!) @auth(level: USER) {
+  consultations(
+    where: {
+      id: { eq: $id }
+      clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+      deletedAt: { isNull: true }
+    }
+    limit: 1
+  ) {
+    id
+    clinicId
+    patientId
+    professionalId
+    appointmentId
+    specialtyId
+    consultationType
+    consultedAt
+    nextVisitAt
+    reason
+    currentIllness
+    physicalExam
+    functionalExam
+    studies
+    diagnosisNotes
+    treatmentPlan
+    evolution
+    plan
+    notes
+    vitals
+    status
+    signedAt
+    createdAt
+    updatedAt
+    patient {
+      fullName
+      recordNumber
+      birthDate
+      sex
+      allergiesNotes
+    }
+    professional {
+      fullName
+    }
+    consultationDiagnoses_on_consultation(orderBy: [{ diagnosedAt: ASC }]) {
+      id
+      cie10Code
+      diagnosisText
+      diagnosisType
+      notes
+      diagnosedAt
+    }
+  }
+}
+
+query SearchCie10($q: String!) @auth(level: USER, insecureReason: "Catálogo CIE-10 público y compartido") {
+  cie10Codes(
+    where: { _or: [{ code: { contains: $q } }, { description: { contains: $q } }] }
+    orderBy: [{ code: ASC }]
+    limit: 20
+  ) {
+    code
+    description
+    chapter
+    category
+  }
+}
+
+query GetCatalogs @auth(level: USER) {
+  users(where: { firebaseUid: { eq_expr: "auth.uid" }, isActive: { eq: true } }) {
+    clinic {
+      professionals_on_clinic(where: { isActive: { eq: true } }, orderBy: [{ fullName: ASC }]) {
+        id
+        fullName
+        licenseNumber
+        defaultOfficeId
+      }
+      offices_on_clinic(where: { isActive: { eq: true } }, orderBy: [{ name: ASC }]) {
+        id
+        code
+        name
+        location
+      }
+      specialties_on_clinic(where: { isActive: { eq: true } }, orderBy: [{ name: ASC }]) {
+        id
+        code
+        name
+      }
+      consultationReasons_on_clinic(where: { isActive: { eq: true } }, orderBy: [{ name: ASC }]) {
+        id
+        code
+        name
+      }
     }
   }
 }

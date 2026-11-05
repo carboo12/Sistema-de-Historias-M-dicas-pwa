@@ -2,15 +2,16 @@ import { useState, type FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, Eye, EyeOff, HeartPulse, LockKeyhole, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
-import { ApiError } from '../lib/api';
+import { ApiError } from '../lib/data';
+import { useFirebaseBackend } from '../services/firebase/client';
 import { Button, Input } from '../components/ui';
 
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [identifier, setIdentifier] = useState('demo@clinica.local');
-  const [password, setPassword] = useState('Demo1234!');
+  const [identifier, setIdentifier] = useState(useFirebaseBackend ? '' : 'demo@clinica.local');
+  const [password, setPassword] = useState(useFirebaseBackend ? '' : 'Demo1234!');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,7 +103,7 @@ export function LoginPage() {
 
           <form className="space-y-5" onSubmit={onSubmit}>
             <label className="block">
-              <span className="label">Usuario o correo</span>
+              <span className="label">{useFirebaseBackend ? 'Correo electrónico' : 'Usuario o correo'}</span>
               <div className="relative">
                 <UserRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/30" />
                 <Input
@@ -110,7 +111,7 @@ export function LoginPage() {
                   value={identifier}
                   onChange={(event) => setIdentifier(event.target.value)}
                   autoComplete="username"
-                  placeholder="demo@clinica.local"
+                  placeholder={useFirebaseBackend ? 'tu@correo.com' : 'demo@clinica.local'}
                   required
                 />
               </div>
@@ -151,8 +152,9 @@ export function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 rounded-2xl border border-teal-100 bg-teal-50/60 p-4">
-            <div className="flex items-start gap-3">
+          {!useFirebaseBackend ? (
+            <div className="mt-6 rounded-2xl border border-teal-100 bg-teal-50/60 p-4">
+              <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-teal-700 text-white">
                 <Sparkles className="h-4 w-4" />
               </div>
@@ -176,6 +178,8 @@ export function LoginPage() {
               </div>
             </div>
           </div>
+
+          ) : null}
 
           <p className="mt-8 text-center text-[11px] leading-relaxed text-ink/35">
             Al continuar aceptas las políticas de privacidad y el tratamiento seguro de datos clínicos.

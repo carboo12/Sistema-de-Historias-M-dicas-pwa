@@ -2,5 +2,8 @@ node_modules/
 dist/
 .env
 .env.local
+*.key.json
+servicekey.json
+DATARESPALDO*
 *.log
 db/*.log

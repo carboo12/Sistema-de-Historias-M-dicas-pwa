@@ -145,8 +145,7 @@ export async function patientRoutes(app) {
        left join public.consultation_diagnoses d on d.consultation_id = c.id
        where c.patient_id = $1 and c.clinic_id = $2 and c.deleted_at is null
        group by c.id, pr.full_name
-       order by c.consulted_at desc
-       limit 12`,
+       order by c.consulted_at desc, c.id desc`,
       [id, clinicId]
     );
 

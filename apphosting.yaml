@@ -1,0 +1,31 @@
+runConfig:
+  cpu: 1
+  memoryMiB: 512
+  minInstances: 0
+  maxInstances: 2
+
+env:
+  - variable: NODE_ENV
+    value: production
+    availability:
+      - RUNTIME
+  - variable: VITE_DATA_BACKEND
+    value: firebase
+    availability:
+      - BUILD
+  - variable: VITE_FIREBASE_PROJECT_ID
+    value: studio-9955473018-e374d
+    availability:
+      - BUILD
+  - variable: VITE_FIREBASE_USE_EMULATORS
+    value: "false"
+    availability:
+      - BUILD
+
+# Configure the following public Firebase Web App values in App Hosting's
+# build environment before deploying. Vite embeds VITE_* values in the client bundle.
+# VITE_FIREBASE_API_KEY
+# VITE_FIREBASE_AUTH_DOMAIN
+# VITE_FIREBASE_STORAGE_BUCKET
+# VITE_FIREBASE_MESSAGING_SENDER_ID
+# VITE_FIREBASE_APP_ID

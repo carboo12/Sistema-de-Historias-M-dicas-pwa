@@ -33,7 +33,7 @@ import {
   Spinner,
   Textarea
 } from '../components/ui';
-import { api, ApiError } from '../lib/api';
+import { api, ApiError } from '../lib/data';
 import {
   ageFromBirthDate,
   consultationStatusLabel,
@@ -57,6 +57,18 @@ interface ConsultationForm {
   notes: string;
   vitals: Record<string, string>;
 }
+
+interface PrescriptionItem {
+  medication: string;
+  presentation: string;
+  dose: string;
+  frequency: string;
+  duration: string;
+  quantity: string;
+  instructions: string;
+}
+
+const emptyPrescriptionItem = (): PrescriptionItem => ({ medication: '', presentation: '', dose: '', frequency: '', duration: '', quantity: '', instructions: '' });
 
 const vitalFields = [
   { key: 'pa', label: 'PA', placeholder: '120/80', unit: 'mmHg' },
@@ -118,6 +130,8 @@ export function ConsultationPage() {
   const [dxQuery, setDxQuery] = useState('');
   const [dxType, setDxType] = useState('principal');
   const [dxError, setDxError] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<'evolution' | 'studies' | 'prescription'>('evolution');
+  const [prescriptionItems, setPrescriptionItems] = useState<PrescriptionItem[]>([emptyPrescriptionItem()]);
 
   const detail = useQuery({
     queryKey: ['consultation', id],
@@ -271,6 +285,7 @@ export function ConsultationPage() {
           Volver a consultas
         </button>
         <div className="flex flex-wrap items-center gap-2">
+          <Button variant="secondary" onClick={() => { setActiveSection('prescription'); window.setTimeout(() => window.print(), 50); }} icon={<Printer className="h-4 w-4" />}>Imprimir receta</Button>
           {!readOnly ? (
             isDirty ? (
               <Badge className="badge-amber" dot>
@@ -347,8 +362,38 @@ export function ConsultationPage() {
         </div>
       </header>
 
+      <nav className="no-print flex flex-wrap gap-2 rounded-2xl border border-line/70 bg-white p-2" aria-label="Secciones de consulta">
+        {([['evolution', 'Evolución / Nota médica'], ['studies', 'Estudios clínicos'], ['prescription', 'Receta de medicamentos']] as const).map(([key, label]) => (
+          <button key={key} type="button" onClick={() => setActiveSection(key)} className={`rounded-xl px-4 py-2.5 text-xs font-extrabold transition ${activeSection === key ? 'bg-teal-700 text-white' : 'text-ink/55 hover:bg-canvas'}`}>{label}</button>
+        ))}
+      </nav>
+
+      {activeSection === 'prescription' ? (
+        <section className="prescription-print card p-5 sm:p-6">
+          <div className="mb-5 flex items-start justify-between gap-3">
+            <div><p className="text-xs font-extrabold uppercase tracking-widest text-teal-700">Récipe médico</p><h2 className="mt-1 text-xl font-extrabold">{consultation.professionalName}</h2><p className="text-xs text-ink/55">{consultation.patientName} · {consultation.recordNumber}</p></div>
+            <Button className="no-print" variant="secondary" icon={<Printer className="h-4 w-4" />} onClick={() => window.print()}>Imprimir receta</Button>
+          </div>
+          <p className="mb-4 text-xs text-ink/50">Fecha: {formatDate(consultation.consultedAt, timezone)}{consultation.specialtyId ? ` · Especialidad registrada` : ''}</p>
+          <div className="space-y-3">
+            {prescriptionItems.map((item, index) => <div key={index} className="grid gap-3 rounded-xl border border-line/70 p-4 sm:grid-cols-2">
+              <Field label={`Medicamento ${index + 1}`}><Input value={item.medication} readOnly={readOnly} placeholder="Nombre del medicamento" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, medication: e.target.value} : row))} /></Field>
+              <Field label="Presentación"><Input value={item.presentation} readOnly={readOnly} placeholder="Tabletas, solución…" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, presentation: e.target.value} : row))} /></Field>
+              <Field label="Dosis"><Input value={item.dose} readOnly={readOnly} placeholder="Dosis" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, dose: e.target.value} : row))} /></Field>
+              <Field label="Frecuencia y vía"><Input value={item.frequency} readOnly={readOnly} placeholder="Cada 8 horas · vía oral" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, frequency: e.target.value} : row))} /></Field>
+              <Field label="Duración"><Input value={item.duration} readOnly={readOnly} placeholder="Ej. 7 días" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, duration: e.target.value} : row))} /></Field>
+              <Field label="Cantidad"><Input value={item.quantity} readOnly={readOnly} placeholder="Cantidad" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, quantity: e.target.value} : row))} /></Field>
+              <div className="sm:col-span-2"><Field label="Indicaciones"><Textarea value={item.instructions} readOnly={readOnly} placeholder="Indicaciones para el paciente" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, instructions: e.target.value} : row))} /></Field></div>
+            </div>)}
+          </div>
+          {!readOnly && <Button className="no-print mt-4" variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={() => setPrescriptionItems(rows => [...rows, emptyPrescriptionItem()])}>Agregar medicamento</Button>}
+          <div className="mt-12 grid grid-cols-2 gap-12 text-center text-xs"><div className="border-t border-ink/40 pt-2">Firma y sello del médico<br/>{consultation.professionalName}</div><div className="border-t border-ink/40 pt-2">Paciente<br/>{consultation.patientName}</div></div>
+        </section>
+      ) : null}
+
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_370px]">
-        <div className="space-y-5">
+        <div className={`space-y-5 ${activeSection === 'prescription' ? 'hidden' : ''}`}>
+          {activeSection === 'evolution' ? <>
           <section className="card p-5 sm:p-6">
             <SectionHeading
               icon={<Stethoscope className="h-4 w-4" />}
@@ -379,30 +424,9 @@ export function ConsultationPage() {
           </section>
 
           <section className="card p-5 sm:p-6">
-            <SectionHeading
-              icon={<HeartPulse className="h-4 w-4" />}
-              title="Signos vitales"
-              description="Registra los valores medidos durante la atención."
-            />
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {vitalFields.map((vital) => (
-                <label key={vital.key} className="rounded-xl border border-line/70 bg-canvas/40 p-3">
-                  <span className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-[0.1em] text-ink/35">
-                    {vital.label}
-                    <span className="font-semibold normal-case tracking-normal text-ink/25">{vital.unit}</span>
-                  </span>
-                  <input
-                    value={form.vitals[vital.key] ?? ''}
-                    onChange={(event) => updateVital(vital.key, event.target.value)}
-                    readOnly={readOnly}
-                    placeholder={vital.placeholder}
-                    className="mt-1 w-full border-0 bg-transparent p-0 text-lg font-extrabold text-ink outline-none placeholder:text-ink/20 read-only:text-ink/60"
-                  />
-                </label>
-              ))}
-            </div>
+            <SectionHeading icon={<HeartPulse className="h-4 w-4" />} title="Signos vitales" description="Registra los valores medidos durante la atención." />
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">{vitalFields.map(vital => <label key={vital.key} className="rounded-xl border border-line/70 bg-canvas/40 p-3"><span className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-[0.1em] text-ink/35">{vital.label}<span>{vital.unit}</span></span><input value={form.vitals[vital.key] ?? ''} onChange={event => updateVital(vital.key, event.target.value)} readOnly={readOnly} placeholder={vital.placeholder} className="mt-1 w-full border-0 bg-transparent p-0 text-lg font-extrabold text-ink outline-none" /></label>)}</div>
           </section>
-
           <section className="card p-5 sm:p-6">
             <SectionHeading
               icon={<FileText className="h-4 w-4" />}
@@ -433,7 +457,9 @@ export function ConsultationPage() {
             </div>
           </section>
 
-          <section className="card p-5 sm:p-6">
+          </> : null}
+
+          {activeSection === 'studies' ? <section className="card p-5 sm:p-6">
             <SectionHeading
               icon={<Search className="h-4 w-4" />}
               title="Estudios y análisis"
@@ -461,8 +487,9 @@ export function ConsultationPage() {
                 />
               </Field>
             </div>
-          </section>
+          </section> : null}
 
+          {activeSection === 'evolution' ? <>
           <section className="card p-5 sm:p-6">
             <SectionHeading
               icon={<ClipboardCheck className="h-4 w-4" />}
@@ -526,6 +553,7 @@ export function ConsultationPage() {
               </div>
             </div>
           </section>
+          </> : null}
         </div>
 
         <aside className="no-print space-y-4 xl:sticky xl:top-24 xl:self-start">
@@ -814,3 +842,7 @@ function SectionHeading({
     </div>
   );
 }
+
+
+
+

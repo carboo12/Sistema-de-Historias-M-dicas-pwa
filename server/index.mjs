@@ -5,6 +5,7 @@ import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import fastifyStatic from '@fastify/static';
 import { resolve } from 'node:path';
+import { closeDatabase } from './db.mjs';
 import { HttpError } from './lib.mjs';
 import { authRoutes, SESSION_COOKIE } from './routes/auth.mjs';
 import { patientRoutes } from './routes/patients.mjs';
@@ -58,12 +59,30 @@ await app.register(catalogRoutes);
 if (process.env.NODE_ENV === 'production') {
   await app.register(fastifyStatic, {
     root: resolve(process.cwd(), 'dist'),
-    wildcard: false
+    wildcard: false,
+    index: false,
+    setHeaders(response, path) {
+      if (/\.(?:html|js|css|svg|png|webmanifest)$/.test(path)) {
+        response.setHeader('Cache-Control', path.endsWith('.html')
+          ? 'no-cache'
+          : 'public, max-age=31536000, immutable');
+      }
+    }
   });
   app.setNotFoundHandler((request, reply) => {
     if (request.raw.url?.startsWith('/api/')) {
       return reply.code(404).send({
         error: { code: 'not_found', message: 'Ruta no encontrada' }
+      });
+    }
+    if (request.method !== 'GET' && request.method !== 'HEAD') {
+      return reply.code(404).send({
+        error: { code: 'not_found', message: 'Ruta no encontrada' }
+      });
+    }
+    if (request.headers.accept && !request.headers.accept.includes('text/html')) {
+      return reply.code(404).send({
+        error: { code: 'not_found', message: 'Recurso no encontrado' }
       });
     }
     return reply.sendFile('index.html');
@@ -105,6 +124,10 @@ app.setErrorHandler((error, request, reply) => {
   return reply.code(500).send({
     error: { code: 'internal_error', message: 'Ocurrió un error inesperado' }
   });
+});
+
+app.addHook('onClose', async () => {
+  await closeDatabase();
 });
 
 const port = Number(process.env.PORT || 8787);

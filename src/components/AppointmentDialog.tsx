@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarPlus } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
-import { api, ApiError } from '../lib/api';
+import { api, ApiError } from '../lib/data';
 import { dateTimeToIso, todayInTimeZone } from '../lib/format';
 import type { Patient } from '../types';
 import { PatientPicker } from './PatientPicker';

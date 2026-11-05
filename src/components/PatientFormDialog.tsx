@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { UserPlus } from 'lucide-react';
-import { api, ApiError } from '../lib/api';
+import { api, ApiError } from '../lib/data';
 import type { Patient } from '../types';
 import { Button, Field, Input, Modal, Select, Textarea } from './ui';
 

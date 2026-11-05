@@ -29,7 +29,7 @@ import {
   PageHeader,
   SkeletonRows
 } from '../components/ui';
-import { api, ApiError } from '../lib/api';
+import { api, ApiError } from '../lib/data';
 import {
   ageFromBirthDate,
   consultationStatusLabel,
@@ -224,7 +224,7 @@ export function PatientDetailPage() {
             <div className="flex items-center justify-between border-b border-line/70 px-5 py-4 sm:px-6">
               <div>
                 <h2 className="text-sm font-extrabold uppercase tracking-[0.14em] text-ink/45">Historia clínica</h2>
-                <p className="mt-1 text-sm text-ink/55">Últimas atenciones registradas</p>
+                <p className="mt-1 text-sm text-ink/55">{consultations.length} atenciones · historial completo</p>
               </div>
               <Button variant="ghost" size="sm" onClick={() => navigate('/consultas')}>
                 Ver todas

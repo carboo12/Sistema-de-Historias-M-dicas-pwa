@@ -41,7 +41,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /^\/assets\//],
         cleanupOutdatedCaches: true
       }
     })
@@ -57,5 +57,8 @@ export default defineConfig({
   },
   preview: {
     port: 4173
-  }
+  },
+  // App Hosting serves the built SPA through Fastify; this fallback keeps direct
+  // React Router URLs working while leaving API and real static-file requests alone.
+  appType: 'spa'
 });

@@ -3,7 +3,7 @@
 # Las tablas fuera del slice se incorporarán cuando se migren sus operaciones.
 
 type Clinic @table(name: "clinics", key: "id") {
-  id: UUID!
+  id: UUID! @default(expr: "uuidV4()")
   code: String!
   name: String!
   legalName: String
@@ -17,12 +17,12 @@ type Clinic @table(name: "clinics", key: "id") {
   logoUrl: String
   settings: Any!
   isActive: Boolean!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }
 
 type User @table(name: "users", key: "id") {
-  id: UUID!
+  id: UUID! @default(expr: "uuidV4()")
   clinic: Clinic!
   firebaseUid: String
   username: String!
@@ -33,33 +33,33 @@ type User @table(name: "users", key: "id") {
   isActive: Boolean!
   mustChangePassword: Boolean!
   lastLoginAt: Timestamp
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }
 
 type Specialty @table(name: "specialties", key: "id") {
-  id: UUID!
+  id: UUID! @default(expr: "uuidV4()")
   clinic: Clinic!
   code: String!
   name: String!
   isActive: Boolean!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }
 
 type Office @table(name: "offices", key: "id") {
-  id: UUID!
+  id: UUID! @default(expr: "uuidV4()")
   clinic: Clinic!
   code: String!
   name: String!
   location: String
   isActive: Boolean!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }
 
 type Professional @table(name: "professionals", key: "id") {
-  id: UUID!
+  id: UUID! @default(expr: "uuidV4()")
   clinic: Clinic!
   user: User @unique
   employeeCode: String
@@ -75,37 +75,37 @@ type Professional @table(name: "professionals", key: "id") {
   defaultOffice: Office
   isActive: Boolean!
   notes: String
-  metadata: Any!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  metadata: Any! @default(sql: "'{}'::jsonb")
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }
 
 type ConsultationReason @table(name: "consultation_reasons", key: "id") {
-  id: UUID!
+  id: UUID! @default(expr: "uuidV4()")
   clinic: Clinic!
   code: String!
   name: String!
   isActive: Boolean!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }
 
 type Patient @table(name: "patients", key: "id") {
-  id: UUID!
+  id: UUID! @default(expr: "uuidV4()")
   clinic: Clinic!
   recordNumber: String!
   documentType: String!
   documentNumber: String
-  documentVerified: Boolean!
+  documentVerified: Boolean! @default(value: false)
   fullName: String!
   firstName: String
   lastName: String
   birthDate: Date
-  birthDateEstimated: Boolean!
-  deceased: Boolean!
+  birthDateEstimated: Boolean! @default(value: false)
+  deceased: Boolean! @default(value: false)
   deathDate: Date
-  sex: String!
-  maritalStatus: String!
+  sex: String! @default(value: "U")
+  maritalStatus: String! @default(value: "desconocido")
   bloodType: String
   nationality: String
   birthPlace: String
@@ -117,7 +117,7 @@ type Patient @table(name: "patients", key: "id") {
   mobile: String
   email: String
   occupation: String
-  isPrivate: Boolean!
+  isPrivate: Boolean! @default(value: true)
   photoUrl: String
   allergiesNotes: String
   currentDiagnosisSummary: String
@@ -127,18 +127,19 @@ type Patient @table(name: "patients", key: "id") {
   guardianPhone: String
   guardianEmail: String
   religion: String
-  isSuspended: Boolean!
+  isSuspended: Boolean! @default(value: false)
   suspensionReason: String
   notes: String
-  metadata: Any!
+  createdBy: User
+  metadata: Any! @default(sql: "'{}'::jsonb")
   searchText: String
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
   deletedAt: Timestamp
 }
 
 type PatientHistory @table(name: "patient_history", key: "id") {
-  id: UUID!
+  id: UUID! @default(expr: "uuidV4()")
   patient: Patient!
   category: String!
   description: String!
@@ -147,8 +148,8 @@ type PatientHistory @table(name: "patient_history", key: "id") {
   isActive: Boolean!
   recordedAt: Timestamp!
   recordedBy: User
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }
 
 type Cie10Code @table(name: "cie10_codes", key: "code") {
@@ -158,12 +159,12 @@ type Cie10Code @table(name: "cie10_codes", key: "code") {
   category: String
   isBillable: Boolean!
   searchText: String
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }
 
 type Appointment @table(name: "appointments", key: "id") {
-  id: UUID!
+  id: UUID! @default(expr: "uuidV4()")
   clinic: Clinic!
   patient: Patient!
   professional: Professional!
@@ -178,13 +179,14 @@ type Appointment @table(name: "appointments", key: "id") {
   source: String!
   legacyId: String
   legacyStatus: String
-  metadata: Any!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdBy: User
+  metadata: Any! @default(sql: "'{}'::jsonb")
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }
 
 type Consultation @table(name: "consultations", key: "id") {
-  id: UUID!
+  id: UUID! @default(expr: "uuidV4()")
   clinic: Clinic!
   patient: Patient!
   professional: Professional!
@@ -203,36 +205,39 @@ type Consultation @table(name: "consultations", key: "id") {
   evolution: String
   plan: String
   notes: String
-  vitals: Any!
+  vitals: Any! @default(sql: "'{}'::jsonb")
   status: String!
   signedAt: Timestamp
   source: String!
   legacyId: String
-  metadata: Any!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdBy: User
+  signedBy: User
+  metadata: Any! @default(sql: "'{}'::jsonb")
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
   deletedAt: Timestamp
 }
 
 type ConsultationDiagnosis @table(name: "consultation_diagnoses", key: "id") {
-  id: UUID!
+  id: UUID! @default(expr: "uuidV4()")
   clinic: Clinic!
   patient: Patient!
   consultation: Consultation
   professional: Professional
-  codeSystem: String!
+  codeSystem: String! @default(value: "CIE10")
   cie10Code: String
   diagnosisText: String!
-  diagnosisType: String!
+  diagnosisType: String! @default(value: "principal")
   notes: String
-  diagnosedAt: Timestamp!
+  diagnosedAt: Timestamp! @default(expr: "request.time")
   legacyId: String
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdBy: User
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }
 
 type Prescription @table(name: "prescriptions", key: "id") {
-  id: UUID!
+  id: UUID! @default(expr: "uuidV4()")
   clinic: Clinic!
   patient: Patient!
   consultation: Consultation
@@ -242,12 +247,12 @@ type Prescription @table(name: "prescriptions", key: "id") {
   status: String!
   notes: String
   legacyId: String
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }
 
 type PrescriptionItem @table(name: "prescription_items", key: "id") {
-  id: UUID!
+  id: UUID! @default(expr: "uuidV4()")
   prescription: Prescription!
   medicationName: String!
   presentation: String
@@ -259,6 +264,23 @@ type PrescriptionItem @table(name: "prescription_items", key: "id") {
   instructions: String
   sortOrder: Int!
   legacyId: String
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type PatientAnamnesisAnswer @table(name: "patient_anamnesis_answers", key: "id") {
+  id: UUID! @default(expr: "uuidV4()")
+  clinic: Clinic!
+  patient: Patient!
+  consultation: Consultation
+  specialtyCode: String
+  itemCode: String
+  promptSnapshot: String
+  answer: String
+  details: String
+  recordedAt: Timestamp!
+  source: String!
+  legacyId: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }

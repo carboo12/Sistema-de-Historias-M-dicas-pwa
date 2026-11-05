@@ -72,6 +72,15 @@ extend type Mutation {
     data: Patient_Data!
   ): Patient_KeyOutput! @fdc_generated(from: "Patient", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `PatientAnamnesisAnswer` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  patientAnamnesisAnswer_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: PatientAnamnesisAnswer_Data!
+  ): PatientAnamnesisAnswer_KeyOutput! @fdc_generated(from: "PatientAnamnesisAnswer", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `PatientHistory` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   patientHistory_insert(
@@ -197,6 +206,15 @@ extend type Mutation {
     """
     data: [Patient_Data!]!
   ): [Patient_KeyOutput!]! @fdc_generated(from: "Patient", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `PatientAnamnesisAnswer` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  patientAnamnesisAnswer_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [PatientAnamnesisAnswer_Data!]!
+  ): [PatientAnamnesisAnswer_KeyOutput!]! @fdc_generated(from: "PatientAnamnesisAnswer", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `PatientHistory` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -324,6 +342,15 @@ extend type Mutation {
     data: Patient_Data!
   ): Patient_KeyOutput! @fdc_generated(from: "Patient", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `PatientAnamnesisAnswer` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PatientAnamnesisAnswer`.
+  """
+  patientAnamnesisAnswer_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: PatientAnamnesisAnswer_Data!
+  ): PatientAnamnesisAnswer_KeyOutput! @fdc_generated(from: "PatientAnamnesisAnswer", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `PatientHistory` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PatientHistory`.
   """
   patientHistory_upsert(
@@ -449,6 +476,15 @@ extend type Mutation {
     """
     data: [Patient_Data!]!
   ): [Patient_KeyOutput!]! @fdc_generated(from: "Patient", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `PatientAnamnesisAnswer` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PatientAnamnesisAnswer`.
+  """
+  patientAnamnesisAnswer_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [PatientAnamnesisAnswer_Data!]!
+  ): [PatientAnamnesisAnswer_KeyOutput!]! @fdc_generated(from: "PatientAnamnesisAnswer", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `PatientHistory` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PatientHistory`.
   """
@@ -690,6 +726,30 @@ extend type Mutation {
     """
     data: Patient_Data!
   ): Patient_KeyOutput @fdc_generated(from: "Patient", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `PatientAnamnesisAnswer` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `PatientAnamnesisAnswer` or `null` if not found.
+  """
+  patientAnamnesisAnswer_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PatientAnamnesisAnswer_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PatientAnamnesisAnswer_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: PatientAnamnesisAnswer_Data!
+  ): PatientAnamnesisAnswer_KeyOutput @fdc_generated(from: "PatientAnamnesisAnswer", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `PatientHistory` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `PatientHistory` or `null` if not found.
   """
@@ -987,6 +1047,25 @@ extend type Mutation {
     data: Patient_Data!
   ): Int! @fdc_generated(from: "Patient", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `PatientAnamnesisAnswer` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  patientAnamnesisAnswer_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: PatientAnamnesisAnswer_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: PatientAnamnesisAnswer_Data!
+  ): Int! @fdc_generated(from: "PatientAnamnesisAnswer", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `PatientHistory` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   patientHistory_updateMany(
@@ -1248,6 +1327,25 @@ extend type Mutation {
     first: Patient_FirstRow
   ): Patient_KeyOutput @fdc_generated(from: "Patient", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `PatientAnamnesisAnswer` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  patientAnamnesisAnswer_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PatientAnamnesisAnswer_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PatientAnamnesisAnswer_FirstRow
+  ): PatientAnamnesisAnswer_KeyOutput @fdc_generated(from: "PatientAnamnesisAnswer", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `PatientHistory` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   patientHistory_delete(
@@ -1473,6 +1571,20 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "Patient", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `PatientAnamnesisAnswer` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  patientAnamnesisAnswer_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: PatientAnamnesisAnswer_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "PatientAnamnesisAnswer", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `PatientHistory` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
