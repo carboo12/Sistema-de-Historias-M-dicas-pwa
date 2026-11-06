@@ -39,7 +39,7 @@ query ListPatients($q: String!, $limit: Int!, $offset: Int!) @auth(level: USER) 
         }
       ]
     }
-    orderBy: [{ updatedAt: DESC }]
+    orderBy: [{ searchText: ASC }]
     limit: $limit
     offset: $offset
   ) {
@@ -107,6 +107,42 @@ query CountPatients($q: String!) @auth(level: USER) {
   ) {
     _count
   }
+}
+
+query ListPatientsByTerms($q1: String! = "", $q2: String! = "", $q3: String! = "", $q4: String! = "", $q5: String! = "", $q6: String! = "", $limit: Int!, $offset: Int!) @auth(level: USER) {
+  patients(
+    where: {
+      _and: [
+        { clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } } }
+        { deletedAt: { isNull: true } }
+        { searchText: { contains: $q1 } }
+        { searchText: { contains: $q2 } }
+        { searchText: { contains: $q3 } }
+        { searchText: { contains: $q4 } }
+        { searchText: { contains: $q5 } }
+        { searchText: { contains: $q6 } }
+      ]
+    }
+    orderBy: [{ searchText: ASC }]
+    limit: $limit
+    offset: $offset
+  ) {
+    id recordNumber documentType documentNumber documentVerified fullName firstName lastName birthDate ageOverride birthDateEstimated deceased sex maritalStatus bloodType nationality birthPlace address city state country phone mobile email occupation isPrivate photoUrl allergiesNotes currentDiagnosisSummary isSuspended suspensionReason notes createdAt updatedAt
+    appointments_on_patient(where: { status: { in: ["programada", "confirmada", "en_espera"] }, startsAt: { ge_expr: "request.time" } }, orderBy: [{ startsAt: ASC }], limit: 1) { startsAt }
+  }
+}
+
+query CountPatientsByTerms($q1: String! = "", $q2: String! = "", $q3: String! = "", $q4: String! = "", $q5: String! = "", $q6: String! = "") @auth(level: USER) {
+  patients(where: { _and: [
+    { clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } } }
+    { deletedAt: { isNull: true } }
+    { searchText: { contains: $q1 } }
+    { searchText: { contains: $q2 } }
+    { searchText: { contains: $q3 } }
+    { searchText: { contains: $q4 } }
+    { searchText: { contains: $q5 } }
+    { searchText: { contains: $q6 } }
+  ] }, limit: 1) { _count }
 }
 
 query GetPatient($id: UUID!) @auth(level: USER) {

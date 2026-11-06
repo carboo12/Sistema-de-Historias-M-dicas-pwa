@@ -165,13 +165,17 @@ export function AppShell() {
 
       {notificationPermission === 'denied' ? <div className="no-print px-4 pt-3 text-center text-xs text-ink/45">Los avisos de citas están bloqueados en el navegador. Puedes habilitarlos desde la configuración del sitio.</div> : null}
 
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-[1] flex items-center justify-center lg:pl-[264px]">
+        <img src="/logo-orthospine.png" alt="" className="h-auto w-[min(62vw,560px)] select-none object-contain opacity-[0.05]" />
+      </div>
+
       {!online ? (
         <div className="no-print bg-amber-500/10 px-4 py-2 text-center text-xs font-semibold text-amber-900 sm:hidden">
           Sin conexión. Puedes seguir redactando; guarda al recuperar la red.
         </div>
       ) : null}
 
-      <main className="mx-auto w-full max-w-[1480px] px-4 pb-28 pt-6 sm:px-6 lg:px-10 lg:pb-12 lg:pt-8">
+      <main className="relative z-10 mx-auto w-full max-w-[1480px] px-4 pb-28 pt-6 sm:px-6 lg:px-10 lg:pb-12 lg:pt-8">
         <Outlet />
       </main>
 

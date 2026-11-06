@@ -115,12 +115,12 @@ export function PatientDetailPage() {
   });
 
   const deletePatient = useMutation({
-    mutationFn: () => api.patients.delete(routePatientId as string),
+    mutationFn: (id: string) => api.patients.delete(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['patients'] });
       navigate('/pacientes');
     },
-    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo archivar el paciente')
+    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo eliminar el paciente')
   });
 
   if (detail.isLoading) {
@@ -520,11 +520,11 @@ export function PatientDetailPage() {
       <Modal
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
-        title="Archivar paciente"
-        description="Se ocultará del directorio activo. El expediente y sus relaciones clínicas se conservarán en el historial."
-        footer={<><Button variant="secondary" onClick={() => setDeleteOpen(false)}>Cancelar</Button><Button variant="danger" loading={deletePatient.isPending} onClick={() => deletePatient.mutate()}>Archivar paciente</Button></>}
+        title="Eliminar paciente del directorio"
+        description="El expediente se dará de baja y sus relaciones clínicas se conservarán en el historial."
+        footer={<><Button variant="secondary" onClick={() => setDeleteOpen(false)}>Cancelar</Button><Button variant="danger" loading={deletePatient.isPending} onClick={() => deletePatient.mutate(patient.id)}>Confirmar eliminación</Button></>}
       >
-        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Estás seguro de archivar a {patient.fullName}? No aparecerá en el directorio activo, pero se conservarán sus datos clínicos.</p>
+        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Confirmas retirar a {patient.fullName} del directorio activo? Su historial médico se conservará.</p>
       </Modal>
       <Modal
         open={Boolean(emailTarget)}

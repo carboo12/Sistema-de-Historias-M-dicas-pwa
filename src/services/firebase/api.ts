@@ -1,4 +1,5 @@
 import {
+  countPatientsByTerms,
   countPatients,
   clinicReports,
   createPatientStudy,
@@ -12,6 +13,7 @@ import {
   getSession,
   listAgenda,
   listConsultations,
+  listPatientsByTerms,
   listPatients,
   listPatientStudies,
   signConsultation,
@@ -282,10 +284,24 @@ export const firebaseApi = {
   },
   patients: {
     async list(q = '', limit = 25, offset = 0) {
-      const normalizedQuery = normalizePatientSearch(q);
+      if (!q.trim()) {
+        const [{ data }, count] = await Promise.all([
+          listPatients(dc(), { q: '', limit, offset }),
+          countPatients(dc(), { q: '' })
+        ]);
+        return {
+          patients: data.patients.map(mapPatient),
+          total: count.data.patients[0]?._count ?? data.patients.length,
+          limit,
+          offset
+        };
+      }
+      const searchTerms = normalizePatientSearch(q).split(/\s+/).filter(Boolean);
+      const lastTerm = searchTerms.at(-1) ?? '';
+      const variables = Object.fromEntries(Array.from({ length: 6 }, (_, index) => [`q${index + 1}`, searchTerms[index] ?? lastTerm])) as Record<string, string>;
       const [{ data }, count] = await Promise.all([
-        listPatients(dc(), { q: normalizedQuery, limit, offset }),
-        countPatients(dc(), { q: normalizedQuery })
+        listPatientsByTerms(dc(), { ...variables, limit, offset }),
+        countPatientsByTerms(dc(), variables)
       ]);
       return {
         patients: data.patients.map(mapPatient),

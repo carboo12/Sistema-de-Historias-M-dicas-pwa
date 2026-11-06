@@ -70,6 +70,21 @@ export interface Consultation_Key {
   __typename?: 'Consultation_Key';
 }
 
+export interface CountPatientsByTermsData {
+  patients: ({
+    _count: number;
+  })[];
+}
+
+export interface CountPatientsByTermsVariables {
+  q1?: string;
+  q2?: string;
+  q3?: string;
+  q4?: string;
+  q5?: string;
+  q6?: string;
+}
+
 export interface CountPatientsData {
   patients: ({
     _count: number;
@@ -471,6 +486,59 @@ export interface ListPatientStudiesVariables {
   offset: number;
 }
 
+export interface ListPatientsByTermsData {
+  patients: ({
+    id: UUIDString;
+    recordNumber: string;
+    documentType?: string | null;
+    documentNumber?: string | null;
+    documentVerified: boolean;
+    fullName: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    birthDate?: DateString | null;
+    ageOverride?: number | null;
+    birthDateEstimated: boolean;
+    deceased: boolean;
+    sex: string;
+    maritalStatus: string;
+    bloodType?: string | null;
+    nationality?: string | null;
+    birthPlace?: string | null;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    country?: string | null;
+    phone?: string | null;
+    mobile?: string | null;
+    email?: string | null;
+    occupation?: string | null;
+    isPrivate: boolean;
+    photoUrl?: string | null;
+    allergiesNotes?: string | null;
+    currentDiagnosisSummary?: string | null;
+    isSuspended: boolean;
+    suspensionReason?: string | null;
+    notes?: string | null;
+    createdAt: TimestampString;
+    updatedAt: TimestampString;
+    appointments_on_patient: ({
+      startsAt: TimestampString;
+    })[];
+  } & Patient_Key)[];
+}
+
+export interface ListPatientsByTermsVariables {
+  q1?: string;
+  q2?: string;
+  q3?: string;
+  q4?: string;
+  q5?: string;
+  q6?: string;
+  limit: number;
+  offset: number;
+}
+
 export interface ListPatientsData {
   patients: ({
     id: UUIDString;
@@ -840,6 +908,30 @@ export const countPatientsRef: CountPatientsRef;
 
 export function countPatients(vars: CountPatientsVariables, options?: ExecuteQueryOptions): QueryPromise<CountPatientsData, CountPatientsVariables>;
 export function countPatients(dc: DataConnect, vars: CountPatientsVariables, options?: ExecuteQueryOptions): QueryPromise<CountPatientsData, CountPatientsVariables>;
+
+interface ListPatientsByTermsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ListPatientsByTermsVariables): QueryRef<ListPatientsByTermsData, ListPatientsByTermsVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: ListPatientsByTermsVariables): QueryRef<ListPatientsByTermsData, ListPatientsByTermsVariables>;
+  operationName: string;
+}
+export const listPatientsByTermsRef: ListPatientsByTermsRef;
+
+export function listPatientsByTerms(vars: ListPatientsByTermsVariables, options?: ExecuteQueryOptions): QueryPromise<ListPatientsByTermsData, ListPatientsByTermsVariables>;
+export function listPatientsByTerms(dc: DataConnect, vars: ListPatientsByTermsVariables, options?: ExecuteQueryOptions): QueryPromise<ListPatientsByTermsData, ListPatientsByTermsVariables>;
+
+interface CountPatientsByTermsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars?: CountPatientsByTermsVariables): QueryRef<CountPatientsByTermsData, CountPatientsByTermsVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars?: CountPatientsByTermsVariables): QueryRef<CountPatientsByTermsData, CountPatientsByTermsVariables>;
+  operationName: string;
+}
+export const countPatientsByTermsRef: CountPatientsByTermsRef;
+
+export function countPatientsByTerms(vars?: CountPatientsByTermsVariables, options?: ExecuteQueryOptions): QueryPromise<CountPatientsByTermsData, CountPatientsByTermsVariables>;
+export function countPatientsByTerms(dc: DataConnect, vars?: CountPatientsByTermsVariables, options?: ExecuteQueryOptions): QueryPromise<CountPatientsByTermsData, CountPatientsByTermsVariables>;
 
 interface GetPatientRef {
   /* Allow users to create refs without passing in DataConnect */

@@ -73,6 +73,10 @@ export async function patientRoutes(app) {
     const limit = Math.min(Math.max(Number(request.query?.limit) || 25, 1), 100);
     const offset = Math.max(Number(request.query?.offset) || 0, 0);
     const clinicId = request.user.clinicId;
+    const searchCondition = `($2::text is null or btrim($2) = '' or not exists (
+      select 1 from unnest(regexp_split_to_array(lower(public.immutable_unaccent($2)), '\\s+')) as terms(term)
+      where term <> '' and p.search_text not like '%' || term || '%'
+    ))`;
 
     const rows = await many(
       `select
@@ -89,15 +93,8 @@ export async function patientRoutes(app) {
        from public.patients p
        where p.clinic_id = $1
          and p.deleted_at is null
-         and (
-           $2::text is null
-           or p.search_text like '%' || lower(public.immutable_unaccent($2)) || '%'
-           or lower(public.immutable_unaccent(coalesce(p.first_name, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
-           or lower(public.immutable_unaccent(coalesce(p.last_name, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
-           or lower(public.immutable_unaccent(coalesce(p.document_number, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
-           or lower(public.immutable_unaccent(coalesce(p.record_number, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
-         )
-       order by p.updated_at desc
+         and ${searchCondition}
+       order by lower(public.immutable_unaccent(p.full_name)) asc, p.full_name asc, p.id asc
        limit $3 offset $4`,
       [clinicId, q, limit, offset]
     );
@@ -107,14 +104,7 @@ export async function patientRoutes(app) {
        from public.patients p
        where p.clinic_id = $1
          and p.deleted_at is null
-          and (
-            $2::text is null
-            or p.search_text like '%' || lower(public.immutable_unaccent($2)) || '%'
-            or lower(public.immutable_unaccent(coalesce(p.first_name, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
-            or lower(public.immutable_unaccent(coalesce(p.last_name, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
-            or lower(public.immutable_unaccent(coalesce(p.document_number, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
-            or lower(public.immutable_unaccent(coalesce(p.record_number, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
-          )`,
+          and ${searchCondition}`,
       [clinicId, q]
     );
 

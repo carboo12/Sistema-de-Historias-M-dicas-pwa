@@ -11,6 +11,8 @@ This README will guide you through the process of using the generated JavaScript
   - [*GetSession*](#getsession)
   - [*ListPatients*](#listpatients)
   - [*CountPatients*](#countpatients)
+  - [*ListPatientsByTerms*](#listpatientsbyterms)
+  - [*CountPatientsByTerms*](#countpatientsbyterms)
   - [*GetPatient*](#getpatient)
   - [*ListAgenda*](#listagenda)
   - [*ListConsultations*](#listconsultations)
@@ -439,6 +441,304 @@ const ref = countPatientsRef({ q: ..., });
 // You can also pass in a `DataConnect` instance to the `QueryRef` function.
 const dataConnect = getDataConnect(connectorConfig);
 const ref = countPatientsRef(dataConnect, countPatientsVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.patients);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.patients);
+});
+```
+
+## ListPatientsByTerms
+You can execute the `ListPatientsByTerms` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+listPatientsByTerms(vars: ListPatientsByTermsVariables, options?: ExecuteQueryOptions): QueryPromise<ListPatientsByTermsData, ListPatientsByTermsVariables>;
+
+interface ListPatientsByTermsRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ListPatientsByTermsVariables): QueryRef<ListPatientsByTermsData, ListPatientsByTermsVariables>;
+}
+export const listPatientsByTermsRef: ListPatientsByTermsRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+listPatientsByTerms(dc: DataConnect, vars: ListPatientsByTermsVariables, options?: ExecuteQueryOptions): QueryPromise<ListPatientsByTermsData, ListPatientsByTermsVariables>;
+
+interface ListPatientsByTermsRef {
+  ...
+  (dc: DataConnect, vars: ListPatientsByTermsVariables): QueryRef<ListPatientsByTermsData, ListPatientsByTermsVariables>;
+}
+export const listPatientsByTermsRef: ListPatientsByTermsRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the listPatientsByTermsRef:
+```typescript
+const name = listPatientsByTermsRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `ListPatientsByTerms` query requires an argument of type `ListPatientsByTermsVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface ListPatientsByTermsVariables {
+  q1?: string;
+  q2?: string;
+  q3?: string;
+  q4?: string;
+  q5?: string;
+  q6?: string;
+  limit: number;
+  offset: number;
+}
+```
+### Return Type
+Recall that executing the `ListPatientsByTerms` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `ListPatientsByTermsData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface ListPatientsByTermsData {
+  patients: ({
+    id: UUIDString;
+    recordNumber: string;
+    documentType?: string | null;
+    documentNumber?: string | null;
+    documentVerified: boolean;
+    fullName: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    birthDate?: DateString | null;
+    ageOverride?: number | null;
+    birthDateEstimated: boolean;
+    deceased: boolean;
+    sex: string;
+    maritalStatus: string;
+    bloodType?: string | null;
+    nationality?: string | null;
+    birthPlace?: string | null;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    country?: string | null;
+    phone?: string | null;
+    mobile?: string | null;
+    email?: string | null;
+    occupation?: string | null;
+    isPrivate: boolean;
+    photoUrl?: string | null;
+    allergiesNotes?: string | null;
+    currentDiagnosisSummary?: string | null;
+    isSuspended: boolean;
+    suspensionReason?: string | null;
+    notes?: string | null;
+    createdAt: TimestampString;
+    updatedAt: TimestampString;
+    appointments_on_patient: ({
+      startsAt: TimestampString;
+    })[];
+  } & Patient_Key)[];
+}
+```
+### Using `ListPatientsByTerms`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, listPatientsByTerms, ListPatientsByTermsVariables } from '@historias/dataconnect';
+
+// The `ListPatientsByTerms` query requires an argument of type `ListPatientsByTermsVariables`:
+const listPatientsByTermsVars: ListPatientsByTermsVariables = {
+  q1: ..., // optional
+  q2: ..., // optional
+  q3: ..., // optional
+  q4: ..., // optional
+  q5: ..., // optional
+  q6: ..., // optional
+  limit: ..., 
+  offset: ..., 
+};
+
+// Call the `listPatientsByTerms()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await listPatientsByTerms(listPatientsByTermsVars);
+// Variables can be defined inline as well.
+const { data } = await listPatientsByTerms({ q1: ..., q2: ..., q3: ..., q4: ..., q5: ..., q6: ..., limit: ..., offset: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await listPatientsByTerms(dataConnect, listPatientsByTermsVars);
+
+console.log(data.patients);
+
+// Or, you can use the `Promise` API.
+listPatientsByTerms(listPatientsByTermsVars).then((response) => {
+  const data = response.data;
+  console.log(data.patients);
+});
+```
+
+### Using `ListPatientsByTerms`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, listPatientsByTermsRef, ListPatientsByTermsVariables } from '@historias/dataconnect';
+
+// The `ListPatientsByTerms` query requires an argument of type `ListPatientsByTermsVariables`:
+const listPatientsByTermsVars: ListPatientsByTermsVariables = {
+  q1: ..., // optional
+  q2: ..., // optional
+  q3: ..., // optional
+  q4: ..., // optional
+  q5: ..., // optional
+  q6: ..., // optional
+  limit: ..., 
+  offset: ..., 
+};
+
+// Call the `listPatientsByTermsRef()` function to get a reference to the query.
+const ref = listPatientsByTermsRef(listPatientsByTermsVars);
+// Variables can be defined inline as well.
+const ref = listPatientsByTermsRef({ q1: ..., q2: ..., q3: ..., q4: ..., q5: ..., q6: ..., limit: ..., offset: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = listPatientsByTermsRef(dataConnect, listPatientsByTermsVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.patients);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.patients);
+});
+```
+
+## CountPatientsByTerms
+You can execute the `CountPatientsByTerms` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+countPatientsByTerms(vars?: CountPatientsByTermsVariables, options?: ExecuteQueryOptions): QueryPromise<CountPatientsByTermsData, CountPatientsByTermsVariables>;
+
+interface CountPatientsByTermsRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars?: CountPatientsByTermsVariables): QueryRef<CountPatientsByTermsData, CountPatientsByTermsVariables>;
+}
+export const countPatientsByTermsRef: CountPatientsByTermsRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+countPatientsByTerms(dc: DataConnect, vars?: CountPatientsByTermsVariables, options?: ExecuteQueryOptions): QueryPromise<CountPatientsByTermsData, CountPatientsByTermsVariables>;
+
+interface CountPatientsByTermsRef {
+  ...
+  (dc: DataConnect, vars?: CountPatientsByTermsVariables): QueryRef<CountPatientsByTermsData, CountPatientsByTermsVariables>;
+}
+export const countPatientsByTermsRef: CountPatientsByTermsRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the countPatientsByTermsRef:
+```typescript
+const name = countPatientsByTermsRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `CountPatientsByTerms` query has an optional argument of type `CountPatientsByTermsVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface CountPatientsByTermsVariables {
+  q1?: string;
+  q2?: string;
+  q3?: string;
+  q4?: string;
+  q5?: string;
+  q6?: string;
+}
+```
+### Return Type
+Recall that executing the `CountPatientsByTerms` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `CountPatientsByTermsData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface CountPatientsByTermsData {
+  patients: ({
+    _count: number;
+  })[];
+}
+```
+### Using `CountPatientsByTerms`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, countPatientsByTerms, CountPatientsByTermsVariables } from '@historias/dataconnect';
+
+// The `CountPatientsByTerms` query has an optional argument of type `CountPatientsByTermsVariables`:
+const countPatientsByTermsVars: CountPatientsByTermsVariables = {
+  q1: ..., // optional
+  q2: ..., // optional
+  q3: ..., // optional
+  q4: ..., // optional
+  q5: ..., // optional
+  q6: ..., // optional
+};
+
+// Call the `countPatientsByTerms()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await countPatientsByTerms(countPatientsByTermsVars);
+// Variables can be defined inline as well.
+const { data } = await countPatientsByTerms({ q1: ..., q2: ..., q3: ..., q4: ..., q5: ..., q6: ..., });
+// Since all variables are optional for this query, you can omit the `CountPatientsByTermsVariables` argument.
+const { data } = await countPatientsByTerms();
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await countPatientsByTerms(dataConnect, countPatientsByTermsVars);
+
+console.log(data.patients);
+
+// Or, you can use the `Promise` API.
+countPatientsByTerms(countPatientsByTermsVars).then((response) => {
+  const data = response.data;
+  console.log(data.patients);
+});
+```
+
+### Using `CountPatientsByTerms`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, countPatientsByTermsRef, CountPatientsByTermsVariables } from '@historias/dataconnect';
+
+// The `CountPatientsByTerms` query has an optional argument of type `CountPatientsByTermsVariables`:
+const countPatientsByTermsVars: CountPatientsByTermsVariables = {
+  q1: ..., // optional
+  q2: ..., // optional
+  q3: ..., // optional
+  q4: ..., // optional
+  q5: ..., // optional
+  q6: ..., // optional
+};
+
+// Call the `countPatientsByTermsRef()` function to get a reference to the query.
+const ref = countPatientsByTermsRef(countPatientsByTermsVars);
+// Variables can be defined inline as well.
+const ref = countPatientsByTermsRef({ q1: ..., q2: ..., q3: ..., q4: ..., q5: ..., q6: ..., });
+// Since all variables are optional for this query, you can omit the `CountPatientsByTermsVariables` argument.
+const ref = countPatientsByTermsRef();
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = countPatientsByTermsRef(dataConnect, countPatientsByTermsVars);
 
 // Call `executeQuery()` on the reference to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.

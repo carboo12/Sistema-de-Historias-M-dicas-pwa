@@ -58,6 +58,22 @@ export function PatientsPage() {
   const rows = patients.data?.patients ?? [];
   const archivePatient = useMutation({
     mutationFn: (patientId: string) => api.patients.delete(patientId),
+    onMutate: async (patientId) => {
+      await queryClient.cancelQueries({ queryKey: ['patients'] });
+      const previous = queryClient.getQueriesData<{ patients: import('../types').Patient[]; total: number }>({ queryKey: ['patients'] });
+      for (const [queryKey, value] of previous) {
+        if (!value) continue;
+        queryClient.setQueryData(queryKey, {
+          ...value,
+          patients: value.patients.filter((patient) => patient.id !== patientId),
+          total: Math.max(value.total - (value.patients.some((patient) => patient.id === patientId) ? 1 : 0), 0)
+        });
+      }
+      return { previous };
+    },
+    onError: (_cause, _patientId, context) => {
+      for (const [queryKey, value] of context?.previous ?? []) queryClient.setQueryData(queryKey, value);
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['patients'] });
       setDeleteTarget(null);
@@ -281,8 +297,9 @@ export function PatientsPage() {
         onClose={() => { setDialogOpen(false); setEditingPatient(null); }}
         onCreated={(patient) => { setEditingPatient(null); if (dialogOpen) navigate(`/pacientes/${patient.id}`); }}
       />
-      <Modal open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Archivar paciente" description="El expediente y sus relaciones se conservarán; el paciente dejará de aparecer en el directorio activo." footer={<><Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancelar</Button><Button variant="danger" loading={archivePatient.isPending} onClick={() => deleteTarget && archivePatient.mutate(deleteTarget.id)}>Archivar paciente</Button></>}>
-        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Estás seguro de archivar a {deleteTarget?.fullName}? Sus datos clínicos permanecerán asociados al historial.</p>
+      <Modal open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Eliminar paciente del directorio" description="El expediente se dará de baja y sus relaciones clínicas se conservarán en el historial." footer={<><Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancelar</Button><Button variant="danger" loading={archivePatient.isPending} onClick={() => deleteTarget && archivePatient.mutate(deleteTarget.id)}>Confirmar eliminación</Button></>}>
+        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Confirmas retirar a {deleteTarget?.fullName} del directorio activo? Su historial médico se conservará.</p>
+        {archivePatient.isError ? <p role="alert" className="mt-3 text-sm font-semibold text-red-700">{archivePatient.error instanceof Error ? archivePatient.error.message : 'No se pudo eliminar el paciente. Intenta de nuevo.'}</p> : null}
       </Modal>
     </div>
   );
