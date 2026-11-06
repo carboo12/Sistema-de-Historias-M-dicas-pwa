@@ -9,6 +9,7 @@ import {
   getDataConnect,
   type DataConnect
 } from 'firebase/data-connect';
+import { connectStorageEmulator, getStorage, type FirebaseStorage } from 'firebase/storage';
 import { connectorConfig } from '@historias/dataconnect';
 
 const firebaseConfig = {
@@ -31,11 +32,13 @@ export const useFirebaseBackend =
 let app: FirebaseApp | null = null;
 let authInstance: Auth | null = null;
 let dataConnectInstance: DataConnect | null = null;
+let storageInstance: FirebaseStorage | null = null;
 
 if (isFirebaseConfigured) {
   app = getApps()[0] ?? initializeApp(firebaseConfig);
   authInstance = getAuth(app);
   dataConnectInstance = getDataConnect(app, connectorConfig);
+  storageInstance = getStorage(app);
 
   if (import.meta.env.VITE_FIREBASE_USE_EMULATORS === 'true') {
     const host = import.meta.env.VITE_FIREBASE_EMULATOR_HOST || '127.0.0.1';
@@ -45,18 +48,20 @@ if (isFirebaseConfigured) {
       host,
       Number(import.meta.env.VITE_DATA_CONNECT_EMULATOR_PORT || 9399)
     );
+    connectStorageEmulator(storageInstance, host, Number(import.meta.env.VITE_STORAGE_EMULATOR_PORT || 9199));
   }
 }
 
 export const firebaseApp = app;
 export const firebaseAuth = authInstance;
 export const firebaseDataConnect = dataConnectInstance;
+export const firebaseStorage = storageInstance;
 
 export function requireFirebase() {
-  if (!firebaseAuth || !firebaseDataConnect) {
+  if (!firebaseAuth || !firebaseDataConnect || !firebaseStorage) {
     throw new Error(
       'Firebase no está configurado. Define VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID y VITE_FIREBASE_APP_ID.'
     );
   }
-  return { auth: firebaseAuth, dataConnect: firebaseDataConnect };
+  return { auth: firebaseAuth, dataConnect: firebaseDataConnect, storage: firebaseStorage };
 }

@@ -90,6 +90,15 @@ extend type Mutation {
     data: PatientHistory_Data!
   ): PatientHistory_KeyOutput! @fdc_generated(from: "PatientHistory", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `PatientStudy` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  patientStudy_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: PatientStudy_Data!
+  ): PatientStudy_KeyOutput! @fdc_generated(from: "PatientStudy", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `Prescription` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   prescription_insert(
@@ -224,6 +233,15 @@ extend type Mutation {
     """
     data: [PatientHistory_Data!]!
   ): [PatientHistory_KeyOutput!]! @fdc_generated(from: "PatientHistory", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `PatientStudy` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  patientStudy_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [PatientStudy_Data!]!
+  ): [PatientStudy_KeyOutput!]! @fdc_generated(from: "PatientStudy", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `Prescription` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -360,6 +378,15 @@ extend type Mutation {
     data: PatientHistory_Data!
   ): PatientHistory_KeyOutput! @fdc_generated(from: "PatientHistory", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `PatientStudy` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PatientStudy`.
+  """
+  patientStudy_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: PatientStudy_Data!
+  ): PatientStudy_KeyOutput! @fdc_generated(from: "PatientStudy", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `Prescription` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Prescription`.
   """
   prescription_upsert(
@@ -494,6 +521,15 @@ extend type Mutation {
     """
     data: [PatientHistory_Data!]!
   ): [PatientHistory_KeyOutput!]! @fdc_generated(from: "PatientHistory", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `PatientStudy` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `PatientStudy`.
+  """
+  patientStudy_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [PatientStudy_Data!]!
+  ): [PatientStudy_KeyOutput!]! @fdc_generated(from: "PatientStudy", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `Prescription` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Prescription`.
   """
@@ -774,6 +810,30 @@ extend type Mutation {
     """
     data: PatientHistory_Data!
   ): PatientHistory_KeyOutput @fdc_generated(from: "PatientHistory", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `PatientStudy` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `PatientStudy` or `null` if not found.
+  """
+  patientStudy_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PatientStudy_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PatientStudy_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: PatientStudy_Data!
+  ): PatientStudy_KeyOutput @fdc_generated(from: "PatientStudy", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `Prescription` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Prescription` or `null` if not found.
   """
@@ -1085,6 +1145,25 @@ extend type Mutation {
     data: PatientHistory_Data!
   ): Int! @fdc_generated(from: "PatientHistory", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `PatientStudy` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  patientStudy_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: PatientStudy_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: PatientStudy_Data!
+  ): Int! @fdc_generated(from: "PatientStudy", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `Prescription` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   prescription_updateMany(
@@ -1365,6 +1444,25 @@ extend type Mutation {
     first: PatientHistory_FirstRow
   ): PatientHistory_KeyOutput @fdc_generated(from: "PatientHistory", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `PatientStudy` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  patientStudy_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: PatientStudy_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: PatientStudy_FirstRow
+  ): PatientStudy_KeyOutput @fdc_generated(from: "PatientStudy", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `Prescription` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   prescription_delete(
@@ -1599,6 +1697,20 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "PatientHistory", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `PatientStudy` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  patientStudy_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: PatientStudy_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `Prescription` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """

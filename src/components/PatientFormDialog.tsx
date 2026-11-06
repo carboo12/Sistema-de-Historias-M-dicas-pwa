@@ -4,6 +4,8 @@ import { UserPlus } from 'lucide-react';
 import { api, ApiError } from '../lib/data';
 import type { Patient } from '../types';
 import { Button, Field, Input, Modal, Select, Textarea } from './ui';
+import { ageFromBirthDate } from '../lib/format';
+import { patientFormSchema } from '../lib/form-validation';
 
 export function PatientFormDialog({
   open,
@@ -18,40 +20,34 @@ export function PatientFormDialog({
 }) {
   const queryClient = useQueryClient();
   const [fullName, setFullName] = useState('');
-  const [documentType, setDocumentType] = useState('cedula');
+  const [documentType, setDocumentType] = useState('');
   const [documentNumber, setDocumentNumber] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [age, setAge] = useState('');
+  const [ageManuallyEdited, setAgeManuallyEdited] = useState(false);
   const [sex, setSex] = useState('U');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [allergies, setAllergies] = useState('');
+  const [conditions, setConditions] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setFullName(patient?.fullName ?? '');
-    setDocumentType(patient?.documentType ?? 'cedula');
+    setDocumentType(patient?.documentType ?? '');
     setDocumentNumber(patient?.documentNumber ?? '');
     setBirthDate(patient?.birthDate?.slice(0, 10) ?? '');
+    setAge(String(patient?.ageOverride ?? ageFromBirthDate(patient?.birthDate ?? null) ?? ''));
+    setAgeManuallyEdited(patient?.ageOverride != null);
     setSex(patient?.sex ?? 'U');
     setPhone(patient?.phone ?? '');
     setEmail(patient?.email ?? '');
-    setAllergies(patient?.allergiesNotes ?? '');
+    setConditions(patient?.currentDiagnosisSummary ?? '');
     setError(null);
   }, [open, patient]);
 
   const mutation = useMutation({
-    mutationFn: () => {
-      const payload = {
-        fullName,
-        documentType,
-        documentNumber,
-        birthDate: birthDate || null,
-        sex,
-        phone,
-        email,
-        allergiesNotes: allergies
-      };
+    mutationFn: (payload: ReturnType<typeof patientFormSchema.parse>) => {
       return patient ? api.patients.update(patient.id, payload) : api.patients.create(payload);
     },
     onSuccess: async (response) => {
@@ -68,11 +64,15 @@ export function PatientFormDialog({
   function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    if (!fullName.trim()) {
-      setError('El nombre completo es obligatorio');
+    const parsed = patientFormSchema.safeParse({
+      fullName, documentType, documentNumber, birthDate, ageOverride: ageManuallyEdited ? age : '',
+      sex, phone, email, currentDiagnosisSummary: conditions
+    });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? 'Revisa los datos del paciente');
       return;
     }
-    mutation.mutate();
+    mutation.mutate(parsed.data);
   }
 
   return (
@@ -106,6 +106,7 @@ export function PatientFormDialog({
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Tipo de documento">
             <Select value={documentType} onChange={(event) => setDocumentType(event.target.value)}>
+              <option value="">Sin especificar</option>
               <option value="cedula">Cédula</option>
               <option value="pasaporte">Pasaporte</option>
               <option value="ruc">RUC</option>
@@ -126,8 +127,22 @@ export function PatientFormDialog({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Fecha de nacimiento">
-            <Input type="date" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} />
+            <Input type="date" value={birthDate} onChange={(event) => {
+              const value = event.target.value;
+              setBirthDate(value);
+              setAge(String(ageFromBirthDate(value || null) ?? ''));
+              setAgeManuallyEdited(false);
+            }} />
           </Field>
+          <Field label="Edad" hint="Se calcula con la fecha de nacimiento; puedes ajustarla manualmente.">
+            <Input type="number" min={0} max={150} step={1} value={age} onChange={(event) => {
+              setAge(event.target.value);
+              setAgeManuallyEdited(true);
+            }} placeholder="Años" />
+          </Field>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Sexo">
             <Select value={sex} onChange={(event) => setSex(event.target.value)}>
               <option value="U">Sin especificar</option>
@@ -152,11 +167,11 @@ export function PatientFormDialog({
           </Field>
         </div>
 
-        <Field label="Alergias conocidas" hint="Medicamentos, alimentos u otras alergias relevantes.">
+        <Field label="Enfermedades / antecedentes" hint="Enfermedades crónicas, antecedentes o condiciones relevantes">
           <Textarea
-            value={allergies}
-            onChange={(event) => setAllergies(event.target.value)}
-            placeholder="Ej. Penicilina"
+            value={conditions}
+            onChange={(event) => setConditions(event.target.value)}
+            placeholder="Enfermedades crónicas, antecedentes o condiciones relevantes"
             className="min-h-20"
           />
         </Field>

@@ -15,7 +15,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*ListAgenda*](#listagenda)
   - [*ListConsultations*](#listconsultations)
   - [*GetConsultation*](#getconsultation)
-  - [*SearchCie10*](#searchcie10)
+  - [*ListPatientStudies*](#listpatientstudies)
   - [*GetCatalogs*](#getcatalogs)
   - [*ClinicReports*](#clinicreports)
 - [**Mutations**](#mutations)
@@ -30,9 +30,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*UpdateConsultation*](#updateconsultation)
   - [*DeleteConsultation*](#deleteconsultation)
   - [*SignConsultation*](#signconsultation)
-  - [*AddDiagnosis*](#adddiagnosis)
-  - [*DeleteDiagnosis*](#deletediagnosis)
-  - [*UpdateDiagnosis*](#updatediagnosis)
+  - [*CreatePatientStudy*](#createpatientstudy)
 
 # Accessing the connector
 A connector is a collection of Queries and Mutations. One SDK is generated for each connector - this SDK is generated for the connector `historias`. You can find more information about connectors in the [Data Connect documentation](https://firebase.google.com/docs/data-connect#how-does).
@@ -239,13 +237,14 @@ export interface ListPatientsData {
   patients: ({
     id: UUIDString;
     recordNumber: string;
-    documentType: string;
+    documentType?: string | null;
     documentNumber?: string | null;
     documentVerified: boolean;
     fullName: string;
     firstName?: string | null;
     lastName?: string | null;
     birthDate?: DateString | null;
+    ageOverride?: number | null;
     birthDateEstimated: boolean;
     deceased: boolean;
     sex: string;
@@ -500,13 +499,14 @@ export interface GetPatientData {
   patients: ({
     id: UUIDString;
     recordNumber: string;
-    documentType: string;
+    documentType?: string | null;
     documentNumber?: string | null;
     documentVerified: boolean;
     fullName: string;
     firstName?: string | null;
     lastName?: string | null;
     birthDate?: DateString | null;
+    ageOverride?: number | null;
     birthDateEstimated: boolean;
     deceased: boolean;
     deathDate?: DateString | null;
@@ -556,12 +556,6 @@ export interface GetPatientData {
       professional: {
         fullName: string;
       };
-      consultationDiagnoses_on_consultation: ({
-        id: UUIDString;
-        cie10Code?: string | null;
-        diagnosisText: string;
-        diagnosisType: string;
-      } & ConsultationDiagnosis_Key)[];
     } & Consultation_Key)[];
     appointments_on_patient: ({
       id: UUIDString;
@@ -695,6 +689,7 @@ export interface ListAgendaData {
     notes?: string | null;
     patient: {
       fullName: string;
+      email?: string | null;
       recordNumber: string;
       phone?: string | null;
     };
@@ -831,12 +826,6 @@ export interface ListConsultationsData {
     professional: {
       fullName: string;
     };
-    consultationDiagnoses_on_consultation: ({
-      id: UUIDString;
-      cie10Code?: string | null;
-      diagnosisText: string;
-      diagnosisType: string;
-    } & ConsultationDiagnosis_Key)[];
   } & Consultation_Key)[];
 }
 ```
@@ -949,6 +938,9 @@ export interface GetConsultationData {
     physicalExam?: string | null;
     functionalExam?: string | null;
     studies?: string | null;
+    evolutionText?: string | null;
+    studiesText?: string | null;
+    prescriptionText?: string | null;
     diagnosisNotes?: string | null;
     treatmentPlan?: string | null;
     evolution?: string | null;
@@ -961,6 +953,7 @@ export interface GetConsultationData {
     updatedAt: TimestampString;
     patient: {
       fullName: string;
+      email?: string | null;
       recordNumber: string;
       birthDate?: DateString | null;
       sex: string;
@@ -969,14 +962,6 @@ export interface GetConsultationData {
     professional: {
       fullName: string;
     };
-    consultationDiagnoses_on_consultation: ({
-      id: UUIDString;
-      cie10Code?: string | null;
-      diagnosisText: string;
-      diagnosisType: string;
-      notes?: string | null;
-      diagnosedAt: TimestampString;
-    } & ConsultationDiagnosis_Key)[];
     prescriptions_on_consultation: ({
       legacyId?: string | null;
       prescriptionItems_on_prescription: ({
@@ -1056,117 +1041,132 @@ executeQuery(ref).then((response) => {
 });
 ```
 
-## SearchCie10
-You can execute the `SearchCie10` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+## ListPatientStudies
+You can execute the `ListPatientStudies` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
 ```typescript
-searchCie10(vars: SearchCie10Variables, options?: ExecuteQueryOptions): QueryPromise<SearchCie10Data, SearchCie10Variables>;
+listPatientStudies(vars: ListPatientStudiesVariables, options?: ExecuteQueryOptions): QueryPromise<ListPatientStudiesData, ListPatientStudiesVariables>;
 
-interface SearchCie10Ref {
+interface ListPatientStudiesRef {
   ...
   /* Allow users to create refs without passing in DataConnect */
-  (vars: SearchCie10Variables): QueryRef<SearchCie10Data, SearchCie10Variables>;
+  (vars: ListPatientStudiesVariables): QueryRef<ListPatientStudiesData, ListPatientStudiesVariables>;
 }
-export const searchCie10Ref: SearchCie10Ref;
+export const listPatientStudiesRef: ListPatientStudiesRef;
 ```
 You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
 ```typescript
-searchCie10(dc: DataConnect, vars: SearchCie10Variables, options?: ExecuteQueryOptions): QueryPromise<SearchCie10Data, SearchCie10Variables>;
+listPatientStudies(dc: DataConnect, vars: ListPatientStudiesVariables, options?: ExecuteQueryOptions): QueryPromise<ListPatientStudiesData, ListPatientStudiesVariables>;
 
-interface SearchCie10Ref {
+interface ListPatientStudiesRef {
   ...
-  (dc: DataConnect, vars: SearchCie10Variables): QueryRef<SearchCie10Data, SearchCie10Variables>;
+  (dc: DataConnect, vars: ListPatientStudiesVariables): QueryRef<ListPatientStudiesData, ListPatientStudiesVariables>;
 }
-export const searchCie10Ref: SearchCie10Ref;
+export const listPatientStudiesRef: ListPatientStudiesRef;
 ```
 
-If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the searchCie10Ref:
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the listPatientStudiesRef:
 ```typescript
-const name = searchCie10Ref.operationName;
+const name = listPatientStudiesRef.operationName;
 console.log(name);
 ```
 
 ### Variables
-The `SearchCie10` query requires an argument of type `SearchCie10Variables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+The `ListPatientStudies` query requires an argument of type `ListPatientStudiesVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
 
 ```typescript
-export interface SearchCie10Variables {
-  q: string;
+export interface ListPatientStudiesVariables {
+  patientId: UUIDString;
+  limit: number;
+  offset: number;
 }
 ```
 ### Return Type
-Recall that executing the `SearchCie10` query returns a `QueryPromise` that resolves to an object with a `data` property.
+Recall that executing the `ListPatientStudies` query returns a `QueryPromise` that resolves to an object with a `data` property.
 
-The `data` property is an object of type `SearchCie10Data`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+The `data` property is an object of type `ListPatientStudiesData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
-export interface SearchCie10Data {
-  cie10Codes: ({
-    code: string;
-    description: string;
-    chapter?: string | null;
-    category?: string | null;
-  } & Cie10Code_Key)[];
+export interface ListPatientStudiesData {
+  patientStudies: ({
+    id: UUIDString;
+    studyType: string;
+    studyName: string;
+    performedAt?: TimestampString | null;
+    resultSummary?: string | null;
+    resultText?: string | null;
+    metadata: unknown;
+    consultation?: {
+      id: UUIDString;
+    } & Consultation_Key;
+    professional?: {
+      fullName: string;
+    };
+  } & PatientStudy_Key)[];
 }
 ```
-### Using `SearchCie10`'s action shortcut function
+### Using `ListPatientStudies`'s action shortcut function
 
 ```typescript
 import { getDataConnect } from 'firebase/data-connect';
-import { connectorConfig, searchCie10, SearchCie10Variables } from '@historias/dataconnect';
+import { connectorConfig, listPatientStudies, ListPatientStudiesVariables } from '@historias/dataconnect';
 
-// The `SearchCie10` query requires an argument of type `SearchCie10Variables`:
-const searchCie10Vars: SearchCie10Variables = {
-  q: ..., 
+// The `ListPatientStudies` query requires an argument of type `ListPatientStudiesVariables`:
+const listPatientStudiesVars: ListPatientStudiesVariables = {
+  patientId: ..., 
+  limit: ..., 
+  offset: ..., 
 };
 
-// Call the `searchCie10()` function to execute the query.
+// Call the `listPatientStudies()` function to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.
-const { data } = await searchCie10(searchCie10Vars);
+const { data } = await listPatientStudies(listPatientStudiesVars);
 // Variables can be defined inline as well.
-const { data } = await searchCie10({ q: ..., });
+const { data } = await listPatientStudies({ patientId: ..., limit: ..., offset: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
-const { data } = await searchCie10(dataConnect, searchCie10Vars);
+const { data } = await listPatientStudies(dataConnect, listPatientStudiesVars);
 
-console.log(data.cie10Codes);
+console.log(data.patientStudies);
 
 // Or, you can use the `Promise` API.
-searchCie10(searchCie10Vars).then((response) => {
+listPatientStudies(listPatientStudiesVars).then((response) => {
   const data = response.data;
-  console.log(data.cie10Codes);
+  console.log(data.patientStudies);
 });
 ```
 
-### Using `SearchCie10`'s `QueryRef` function
+### Using `ListPatientStudies`'s `QueryRef` function
 
 ```typescript
 import { getDataConnect, executeQuery } from 'firebase/data-connect';
-import { connectorConfig, searchCie10Ref, SearchCie10Variables } from '@historias/dataconnect';
+import { connectorConfig, listPatientStudiesRef, ListPatientStudiesVariables } from '@historias/dataconnect';
 
-// The `SearchCie10` query requires an argument of type `SearchCie10Variables`:
-const searchCie10Vars: SearchCie10Variables = {
-  q: ..., 
+// The `ListPatientStudies` query requires an argument of type `ListPatientStudiesVariables`:
+const listPatientStudiesVars: ListPatientStudiesVariables = {
+  patientId: ..., 
+  limit: ..., 
+  offset: ..., 
 };
 
-// Call the `searchCie10Ref()` function to get a reference to the query.
-const ref = searchCie10Ref(searchCie10Vars);
+// Call the `listPatientStudiesRef()` function to get a reference to the query.
+const ref = listPatientStudiesRef(listPatientStudiesVars);
 // Variables can be defined inline as well.
-const ref = searchCie10Ref({ q: ..., });
+const ref = listPatientStudiesRef({ patientId: ..., limit: ..., offset: ..., });
 
 // You can also pass in a `DataConnect` instance to the `QueryRef` function.
 const dataConnect = getDataConnect(connectorConfig);
-const ref = searchCie10Ref(dataConnect, searchCie10Vars);
+const ref = listPatientStudiesRef(dataConnect, listPatientStudiesVars);
 
 // Call `executeQuery()` on the reference to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await executeQuery(ref);
 
-console.log(data.cie10Codes);
+console.log(data.patientStudies);
 
 // Or, you can use the `Promise` API.
 executeQuery(ref).then((response) => {
   const data = response.data;
-  console.log(data.cie10Codes);
+  console.log(data.patientStudies);
 });
 ```
 
@@ -1345,11 +1345,6 @@ export interface ClinicReportsData {
       sex: string;
       birthDate?: DateString | null;
     };
-    consultationDiagnoses_on_consultation: ({
-      cie10Code?: string | null;
-      diagnosisText: string;
-      diagnosisType: string;
-    })[];
   } & Consultation_Key)[];
   patients: ({
     id: UUIDString;
@@ -1573,14 +1568,16 @@ The `CreatePatient` mutation requires an argument of type `CreatePatientVariable
 ```typescript
 export interface CreatePatientVariables {
   clinicId: UUIDString;
+  createdById: UUIDString;
   recordNumber: string;
-  documentType: string;
+  documentType?: string | null;
   documentNumber?: string | null;
   documentVerified: boolean;
   fullName: string;
   firstName?: string | null;
   lastName?: string | null;
   birthDate?: DateString | null;
+  ageOverride?: number | null;
   birthDateEstimated: boolean;
   sex: string;
   maritalStatus: string;
@@ -1609,6 +1606,7 @@ Recall that executing the `CreatePatient` mutation returns a `MutationPromise` t
 The `data` property is an object of type `CreatePatientData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
 export interface CreatePatientData {
+  user_update?: User_Key | null;
   patient_insert: Patient_Key;
 }
 ```
@@ -1621,14 +1619,16 @@ import { connectorConfig, createPatient, CreatePatientVariables } from '@histori
 // The `CreatePatient` mutation requires an argument of type `CreatePatientVariables`:
 const createPatientVars: CreatePatientVariables = {
   clinicId: ..., 
+  createdById: ..., 
   recordNumber: ..., 
-  documentType: ..., 
+  documentType: ..., // optional
   documentNumber: ..., // optional
   documentVerified: ..., 
   fullName: ..., 
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
+  ageOverride: ..., // optional
   birthDateEstimated: ..., 
   sex: ..., 
   maritalStatus: ..., 
@@ -1655,17 +1655,19 @@ const createPatientVars: CreatePatientVariables = {
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await createPatient(createPatientVars);
 // Variables can be defined inline as well.
-const { data } = await createPatient({ clinicId: ..., recordNumber: ..., documentType: ..., documentNumber: ..., documentVerified: ..., fullName: ..., firstName: ..., lastName: ..., birthDate: ..., birthDateEstimated: ..., sex: ..., maritalStatus: ..., bloodType: ..., nationality: ..., birthPlace: ..., address: ..., city: ..., state: ..., country: ..., phone: ..., mobile: ..., email: ..., occupation: ..., isPrivate: ..., allergiesNotes: ..., currentDiagnosisSummary: ..., notes: ..., isSuspended: ..., suspensionReason: ..., });
+const { data } = await createPatient({ clinicId: ..., createdById: ..., recordNumber: ..., documentType: ..., documentNumber: ..., documentVerified: ..., fullName: ..., firstName: ..., lastName: ..., birthDate: ..., ageOverride: ..., birthDateEstimated: ..., sex: ..., maritalStatus: ..., bloodType: ..., nationality: ..., birthPlace: ..., address: ..., city: ..., state: ..., country: ..., phone: ..., mobile: ..., email: ..., occupation: ..., isPrivate: ..., allergiesNotes: ..., currentDiagnosisSummary: ..., notes: ..., isSuspended: ..., suspensionReason: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
 const { data } = await createPatient(dataConnect, createPatientVars);
 
+console.log(data.user_update);
 console.log(data.patient_insert);
 
 // Or, you can use the `Promise` API.
 createPatient(createPatientVars).then((response) => {
   const data = response.data;
+  console.log(data.user_update);
   console.log(data.patient_insert);
 });
 ```
@@ -1679,14 +1681,16 @@ import { connectorConfig, createPatientRef, CreatePatientVariables } from '@hist
 // The `CreatePatient` mutation requires an argument of type `CreatePatientVariables`:
 const createPatientVars: CreatePatientVariables = {
   clinicId: ..., 
+  createdById: ..., 
   recordNumber: ..., 
-  documentType: ..., 
+  documentType: ..., // optional
   documentNumber: ..., // optional
   documentVerified: ..., 
   fullName: ..., 
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
+  ageOverride: ..., // optional
   birthDateEstimated: ..., 
   sex: ..., 
   maritalStatus: ..., 
@@ -1712,7 +1716,7 @@ const createPatientVars: CreatePatientVariables = {
 // Call the `createPatientRef()` function to get a reference to the mutation.
 const ref = createPatientRef(createPatientVars);
 // Variables can be defined inline as well.
-const ref = createPatientRef({ clinicId: ..., recordNumber: ..., documentType: ..., documentNumber: ..., documentVerified: ..., fullName: ..., firstName: ..., lastName: ..., birthDate: ..., birthDateEstimated: ..., sex: ..., maritalStatus: ..., bloodType: ..., nationality: ..., birthPlace: ..., address: ..., city: ..., state: ..., country: ..., phone: ..., mobile: ..., email: ..., occupation: ..., isPrivate: ..., allergiesNotes: ..., currentDiagnosisSummary: ..., notes: ..., isSuspended: ..., suspensionReason: ..., });
+const ref = createPatientRef({ clinicId: ..., createdById: ..., recordNumber: ..., documentType: ..., documentNumber: ..., documentVerified: ..., fullName: ..., firstName: ..., lastName: ..., birthDate: ..., ageOverride: ..., birthDateEstimated: ..., sex: ..., maritalStatus: ..., bloodType: ..., nationality: ..., birthPlace: ..., address: ..., city: ..., state: ..., country: ..., phone: ..., mobile: ..., email: ..., occupation: ..., isPrivate: ..., allergiesNotes: ..., currentDiagnosisSummary: ..., notes: ..., isSuspended: ..., suspensionReason: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -1722,11 +1726,13 @@ const ref = createPatientRef(dataConnect, createPatientVars);
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await executeMutation(ref);
 
+console.log(data.user_update);
 console.log(data.patient_insert);
 
 // Or, you can use the `Promise` API.
 executeMutation(ref).then((response) => {
   const data = response.data;
+  console.log(data.user_update);
   console.log(data.patient_insert);
 });
 ```
@@ -1766,13 +1772,14 @@ The `UpdatePatient` mutation requires an argument of type `UpdatePatientVariable
 ```typescript
 export interface UpdatePatientVariables {
   id: UUIDString;
-  documentType: string;
+  documentType?: string | null;
   documentNumber?: string | null;
   documentVerified: boolean;
   fullName: string;
   firstName?: string | null;
   lastName?: string | null;
   birthDate?: DateString | null;
+  ageOverride?: number | null;
   birthDateEstimated: boolean;
   sex: string;
   maritalStatus: string;
@@ -1813,13 +1820,14 @@ import { connectorConfig, updatePatient, UpdatePatientVariables } from '@histori
 // The `UpdatePatient` mutation requires an argument of type `UpdatePatientVariables`:
 const updatePatientVars: UpdatePatientVariables = {
   id: ..., 
-  documentType: ..., 
+  documentType: ..., // optional
   documentNumber: ..., // optional
   documentVerified: ..., 
   fullName: ..., 
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
+  ageOverride: ..., // optional
   birthDateEstimated: ..., 
   sex: ..., 
   maritalStatus: ..., 
@@ -1846,7 +1854,7 @@ const updatePatientVars: UpdatePatientVariables = {
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await updatePatient(updatePatientVars);
 // Variables can be defined inline as well.
-const { data } = await updatePatient({ id: ..., documentType: ..., documentNumber: ..., documentVerified: ..., fullName: ..., firstName: ..., lastName: ..., birthDate: ..., birthDateEstimated: ..., sex: ..., maritalStatus: ..., bloodType: ..., nationality: ..., birthPlace: ..., address: ..., city: ..., state: ..., country: ..., phone: ..., mobile: ..., email: ..., occupation: ..., isPrivate: ..., allergiesNotes: ..., currentDiagnosisSummary: ..., notes: ..., isSuspended: ..., suspensionReason: ..., });
+const { data } = await updatePatient({ id: ..., documentType: ..., documentNumber: ..., documentVerified: ..., fullName: ..., firstName: ..., lastName: ..., birthDate: ..., ageOverride: ..., birthDateEstimated: ..., sex: ..., maritalStatus: ..., bloodType: ..., nationality: ..., birthPlace: ..., address: ..., city: ..., state: ..., country: ..., phone: ..., mobile: ..., email: ..., occupation: ..., isPrivate: ..., allergiesNotes: ..., currentDiagnosisSummary: ..., notes: ..., isSuspended: ..., suspensionReason: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -1870,13 +1878,14 @@ import { connectorConfig, updatePatientRef, UpdatePatientVariables } from '@hist
 // The `UpdatePatient` mutation requires an argument of type `UpdatePatientVariables`:
 const updatePatientVars: UpdatePatientVariables = {
   id: ..., 
-  documentType: ..., 
+  documentType: ..., // optional
   documentNumber: ..., // optional
   documentVerified: ..., 
   fullName: ..., 
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
+  ageOverride: ..., // optional
   birthDateEstimated: ..., 
   sex: ..., 
   maritalStatus: ..., 
@@ -1902,7 +1911,7 @@ const updatePatientVars: UpdatePatientVariables = {
 // Call the `updatePatientRef()` function to get a reference to the mutation.
 const ref = updatePatientRef(updatePatientVars);
 // Variables can be defined inline as well.
-const ref = updatePatientRef({ id: ..., documentType: ..., documentNumber: ..., documentVerified: ..., fullName: ..., firstName: ..., lastName: ..., birthDate: ..., birthDateEstimated: ..., sex: ..., maritalStatus: ..., bloodType: ..., nationality: ..., birthPlace: ..., address: ..., city: ..., state: ..., country: ..., phone: ..., mobile: ..., email: ..., occupation: ..., isPrivate: ..., allergiesNotes: ..., currentDiagnosisSummary: ..., notes: ..., isSuspended: ..., suspensionReason: ..., });
+const ref = updatePatientRef({ id: ..., documentType: ..., documentNumber: ..., documentVerified: ..., fullName: ..., firstName: ..., lastName: ..., birthDate: ..., ageOverride: ..., birthDateEstimated: ..., sex: ..., maritalStatus: ..., bloodType: ..., nationality: ..., birthPlace: ..., address: ..., city: ..., state: ..., country: ..., phone: ..., mobile: ..., email: ..., occupation: ..., isPrivate: ..., allergiesNotes: ..., currentDiagnosisSummary: ..., notes: ..., isSuspended: ..., suspensionReason: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -2065,6 +2074,7 @@ The `CreateAppointment` mutation requires an argument of type `CreateAppointment
 ```typescript
 export interface CreateAppointmentVariables {
   clinicId: UUIDString;
+  createdById: UUIDString;
   patientId: UUIDString;
   professionalId: UUIDString;
   specialtyId?: UUIDString | null;
@@ -2084,6 +2094,7 @@ Recall that executing the `CreateAppointment` mutation returns a `MutationPromis
 The `data` property is an object of type `CreateAppointmentData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
 export interface CreateAppointmentData {
+  user_update?: User_Key | null;
   appointment_insert: Appointment_Key;
 }
 ```
@@ -2096,6 +2107,7 @@ import { connectorConfig, createAppointment, CreateAppointmentVariables } from '
 // The `CreateAppointment` mutation requires an argument of type `CreateAppointmentVariables`:
 const createAppointmentVars: CreateAppointmentVariables = {
   clinicId: ..., 
+  createdById: ..., 
   patientId: ..., 
   professionalId: ..., 
   specialtyId: ..., // optional
@@ -2113,17 +2125,19 @@ const createAppointmentVars: CreateAppointmentVariables = {
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await createAppointment(createAppointmentVars);
 // Variables can be defined inline as well.
-const { data } = await createAppointment({ clinicId: ..., patientId: ..., professionalId: ..., specialtyId: ..., officeId: ..., startsAt: ..., endsAt: ..., durationMinutes: ..., reason: ..., notes: ..., status: ..., source: ..., });
+const { data } = await createAppointment({ clinicId: ..., createdById: ..., patientId: ..., professionalId: ..., specialtyId: ..., officeId: ..., startsAt: ..., endsAt: ..., durationMinutes: ..., reason: ..., notes: ..., status: ..., source: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
 const { data } = await createAppointment(dataConnect, createAppointmentVars);
 
+console.log(data.user_update);
 console.log(data.appointment_insert);
 
 // Or, you can use the `Promise` API.
 createAppointment(createAppointmentVars).then((response) => {
   const data = response.data;
+  console.log(data.user_update);
   console.log(data.appointment_insert);
 });
 ```
@@ -2137,6 +2151,7 @@ import { connectorConfig, createAppointmentRef, CreateAppointmentVariables } fro
 // The `CreateAppointment` mutation requires an argument of type `CreateAppointmentVariables`:
 const createAppointmentVars: CreateAppointmentVariables = {
   clinicId: ..., 
+  createdById: ..., 
   patientId: ..., 
   professionalId: ..., 
   specialtyId: ..., // optional
@@ -2153,7 +2168,7 @@ const createAppointmentVars: CreateAppointmentVariables = {
 // Call the `createAppointmentRef()` function to get a reference to the mutation.
 const ref = createAppointmentRef(createAppointmentVars);
 // Variables can be defined inline as well.
-const ref = createAppointmentRef({ clinicId: ..., patientId: ..., professionalId: ..., specialtyId: ..., officeId: ..., startsAt: ..., endsAt: ..., durationMinutes: ..., reason: ..., notes: ..., status: ..., source: ..., });
+const ref = createAppointmentRef({ clinicId: ..., createdById: ..., patientId: ..., professionalId: ..., specialtyId: ..., officeId: ..., startsAt: ..., endsAt: ..., durationMinutes: ..., reason: ..., notes: ..., status: ..., source: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -2163,11 +2178,13 @@ const ref = createAppointmentRef(dataConnect, createAppointmentVars);
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await executeMutation(ref);
 
+console.log(data.user_update);
 console.log(data.appointment_insert);
 
 // Or, you can use the `Promise` API.
 executeMutation(ref).then((response) => {
   const data = response.data;
+  console.log(data.user_update);
   console.log(data.appointment_insert);
 });
 ```
@@ -2446,6 +2463,7 @@ The `CreateConsultation` mutation requires an argument of type `CreateConsultati
 ```typescript
 export interface CreateConsultationVariables {
   clinicId: UUIDString;
+  createdById: UUIDString;
   patientId: UUIDString;
   professionalId: UUIDString;
   appointmentId?: UUIDString | null;
@@ -2464,6 +2482,7 @@ Recall that executing the `CreateConsultation` mutation returns a `MutationPromi
 The `data` property is an object of type `CreateConsultationData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
 export interface CreateConsultationData {
+  user_update?: User_Key | null;
   consultation_insert: Consultation_Key;
 }
 ```
@@ -2476,6 +2495,7 @@ import { connectorConfig, createConsultation, CreateConsultationVariables } from
 // The `CreateConsultation` mutation requires an argument of type `CreateConsultationVariables`:
 const createConsultationVars: CreateConsultationVariables = {
   clinicId: ..., 
+  createdById: ..., 
   patientId: ..., 
   professionalId: ..., 
   appointmentId: ..., // optional
@@ -2492,17 +2512,19 @@ const createConsultationVars: CreateConsultationVariables = {
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await createConsultation(createConsultationVars);
 // Variables can be defined inline as well.
-const { data } = await createConsultation({ clinicId: ..., patientId: ..., professionalId: ..., appointmentId: ..., specialtyId: ..., consultationType: ..., consultedAt: ..., reason: ..., notes: ..., status: ..., source: ..., });
+const { data } = await createConsultation({ clinicId: ..., createdById: ..., patientId: ..., professionalId: ..., appointmentId: ..., specialtyId: ..., consultationType: ..., consultedAt: ..., reason: ..., notes: ..., status: ..., source: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
 const { data } = await createConsultation(dataConnect, createConsultationVars);
 
+console.log(data.user_update);
 console.log(data.consultation_insert);
 
 // Or, you can use the `Promise` API.
 createConsultation(createConsultationVars).then((response) => {
   const data = response.data;
+  console.log(data.user_update);
   console.log(data.consultation_insert);
 });
 ```
@@ -2516,6 +2538,7 @@ import { connectorConfig, createConsultationRef, CreateConsultationVariables } f
 // The `CreateConsultation` mutation requires an argument of type `CreateConsultationVariables`:
 const createConsultationVars: CreateConsultationVariables = {
   clinicId: ..., 
+  createdById: ..., 
   patientId: ..., 
   professionalId: ..., 
   appointmentId: ..., // optional
@@ -2531,7 +2554,7 @@ const createConsultationVars: CreateConsultationVariables = {
 // Call the `createConsultationRef()` function to get a reference to the mutation.
 const ref = createConsultationRef(createConsultationVars);
 // Variables can be defined inline as well.
-const ref = createConsultationRef({ clinicId: ..., patientId: ..., professionalId: ..., appointmentId: ..., specialtyId: ..., consultationType: ..., consultedAt: ..., reason: ..., notes: ..., status: ..., source: ..., });
+const ref = createConsultationRef({ clinicId: ..., createdById: ..., patientId: ..., professionalId: ..., appointmentId: ..., specialtyId: ..., consultationType: ..., consultedAt: ..., reason: ..., notes: ..., status: ..., source: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -2541,11 +2564,13 @@ const ref = createConsultationRef(dataConnect, createConsultationVars);
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await executeMutation(ref);
 
+console.log(data.user_update);
 console.log(data.consultation_insert);
 
 // Or, you can use the `Promise` API.
 executeMutation(ref).then((response) => {
   const data = response.data;
+  console.log(data.user_update);
   console.log(data.consultation_insert);
 });
 ```
@@ -2591,6 +2616,9 @@ export interface UpdateConsultationVariables {
   physicalExam?: string | null;
   functionalExam?: string | null;
   studies?: string | null;
+  evolutionText?: string | null;
+  studiesText?: string | null;
+  prescriptionText?: string | null;
   diagnosisNotes?: string | null;
   treatmentPlan?: string | null;
   evolution?: string | null;
@@ -2623,6 +2651,9 @@ const updateConsultationVars: UpdateConsultationVariables = {
   physicalExam: ..., // optional
   functionalExam: ..., // optional
   studies: ..., // optional
+  evolutionText: ..., // optional
+  studiesText: ..., // optional
+  prescriptionText: ..., // optional
   diagnosisNotes: ..., // optional
   treatmentPlan: ..., // optional
   evolution: ..., // optional
@@ -2635,7 +2666,7 @@ const updateConsultationVars: UpdateConsultationVariables = {
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await updateConsultation(updateConsultationVars);
 // Variables can be defined inline as well.
-const { data } = await updateConsultation({ id: ..., nextVisitAt: ..., reason: ..., currentIllness: ..., physicalExam: ..., functionalExam: ..., studies: ..., diagnosisNotes: ..., treatmentPlan: ..., evolution: ..., plan: ..., notes: ..., vitals: ..., });
+const { data } = await updateConsultation({ id: ..., nextVisitAt: ..., reason: ..., currentIllness: ..., physicalExam: ..., functionalExam: ..., studies: ..., evolutionText: ..., studiesText: ..., prescriptionText: ..., diagnosisNotes: ..., treatmentPlan: ..., evolution: ..., plan: ..., notes: ..., vitals: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -2665,6 +2696,9 @@ const updateConsultationVars: UpdateConsultationVariables = {
   physicalExam: ..., // optional
   functionalExam: ..., // optional
   studies: ..., // optional
+  evolutionText: ..., // optional
+  studiesText: ..., // optional
+  prescriptionText: ..., // optional
   diagnosisNotes: ..., // optional
   treatmentPlan: ..., // optional
   evolution: ..., // optional
@@ -2676,7 +2710,7 @@ const updateConsultationVars: UpdateConsultationVariables = {
 // Call the `updateConsultationRef()` function to get a reference to the mutation.
 const ref = updateConsultationRef(updateConsultationVars);
 // Variables can be defined inline as well.
-const ref = updateConsultationRef({ id: ..., nextVisitAt: ..., reason: ..., currentIllness: ..., physicalExam: ..., functionalExam: ..., studies: ..., diagnosisNotes: ..., treatmentPlan: ..., evolution: ..., plan: ..., notes: ..., vitals: ..., });
+const ref = updateConsultationRef({ id: ..., nextVisitAt: ..., reason: ..., currentIllness: ..., physicalExam: ..., functionalExam: ..., studies: ..., evolutionText: ..., studiesText: ..., prescriptionText: ..., diagnosisNotes: ..., treatmentPlan: ..., evolution: ..., plan: ..., notes: ..., vitals: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -2839,6 +2873,7 @@ The `SignConsultation` mutation requires an argument of type `SignConsultationVa
 ```typescript
 export interface SignConsultationVariables {
   id: UUIDString;
+  signedById: UUIDString;
 }
 ```
 ### Return Type
@@ -2847,6 +2882,7 @@ Recall that executing the `SignConsultation` mutation returns a `MutationPromise
 The `data` property is an object of type `SignConsultationData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
 export interface SignConsultationData {
+  user_update?: User_Key | null;
   consultation_update?: Consultation_Key | null;
 }
 ```
@@ -2859,23 +2895,26 @@ import { connectorConfig, signConsultation, SignConsultationVariables } from '@h
 // The `SignConsultation` mutation requires an argument of type `SignConsultationVariables`:
 const signConsultationVars: SignConsultationVariables = {
   id: ..., 
+  signedById: ..., 
 };
 
 // Call the `signConsultation()` function to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await signConsultation(signConsultationVars);
 // Variables can be defined inline as well.
-const { data } = await signConsultation({ id: ..., });
+const { data } = await signConsultation({ id: ..., signedById: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
 const { data } = await signConsultation(dataConnect, signConsultationVars);
 
+console.log(data.user_update);
 console.log(data.consultation_update);
 
 // Or, you can use the `Promise` API.
 signConsultation(signConsultationVars).then((response) => {
   const data = response.data;
+  console.log(data.user_update);
   console.log(data.consultation_update);
 });
 ```
@@ -2889,12 +2928,13 @@ import { connectorConfig, signConsultationRef, SignConsultationVariables } from 
 // The `SignConsultation` mutation requires an argument of type `SignConsultationVariables`:
 const signConsultationVars: SignConsultationVariables = {
   id: ..., 
+  signedById: ..., 
 };
 
 // Call the `signConsultationRef()` function to get a reference to the mutation.
 const ref = signConsultationRef(signConsultationVars);
 // Variables can be defined inline as well.
-const ref = signConsultationRef({ id: ..., });
+const ref = signConsultationRef({ id: ..., signedById: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -2904,369 +2944,152 @@ const ref = signConsultationRef(dataConnect, signConsultationVars);
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await executeMutation(ref);
 
+console.log(data.user_update);
 console.log(data.consultation_update);
 
 // Or, you can use the `Promise` API.
 executeMutation(ref).then((response) => {
   const data = response.data;
+  console.log(data.user_update);
   console.log(data.consultation_update);
 });
 ```
 
-## AddDiagnosis
-You can execute the `AddDiagnosis` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+## CreatePatientStudy
+You can execute the `CreatePatientStudy` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
 ```typescript
-addDiagnosis(vars: AddDiagnosisVariables): MutationPromise<AddDiagnosisData, AddDiagnosisVariables>;
+createPatientStudy(vars: CreatePatientStudyVariables): MutationPromise<CreatePatientStudyData, CreatePatientStudyVariables>;
 
-interface AddDiagnosisRef {
+interface CreatePatientStudyRef {
   ...
   /* Allow users to create refs without passing in DataConnect */
-  (vars: AddDiagnosisVariables): MutationRef<AddDiagnosisData, AddDiagnosisVariables>;
+  (vars: CreatePatientStudyVariables): MutationRef<CreatePatientStudyData, CreatePatientStudyVariables>;
 }
-export const addDiagnosisRef: AddDiagnosisRef;
+export const createPatientStudyRef: CreatePatientStudyRef;
 ```
 You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
 ```typescript
-addDiagnosis(dc: DataConnect, vars: AddDiagnosisVariables): MutationPromise<AddDiagnosisData, AddDiagnosisVariables>;
+createPatientStudy(dc: DataConnect, vars: CreatePatientStudyVariables): MutationPromise<CreatePatientStudyData, CreatePatientStudyVariables>;
 
-interface AddDiagnosisRef {
+interface CreatePatientStudyRef {
   ...
-  (dc: DataConnect, vars: AddDiagnosisVariables): MutationRef<AddDiagnosisData, AddDiagnosisVariables>;
+  (dc: DataConnect, vars: CreatePatientStudyVariables): MutationRef<CreatePatientStudyData, CreatePatientStudyVariables>;
 }
-export const addDiagnosisRef: AddDiagnosisRef;
+export const createPatientStudyRef: CreatePatientStudyRef;
 ```
 
-If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the addDiagnosisRef:
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the createPatientStudyRef:
 ```typescript
-const name = addDiagnosisRef.operationName;
+const name = createPatientStudyRef.operationName;
 console.log(name);
 ```
 
 ### Variables
-The `AddDiagnosis` mutation requires an argument of type `AddDiagnosisVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+The `CreatePatientStudy` mutation requires an argument of type `CreatePatientStudyVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
 
 ```typescript
-export interface AddDiagnosisVariables {
+export interface CreatePatientStudyVariables {
   clinicId: UUIDString;
   patientId: UUIDString;
-  consultationId: UUIDString;
   professionalId?: UUIDString | null;
-  cie10Code?: string | null;
-  diagnosisText: string;
-  diagnosisType: string;
-  notes?: string | null;
+  studyType: string;
+  studyName: string;
+  performedAt: TimestampString;
+  resultSummary?: string | null;
+  resultText?: string | null;
+  metadata: unknown;
 }
 ```
 ### Return Type
-Recall that executing the `AddDiagnosis` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+Recall that executing the `CreatePatientStudy` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
 
-The `data` property is an object of type `AddDiagnosisData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+The `data` property is an object of type `CreatePatientStudyData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
-export interface AddDiagnosisData {
-  consultationDiagnosis_insert: ConsultationDiagnosis_Key;
+export interface CreatePatientStudyData {
+  patient_update?: Patient_Key | null;
+  patientStudy_insert: PatientStudy_Key;
 }
 ```
-### Using `AddDiagnosis`'s action shortcut function
+### Using `CreatePatientStudy`'s action shortcut function
 
 ```typescript
 import { getDataConnect } from 'firebase/data-connect';
-import { connectorConfig, addDiagnosis, AddDiagnosisVariables } from '@historias/dataconnect';
+import { connectorConfig, createPatientStudy, CreatePatientStudyVariables } from '@historias/dataconnect';
 
-// The `AddDiagnosis` mutation requires an argument of type `AddDiagnosisVariables`:
-const addDiagnosisVars: AddDiagnosisVariables = {
+// The `CreatePatientStudy` mutation requires an argument of type `CreatePatientStudyVariables`:
+const createPatientStudyVars: CreatePatientStudyVariables = {
   clinicId: ..., 
   patientId: ..., 
-  consultationId: ..., 
   professionalId: ..., // optional
-  cie10Code: ..., // optional
-  diagnosisText: ..., 
-  diagnosisType: ..., 
-  notes: ..., // optional
+  studyType: ..., 
+  studyName: ..., 
+  performedAt: ..., 
+  resultSummary: ..., // optional
+  resultText: ..., // optional
+  metadata: ..., 
 };
 
-// Call the `addDiagnosis()` function to execute the mutation.
+// Call the `createPatientStudy()` function to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.
-const { data } = await addDiagnosis(addDiagnosisVars);
+const { data } = await createPatientStudy(createPatientStudyVars);
 // Variables can be defined inline as well.
-const { data } = await addDiagnosis({ clinicId: ..., patientId: ..., consultationId: ..., professionalId: ..., cie10Code: ..., diagnosisText: ..., diagnosisType: ..., notes: ..., });
+const { data } = await createPatientStudy({ clinicId: ..., patientId: ..., professionalId: ..., studyType: ..., studyName: ..., performedAt: ..., resultSummary: ..., resultText: ..., metadata: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
-const { data } = await addDiagnosis(dataConnect, addDiagnosisVars);
+const { data } = await createPatientStudy(dataConnect, createPatientStudyVars);
 
-console.log(data.consultationDiagnosis_insert);
+console.log(data.patient_update);
+console.log(data.patientStudy_insert);
 
 // Or, you can use the `Promise` API.
-addDiagnosis(addDiagnosisVars).then((response) => {
+createPatientStudy(createPatientStudyVars).then((response) => {
   const data = response.data;
-  console.log(data.consultationDiagnosis_insert);
+  console.log(data.patient_update);
+  console.log(data.patientStudy_insert);
 });
 ```
 
-### Using `AddDiagnosis`'s `MutationRef` function
+### Using `CreatePatientStudy`'s `MutationRef` function
 
 ```typescript
 import { getDataConnect, executeMutation } from 'firebase/data-connect';
-import { connectorConfig, addDiagnosisRef, AddDiagnosisVariables } from '@historias/dataconnect';
+import { connectorConfig, createPatientStudyRef, CreatePatientStudyVariables } from '@historias/dataconnect';
 
-// The `AddDiagnosis` mutation requires an argument of type `AddDiagnosisVariables`:
-const addDiagnosisVars: AddDiagnosisVariables = {
+// The `CreatePatientStudy` mutation requires an argument of type `CreatePatientStudyVariables`:
+const createPatientStudyVars: CreatePatientStudyVariables = {
   clinicId: ..., 
   patientId: ..., 
-  consultationId: ..., 
   professionalId: ..., // optional
-  cie10Code: ..., // optional
-  diagnosisText: ..., 
-  diagnosisType: ..., 
-  notes: ..., // optional
+  studyType: ..., 
+  studyName: ..., 
+  performedAt: ..., 
+  resultSummary: ..., // optional
+  resultText: ..., // optional
+  metadata: ..., 
 };
 
-// Call the `addDiagnosisRef()` function to get a reference to the mutation.
-const ref = addDiagnosisRef(addDiagnosisVars);
+// Call the `createPatientStudyRef()` function to get a reference to the mutation.
+const ref = createPatientStudyRef(createPatientStudyVars);
 // Variables can be defined inline as well.
-const ref = addDiagnosisRef({ clinicId: ..., patientId: ..., consultationId: ..., professionalId: ..., cie10Code: ..., diagnosisText: ..., diagnosisType: ..., notes: ..., });
+const ref = createPatientStudyRef({ clinicId: ..., patientId: ..., professionalId: ..., studyType: ..., studyName: ..., performedAt: ..., resultSummary: ..., resultText: ..., metadata: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
-const ref = addDiagnosisRef(dataConnect, addDiagnosisVars);
+const ref = createPatientStudyRef(dataConnect, createPatientStudyVars);
 
 // Call `executeMutation()` on the reference to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await executeMutation(ref);
 
-console.log(data.consultationDiagnosis_insert);
+console.log(data.patient_update);
+console.log(data.patientStudy_insert);
 
 // Or, you can use the `Promise` API.
 executeMutation(ref).then((response) => {
   const data = response.data;
-  console.log(data.consultationDiagnosis_insert);
-});
-```
-
-## DeleteDiagnosis
-You can execute the `DeleteDiagnosis` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
-```typescript
-deleteDiagnosis(vars: DeleteDiagnosisVariables): MutationPromise<DeleteDiagnosisData, DeleteDiagnosisVariables>;
-
-interface DeleteDiagnosisRef {
-  ...
-  /* Allow users to create refs without passing in DataConnect */
-  (vars: DeleteDiagnosisVariables): MutationRef<DeleteDiagnosisData, DeleteDiagnosisVariables>;
-}
-export const deleteDiagnosisRef: DeleteDiagnosisRef;
-```
-You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
-```typescript
-deleteDiagnosis(dc: DataConnect, vars: DeleteDiagnosisVariables): MutationPromise<DeleteDiagnosisData, DeleteDiagnosisVariables>;
-
-interface DeleteDiagnosisRef {
-  ...
-  (dc: DataConnect, vars: DeleteDiagnosisVariables): MutationRef<DeleteDiagnosisData, DeleteDiagnosisVariables>;
-}
-export const deleteDiagnosisRef: DeleteDiagnosisRef;
-```
-
-If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteDiagnosisRef:
-```typescript
-const name = deleteDiagnosisRef.operationName;
-console.log(name);
-```
-
-### Variables
-The `DeleteDiagnosis` mutation requires an argument of type `DeleteDiagnosisVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
-
-```typescript
-export interface DeleteDiagnosisVariables {
-  id: UUIDString;
-}
-```
-### Return Type
-Recall that executing the `DeleteDiagnosis` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
-
-The `data` property is an object of type `DeleteDiagnosisData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
-```typescript
-export interface DeleteDiagnosisData {
-  consultationDiagnosis_delete?: ConsultationDiagnosis_Key | null;
-}
-```
-### Using `DeleteDiagnosis`'s action shortcut function
-
-```typescript
-import { getDataConnect } from 'firebase/data-connect';
-import { connectorConfig, deleteDiagnosis, DeleteDiagnosisVariables } from '@historias/dataconnect';
-
-// The `DeleteDiagnosis` mutation requires an argument of type `DeleteDiagnosisVariables`:
-const deleteDiagnosisVars: DeleteDiagnosisVariables = {
-  id: ..., 
-};
-
-// Call the `deleteDiagnosis()` function to execute the mutation.
-// You can use the `await` keyword to wait for the promise to resolve.
-const { data } = await deleteDiagnosis(deleteDiagnosisVars);
-// Variables can be defined inline as well.
-const { data } = await deleteDiagnosis({ id: ..., });
-
-// You can also pass in a `DataConnect` instance to the action shortcut function.
-const dataConnect = getDataConnect(connectorConfig);
-const { data } = await deleteDiagnosis(dataConnect, deleteDiagnosisVars);
-
-console.log(data.consultationDiagnosis_delete);
-
-// Or, you can use the `Promise` API.
-deleteDiagnosis(deleteDiagnosisVars).then((response) => {
-  const data = response.data;
-  console.log(data.consultationDiagnosis_delete);
-});
-```
-
-### Using `DeleteDiagnosis`'s `MutationRef` function
-
-```typescript
-import { getDataConnect, executeMutation } from 'firebase/data-connect';
-import { connectorConfig, deleteDiagnosisRef, DeleteDiagnosisVariables } from '@historias/dataconnect';
-
-// The `DeleteDiagnosis` mutation requires an argument of type `DeleteDiagnosisVariables`:
-const deleteDiagnosisVars: DeleteDiagnosisVariables = {
-  id: ..., 
-};
-
-// Call the `deleteDiagnosisRef()` function to get a reference to the mutation.
-const ref = deleteDiagnosisRef(deleteDiagnosisVars);
-// Variables can be defined inline as well.
-const ref = deleteDiagnosisRef({ id: ..., });
-
-// You can also pass in a `DataConnect` instance to the `MutationRef` function.
-const dataConnect = getDataConnect(connectorConfig);
-const ref = deleteDiagnosisRef(dataConnect, deleteDiagnosisVars);
-
-// Call `executeMutation()` on the reference to execute the mutation.
-// You can use the `await` keyword to wait for the promise to resolve.
-const { data } = await executeMutation(ref);
-
-console.log(data.consultationDiagnosis_delete);
-
-// Or, you can use the `Promise` API.
-executeMutation(ref).then((response) => {
-  const data = response.data;
-  console.log(data.consultationDiagnosis_delete);
-});
-```
-
-## UpdateDiagnosis
-You can execute the `UpdateDiagnosis` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
-```typescript
-updateDiagnosis(vars: UpdateDiagnosisVariables): MutationPromise<UpdateDiagnosisData, UpdateDiagnosisVariables>;
-
-interface UpdateDiagnosisRef {
-  ...
-  /* Allow users to create refs without passing in DataConnect */
-  (vars: UpdateDiagnosisVariables): MutationRef<UpdateDiagnosisData, UpdateDiagnosisVariables>;
-}
-export const updateDiagnosisRef: UpdateDiagnosisRef;
-```
-You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
-```typescript
-updateDiagnosis(dc: DataConnect, vars: UpdateDiagnosisVariables): MutationPromise<UpdateDiagnosisData, UpdateDiagnosisVariables>;
-
-interface UpdateDiagnosisRef {
-  ...
-  (dc: DataConnect, vars: UpdateDiagnosisVariables): MutationRef<UpdateDiagnosisData, UpdateDiagnosisVariables>;
-}
-export const updateDiagnosisRef: UpdateDiagnosisRef;
-```
-
-If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateDiagnosisRef:
-```typescript
-const name = updateDiagnosisRef.operationName;
-console.log(name);
-```
-
-### Variables
-The `UpdateDiagnosis` mutation requires an argument of type `UpdateDiagnosisVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
-
-```typescript
-export interface UpdateDiagnosisVariables {
-  id: UUIDString;
-  diagnosisText: string;
-  diagnosisType: string;
-  notes?: string | null;
-}
-```
-### Return Type
-Recall that executing the `UpdateDiagnosis` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
-
-The `data` property is an object of type `UpdateDiagnosisData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
-```typescript
-export interface UpdateDiagnosisData {
-  consultationDiagnosis_update?: ConsultationDiagnosis_Key | null;
-}
-```
-### Using `UpdateDiagnosis`'s action shortcut function
-
-```typescript
-import { getDataConnect } from 'firebase/data-connect';
-import { connectorConfig, updateDiagnosis, UpdateDiagnosisVariables } from '@historias/dataconnect';
-
-// The `UpdateDiagnosis` mutation requires an argument of type `UpdateDiagnosisVariables`:
-const updateDiagnosisVars: UpdateDiagnosisVariables = {
-  id: ..., 
-  diagnosisText: ..., 
-  diagnosisType: ..., 
-  notes: ..., // optional
-};
-
-// Call the `updateDiagnosis()` function to execute the mutation.
-// You can use the `await` keyword to wait for the promise to resolve.
-const { data } = await updateDiagnosis(updateDiagnosisVars);
-// Variables can be defined inline as well.
-const { data } = await updateDiagnosis({ id: ..., diagnosisText: ..., diagnosisType: ..., notes: ..., });
-
-// You can also pass in a `DataConnect` instance to the action shortcut function.
-const dataConnect = getDataConnect(connectorConfig);
-const { data } = await updateDiagnosis(dataConnect, updateDiagnosisVars);
-
-console.log(data.consultationDiagnosis_update);
-
-// Or, you can use the `Promise` API.
-updateDiagnosis(updateDiagnosisVars).then((response) => {
-  const data = response.data;
-  console.log(data.consultationDiagnosis_update);
-});
-```
-
-### Using `UpdateDiagnosis`'s `MutationRef` function
-
-```typescript
-import { getDataConnect, executeMutation } from 'firebase/data-connect';
-import { connectorConfig, updateDiagnosisRef, UpdateDiagnosisVariables } from '@historias/dataconnect';
-
-// The `UpdateDiagnosis` mutation requires an argument of type `UpdateDiagnosisVariables`:
-const updateDiagnosisVars: UpdateDiagnosisVariables = {
-  id: ..., 
-  diagnosisText: ..., 
-  diagnosisType: ..., 
-  notes: ..., // optional
-};
-
-// Call the `updateDiagnosisRef()` function to get a reference to the mutation.
-const ref = updateDiagnosisRef(updateDiagnosisVars);
-// Variables can be defined inline as well.
-const ref = updateDiagnosisRef({ id: ..., diagnosisText: ..., diagnosisType: ..., notes: ..., });
-
-// You can also pass in a `DataConnect` instance to the `MutationRef` function.
-const dataConnect = getDataConnect(connectorConfig);
-const ref = updateDiagnosisRef(dataConnect, updateDiagnosisVars);
-
-// Call `executeMutation()` on the reference to execute the mutation.
-// You can use the `await` keyword to wait for the promise to resolve.
-const { data } = await executeMutation(ref);
-
-console.log(data.consultationDiagnosis_update);
-
-// Or, you can use the `Promise` API.
-executeMutation(ref).then((response) => {
-  const data = response.data;
-  console.log(data.consultationDiagnosis_update);
+  console.log(data.patient_update);
+  console.log(data.patientStudy_insert);
 });
 ```
 

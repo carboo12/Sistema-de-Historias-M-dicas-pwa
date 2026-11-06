@@ -110,7 +110,7 @@ export function NewConsultationPage() {
       <PageHeader
         eyebrow="Nueva atención"
         title="Abrir consulta"
-        description="La consulta se crea como borrador. Podrás completarla, agregar diagnósticos CIE-10 y firmarla."
+        description="La consulta se crea como borrador. Podrás completar la nota clínica, las órdenes de estudio y la receta antes de firmarla."
       />
 
       {error ? (
@@ -261,10 +261,6 @@ export function NewConsultationPage() {
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
                 <span>La consulta se guarda como borrador editable.</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
-                <span>Agrega al menos un diagnóstico CIE-10.</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />

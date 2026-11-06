@@ -39,26 +39,32 @@ replica/          recon, arquitectura, migración
 1. Login con usuario demo y sesión persistente.
 2. Agenda diaria con citas y creación de cita.
 3. Búsqueda, alta y expediente de paciente.
-4. Nueva consulta, edición de borrador, diagnósticos CIE-10 y firma.
+4. Nueva consulta, edición de borrador, nota clínica, órdenes de estudios, receta y firma.
 5. PWA instalable, navegación responsive y estados vacíos/error.
 
 ## Reglas
 
 - Toda consulta a la API filtra por `clinic_id`.
 - Una consulta firmada no se edita; se corrige con evolución.
-- La firma exige motivo y al menos un diagnóstico.
+- La firma exige una nota clínica.
 - Los datos clínicos no se registran en logs ni en cache del service worker.
 - No se migran ni muestran secretos de `config`.
 - UI en español; fechas en la zona horaria de la clínica.
 
 ## Checklist
 
+## Nota de arquitectura
+
+Sección de Imágenes y Documentos / Estudios adjuntos (Firebase Storage) ocultada temporalmente a petición del usuario el 2026-11-06. El código y la integración de backend se mantienen preservados para futura habilitación.
+
+Módulo de diagnósticos CIE-10 retirado de la interfaz y del flujo de consulta a solicitud del usuario el 2026-11-06. Los registros históricos existentes se conservan; ya no se muestran ni se requieren para firmar.
+
 - [x] Esquema, ETL y validación de datos.
 - [x] Blueprint y scaffold.
 - [ ] API de auth.
 - [ ] API de pacientes.
 - [ ] API de agenda.
-- [ ] API de consultas y CIE-10.
+- [ ] API de consultas y firma.
 - [ ] Login y shell.
 - [ ] Pacientes.
 - [ ] Agenda.

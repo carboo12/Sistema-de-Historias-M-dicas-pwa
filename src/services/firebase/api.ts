@@ -1,12 +1,11 @@
 import {
-  addDiagnosis,
   countPatients,
   clinicReports,
+  createPatientStudy,
   createAppointment,
   createConsultation,
   createPatient,
   deletePatient,
-  deleteDiagnosis,
   getCatalogs,
   getConsultation,
   getPatient,
@@ -14,31 +13,31 @@ import {
   listAgenda,
   listConsultations,
   listPatients,
-  searchCie10,
+  listPatientStudies,
   signConsultation,
   updateAppointmentStatus,
   updateAppointment,
   updateConsultation,
   updatePatient,
   deleteConsultation,
-  updateDiagnosis
 } from '@historias/dataconnect';
 import { ApiError } from '../../lib/api';
 import type {
   AgendaResponse,
   Appointment,
   Catalogs,
-  Cie10Code,
   Consultation,
   ConsultationSummary,
-  Diagnosis,
   Patient,
   PatientDetail,
   Summary,
-  ReportsDataset
+  ReportsDataset,
+  PatientStudy
 } from '../../types';
 import { getFirebaseSession, signInWithFirebase, signOutFromFirebase } from './auth';
 import { requireFirebase } from './client';
+import { removeStudyAssets, uploadStudyAssets } from './study-storage';
+import { normalizePatientSearch } from '../../lib/format';
 
 function dc() {
   return requireFirebase().dataConnect;
@@ -48,11 +47,24 @@ function iso(value: string | null | undefined) {
   return value ?? null;
 }
 
+function normalizeUuid(value: unknown): string | null {
+  const raw = String(value ?? '').trim().replace(/^\{(.+)\}$/, '$1');
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)) {
+    return raw.toLowerCase();
+  }
+  if (/^[0-9a-f]{32}$/i.test(raw)) {
+    const compact = raw.toLowerCase();
+    return `${compact.slice(0, 8)}-${compact.slice(8, 12)}-${compact.slice(12, 16)}-${compact.slice(16, 20)}-${compact.slice(20)}`;
+  }
+  return null;
+}
+
 async function sessionContext() {
   const { data } = await getSession(dc());
   const user = data.users[0];
   if (!user) throw new ApiError('Sesión clínica no encontrada', 401, 'anonymous');
   return {
+    userId: user.id,
     clinicId: user.clinic.id,
     professionalId: user.professional_on_user?.id ?? null
   };
@@ -84,6 +96,7 @@ function mapPatient(record: Record<string, any>): Patient {
     firstName: record.firstName ?? null,
     lastName: record.lastName ?? null,
     birthDate: record.birthDate ?? null,
+    ageOverride: record.ageOverride ?? null,
     sex: record.sex as Patient['sex'],
     maritalStatus: record.maritalStatus,
     bloodType: record.bloodType ?? null,
@@ -110,17 +123,6 @@ function mapPatient(record: Record<string, any>): Patient {
   };
 }
 
-function mapDiagnosis(record: Record<string, any>): Diagnosis {
-  return {
-    id: record.id,
-    code: record.cie10Code ?? '',
-    description: record.diagnosisText,
-    type: record.diagnosisType,
-    notes: record.notes ?? null,
-    diagnosed_at: record.diagnosedAt ?? undefined
-  };
-}
-
 function mapConsultationSummary(record: Record<string, any>): ConsultationSummary {
   return {
     id: record.id,
@@ -134,7 +136,6 @@ function mapConsultationSummary(record: Record<string, any>): ConsultationSummar
     professional_name: record.professional?.fullName ?? '',
     patient_name: record.patient?.fullName,
     record_number: record.patient?.recordNumber,
-    diagnoses: (record.consultationDiagnoses_on_consultation ?? []).map(mapDiagnosis)
   };
 }
 
@@ -164,6 +165,7 @@ function mapConsultation(record: Record<string, any>): Consultation {
         presentation: item.presentation ?? '',
         dose: item.dose ?? '',
         frequency: item.frequency ?? '',
+        route: item.route ?? '',
         duration: item.duration ?? '',
         quantity: item.quantity == null ? '' : String(item.quantity),
         instructions: item.instructions ?? ''
@@ -174,6 +176,7 @@ function mapConsultation(record: Record<string, any>): Consultation {
     id: record.id,
     patientId: record.patientId,
     patientName: record.patient.fullName,
+    patientEmail: record.patient.email ?? null,
     recordNumber: record.patient.recordNumber,
     birthDate: record.patient.birthDate ?? null,
     sex: record.patient.sex,
@@ -190,6 +193,9 @@ function mapConsultation(record: Record<string, any>): Consultation {
     physicalExam: record.physicalExam ?? null,
     functionalExam: record.functionalExam ?? null,
     studies: record.studies ?? null,
+    evolutionText: record.evolutionText ?? [record.reason, record.currentIllness, record.physicalExam, record.functionalExam, record.diagnosisNotes, record.treatmentPlan, record.evolution, record.plan].filter(Boolean).join('\n\n'),
+    studiesText: record.studiesText ?? record.studies ?? null,
+    prescriptionText: record.prescriptionText ?? ((prescriptionItems ?? []).length ? (prescriptionItems ?? []).map((item) => [item.medication, item.presentation, item.dose, item.frequency, item.route, item.duration, item.quantity, item.instructions].filter(Boolean).join(' · ')).join('\n') : [record.plan, record.treatmentPlan].filter(Boolean).join('\n\n')),
     diagnosisNotes: record.diagnosisNotes ?? null,
     treatmentPlan: record.treatmentPlan ?? null,
     evolution: record.evolution ?? null,
@@ -276,9 +282,10 @@ export const firebaseApi = {
   },
   patients: {
     async list(q = '', limit = 25, offset = 0) {
+      const normalizedQuery = normalizePatientSearch(q);
       const [{ data }, count] = await Promise.all([
-        listPatients(dc(), { q, limit, offset }),
-        countPatients(dc(), { q })
+        listPatients(dc(), { q: normalizedQuery, limit, offset }),
+        countPatients(dc(), { q: normalizedQuery })
       ]);
       return {
         patients: data.patients.map(mapPatient),
@@ -289,19 +296,21 @@ export const firebaseApi = {
     },
     get: fetchPatientDetail,
     async create(payload: Record<string, unknown>) {
-      const { clinicId } = await sessionContext();
+      const { userId, clinicId } = await sessionContext();
       const fullName = String(payload.fullName ?? '').trim();
       const parts = splitName(fullName);
       const created = await createPatient(dc(), {
+        createdById: userId,
         clinicId,
         recordNumber: String(payload.recordNumber ?? makeRecordNumber()),
-        documentType: String(payload.documentType ?? 'cedula'),
-        documentNumber: (payload.documentNumber as string | null) ?? null,
-        documentVerified: Boolean(payload.documentVerified ?? false),
+        documentType: payload.documentType == null || !String(payload.documentType).trim() ? null : String(payload.documentType),
+        documentNumber: payload.documentNumber == null || !String(payload.documentNumber).trim() ? null : String(payload.documentNumber).trim(),
+        documentVerified: Boolean(payload.documentVerified ?? false) && Boolean(String(payload.documentNumber ?? '').trim()),
         fullName,
         firstName: (payload.firstName as string | null) ?? parts.firstName,
         lastName: (payload.lastName as string | null) ?? parts.lastName,
         birthDate: (payload.birthDate as string | null) ?? null,
+        ageOverride: payload.ageOverride == null ? null : Number(payload.ageOverride),
         birthDateEstimated: Boolean(payload.birthDateEstimated ?? false),
         sex: String(payload.sex ?? 'U'),
         maritalStatus: String(payload.maritalStatus ?? 'desconocido'),
@@ -331,15 +340,19 @@ export const firebaseApi = {
       const current = detail.patient;
       const fullName = String(payload.fullName ?? current.fullName).trim();
       const parts = splitName(fullName);
+      const nextDocumentNumber = payload.documentNumber === undefined
+        ? current.documentNumber
+        : (payload.documentNumber == null || !String(payload.documentNumber).trim() ? null : String(payload.documentNumber).trim());
       await updatePatient(dc(), {
         id,
-        documentType: String(payload.documentType ?? current.documentType),
-        documentNumber: (payload.documentNumber as string | null) ?? current.documentNumber,
-        documentVerified: Boolean(payload.documentVerified ?? current.documentVerified),
+        documentType: payload.documentType === undefined ? current.documentType : (payload.documentType == null || !String(payload.documentType).trim() ? null : String(payload.documentType)),
+        documentNumber: nextDocumentNumber,
+        documentVerified: Boolean(payload.documentVerified ?? current.documentVerified) && Boolean(nextDocumentNumber),
         fullName,
         firstName: (payload.firstName as string | null) ?? current.firstName ?? parts.firstName,
         lastName: (payload.lastName as string | null) ?? current.lastName ?? parts.lastName,
         birthDate: (payload.birthDate as string | null) ?? current.birthDate,
+        ageOverride: payload.ageOverride === undefined ? current.ageOverride : (payload.ageOverride == null ? null : Number(payload.ageOverride)),
         birthDateEstimated: Boolean(payload.birthDateEstimated ?? false),
         sex: String(payload.sex ?? current.sex),
         maritalStatus: String(payload.maritalStatus ?? current.maritalStatus),
@@ -416,7 +429,7 @@ export const firebaseApi = {
       };
     },
     async create(payload: Record<string, unknown>) {
-      const { clinicId, professionalId: sessionProfessionalId } = await sessionContext();
+      const { userId, clinicId, professionalId: sessionProfessionalId } = await sessionContext();
       const startsAt = String(payload.startsAt);
       const durationMinutes = Number(payload.durationMinutes ?? 30);
       const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60_000).toISOString();
@@ -424,6 +437,7 @@ export const firebaseApi = {
       if (!professionalId) throw new ApiError('Selecciona un profesional', 400, 'professional_required');
 
       const created = await createAppointment(dc(), {
+        createdById: userId,
         clinicId,
         patientId: String(payload.patientId),
         professionalId,
@@ -492,27 +506,44 @@ export const firebaseApi = {
       const record = await fetchConsultation(id);
       return {
         consultation: mapConsultation(record),
-        diagnoses: record.consultationDiagnoses_on_consultation.map(mapDiagnosis),
-        canSign: record.status === 'borrador' && Boolean(record.reason) &&
-          record.consultationDiagnoses_on_consultation.length > 0,
-        signBlockers: {
-          reason: !record.reason,
-          diagnosis: record.consultationDiagnoses_on_consultation.length === 0
-        }
       };
     },
     async create(payload: Record<string, unknown>) {
       const context = await sessionContext();
-      let professionalId = (payload.professionalId as string | undefined) ?? context.professionalId;
-      if (!professionalId) {
-        const { data } = await getCatalogs(dc());
-        professionalId = data.users[0]?.clinic.professionals_on_clinic[0]?.id ?? null;
-      }
-      if (!professionalId) throw new ApiError('Selecciona un profesional', 400, 'professional_required');
+      const clinicId = normalizeUuid(context.clinicId);
+      const patientId = normalizeUuid(payload.patientId);
+      if (!clinicId) throw new ApiError('La clínica de la sesión tiene un identificador inválido', 400, 'invalid_clinic_id');
+      if (!patientId) throw new ApiError('El expediente no tiene un identificador de paciente válido', 400, 'invalid_patient_id');
 
-      const created = await createConsultation(dc(), {
-        clinicId: context.clinicId,
-        patientId: String(payload.patientId),
+      const { data } = await getCatalogs(dc());
+      const professionals = data.users[0]?.clinic.professionals_on_clinic ?? [];
+      const professionalsById = new Map(
+        professionals.flatMap((professional) => {
+          const id = normalizeUuid(professional.id);
+          return id ? [[id, professional] as const] : [];
+        })
+      );
+      const principal = professionals.find((professional) => /administrador\s+principal/i.test(professional.fullName))
+        ?? professionals.find((professional) => /principal|administrador/i.test(professional.fullName));
+      const candidates = [
+        normalizeUuid(payload.professionalId),
+        normalizeUuid(context.professionalId),
+        normalizeUuid(principal?.id),
+        ...professionals.map((professional) => normalizeUuid(professional.id))
+      ];
+      const professionalId = candidates.find((id): id is string => Boolean(id && professionalsById.has(id))) ?? null;
+      if (!professionalId) {
+        console.error('No se puede crear consulta: la clínica no tiene profesionales activos asignados.', {
+          clinicId,
+          userProfessionalId: context.professionalId
+        });
+        throw new ApiError('No hay un profesional activo asignado a esta clínica', 400, 'professional_required');
+      }
+
+      const variables = {
+        createdById: context.userId,
+        clinicId,
+        patientId,
         professionalId,
         appointmentId: (payload.appointmentId as string | null) ?? null,
         specialtyId: (payload.specialtyId as string | null) ?? null,
@@ -522,12 +553,19 @@ export const firebaseApi = {
         notes: (payload.notes as string | null) ?? null,
         status: String(payload.status ?? 'borrador'),
         source: String(payload.source ?? 'web')
-      });
+      };
+      let created;
+      try {
+        created = await createConsultation(dc(), variables);
+      } catch (cause) {
+        console.error('Data Connect CreateConsultation falló', { variables, cause });
+        throw cause;
+      }
 
       return {
         consultation: {
           id: created.data.consultation_insert.id,
-          patientId: String(payload.patientId),
+          patientId,
           status: 'borrador'
         } as Consultation
       };
@@ -544,6 +582,9 @@ export const firebaseApi = {
         physicalExam: (payload.physicalExam as string | null) ?? null,
         functionalExam: (payload.functionalExam as string | null) ?? null,
         studies: (payload.studies as string | null) ?? null,
+        evolutionText: (payload.evolutionText as string | null) ?? null,
+        studiesText: (payload.studiesText as string | null) ?? null,
+        prescriptionText: (payload.prescriptionText as string | null) ?? null,
         diagnosisNotes: (payload.diagnosisNotes as string | null) ?? null,
         treatmentPlan: (payload.treatmentPlan as string | null) ?? null,
         evolution: (payload.evolution as string | null) ?? null,
@@ -559,60 +600,68 @@ export const firebaseApi = {
       return { id };
     },
     async sign(id: string) {
-      await signConsultation(dc(), { id });
+      const { userId } = await sessionContext();
+      await signConsultation(dc(), { id, signedById: userId });
       const record = await fetchConsultation(id);
       return {
         consultation: mapConsultation(record),
         signedAt: record.signedAt ?? new Date().toISOString()
       };
     },
-    async addDiagnosis(id: string, payload: { code: string; type?: string; notes?: string }) {
-      const consultation = await fetchConsultation(id);
-      const { data } = await searchCie10(dc(), { q: payload.code });
-      const code = data.cie10Codes.find((item) => item.code === payload.code) ?? data.cie10Codes[0];
-      const created = await addDiagnosis(dc(), {
-        clinicId: consultation.clinicId,
-        patientId: consultation.patientId,
-        consultationId: id,
-        professionalId: consultation.professionalId,
-        cie10Code: payload.code,
-        diagnosisText: code?.description ?? payload.code,
-        diagnosisType: payload.type ?? 'principal',
-        notes: payload.notes ?? null
-      });
-      return {
-        diagnosis: {
-          id: created.data.consultationDiagnosis_insert.id,
-          code: payload.code,
-          description: code?.description ?? payload.code,
-          type: (payload.type ?? 'principal') as Diagnosis['type'],
-          notes: payload.notes ?? null
-        }
-      };
-    },
-    async deleteDiagnosis(_id: string, diagnosisId: string) {
-      await deleteDiagnosis(dc(), { id: diagnosisId });
-    },
-    async updateDiagnosis(_id: string, diagnosisId: string, payload: { description: string; type: string; notes?: string | null }) {
-      await updateDiagnosis(dc(), {
-        id: diagnosisId,
-        diagnosisText: payload.description,
-        diagnosisType: payload.type,
-        notes: payload.notes ?? null
-      });
-    }
   },
-  cie10: {
-    async search(q: string): Promise<{ codes: Cie10Code[] }> {
-      const { data } = await searchCie10(dc(), { q });
-      return {
-        codes: data.cie10Codes.map((item) => ({
-          code: item.code,
-          description: item.description,
-          chapter: item.chapter ?? null,
-          category: item.category ?? null
-        }))
-      };
+  studies: {
+    async list(patientId: string): Promise<{ studies: PatientStudy[] }> {
+      const { data } = await listPatientStudies(dc(), { patientId, limit: 1000, offset: 0 });
+      const studies = data.patientStudies.flatMap((record) => {
+        const metadata = (record.metadata ?? {}) as Record<string, unknown>;
+        const fileUrl = typeof metadata.fileUrl === 'string' ? metadata.fileUrl : '';
+        if (!fileUrl) return [];
+        return [{
+          id: record.id,
+          patientId,
+          consultationId: record.consultation?.id ?? null,
+          studyType: record.studyType,
+          studyName: record.studyName,
+          performedAt: record.performedAt ?? '',
+          resultSummary: record.resultSummary ?? null,
+          resultText: record.resultText ?? null,
+          fileUrl,
+          previewUrl: typeof metadata.previewUrl === 'string' ? metadata.previewUrl : null,
+          fileName: typeof metadata.fileName === 'string' ? metadata.fileName : record.studyName,
+          mimeType: typeof metadata.mimeType === 'string' ? metadata.mimeType : 'application/octet-stream',
+          professionalName: record.professional?.fullName ?? ''
+        }];
+      });
+      return { studies };
+    },
+    async create(input: { patientId: string; studyName: string; studyType: string; performedAt: string; note: string; file: File }) {
+      const { clinicId, professionalId } = await sessionContext();
+      const assets = await uploadStudyAssets({ patientId: input.patientId, clinicId, file: input.file });
+      try {
+        const { data } = await createPatientStudy(dc(), {
+          clinicId,
+          patientId: input.patientId,
+          professionalId,
+          studyType: input.studyType,
+          studyName: input.studyName,
+          performedAt: new Date(`${input.performedAt}T12:00:00`).toISOString(),
+          resultSummary: input.note || null,
+          resultText: input.note || null,
+          metadata: {
+            fileUrl: assets.fileUrl,
+            previewUrl: assets.previewUrl,
+            storagePath: assets.filePath,
+            previewPath: assets.previewPath,
+            fileName: assets.fileName,
+            mimeType: assets.mimeType,
+            fileSize: assets.fileSize
+          }
+        });
+        return { id: data.patientStudy_insert.id, ...assets };
+      } catch (error) {
+        await removeStudyAssets([assets.filePath, assets.previewPath]);
+        throw error;
+      }
     }
   },
   reports: {
@@ -632,12 +681,7 @@ export const firebaseApi = {
           recordNumber: record.patient.recordNumber,
           sex: record.patient.sex,
           birthDate: record.patient.birthDate ?? null,
-          professionalName: record.professional.fullName,
-          diagnoses: record.consultationDiagnoses_on_consultation.map((diagnosis) => ({
-            code: diagnosis.cie10Code ?? 'Sin código',
-            description: diagnosis.diagnosisText,
-            type: diagnosis.diagnosisType
-          }))
+          professionalName: record.professional.fullName
         })));
         patients.push(...data.patients.map((patient) => ({
           id: patient.id,

@@ -17,13 +17,14 @@ export interface User {
 export interface Patient {
   id: string;
   recordNumber: string;
-  documentType: string;
+  documentType: string | null;
   documentNumber: string | null;
   documentVerified: boolean;
   fullName: string;
   firstName: string | null;
   lastName: string | null;
   birthDate: string | null;
+  ageOverride: number | null;
   sex: 'M' | 'F' | 'X' | 'U';
   maritalStatus: string;
   bloodType: string | null;
@@ -60,15 +61,6 @@ export interface PatientHistoryItem {
   recorded_at: string;
 }
 
-export interface Diagnosis {
-  id: string;
-  code: string;
-  description: string;
-  type: 'principal' | 'secundario' | 'presuntivo' | 'diferencial' | 'otro';
-  notes?: string | null;
-  diagnosed_at?: string;
-}
-
 export interface ConsultationSummary {
   id: string;
   consulted_at: string;
@@ -81,13 +73,13 @@ export interface ConsultationSummary {
   professional_name: string;
   patient_name?: string;
   record_number?: string;
-  diagnoses: Diagnosis[];
 }
 
 export interface Consultation {
   id: string;
   patientId: string;
   patientName: string;
+  patientEmail: string | null;
   recordNumber: string;
   birthDate: string | null;
   sex: string;
@@ -104,6 +96,9 @@ export interface Consultation {
   physicalExam: string | null;
   functionalExam: string | null;
   studies: string | null;
+  evolutionText: string | null;
+  studiesText: string | null;
+  prescriptionText: string | null;
   diagnosisNotes: string | null;
   treatmentPlan: string | null;
   evolution: string | null;
@@ -114,6 +109,7 @@ export interface Consultation {
     presentation: string;
     dose: string;
     frequency: string;
+    route?: string;
     duration: string;
     quantity: string;
     instructions: string;
@@ -162,13 +158,6 @@ export interface AgendaResponse {
     attended: number;
     cancelled: number;
   };
-}
-
-export interface Cie10Code {
-  code: string;
-  description: string;
-  chapter: string | null;
-  category: string | null;
 }
 
 export interface Professional {
@@ -237,7 +226,22 @@ export interface ReportsDataset {
     sex: string;
     birthDate: string | null;
     professionalName: string;
-    diagnoses: { code: string; description: string; type: string }[];
   }[];
   patients: { id: string; createdAt: string; sex: string; birthDate: string | null }[];
+}
+
+export interface PatientStudy {
+  id: string;
+  patientId: string;
+  consultationId: string | null;
+  studyType: string;
+  studyName: string;
+  performedAt: string;
+  resultSummary: string | null;
+  resultText: string | null;
+  fileUrl: string;
+  previewUrl: string | null;
+  fileName: string;
+  mimeType: string;
+  professionalName: string;
 }

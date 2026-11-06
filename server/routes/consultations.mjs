@@ -1,7 +1,6 @@
 import { many, one, query, transaction } from '../db.mjs';
 import { HttpError, audit, isoDate, jsonObject, requiredText, text, uuid } from '../lib.mjs';
 
-const DIAGNOSIS_TYPES = ['principal', 'secundario', 'presuntivo', 'diferencial', 'otro'];
 const CONSULTATION_TYPES = ['consulta', 'evolucion', 'interconsulta', 'procedimiento', 'otro'];
 
 function mapConsultation(row) {
@@ -9,6 +8,7 @@ function mapConsultation(row) {
     id: row.id,
     patientId: row.patient_id,
     patientName: row.patient_name,
+    patientEmail: row.patient_email ?? null,
     recordNumber: row.record_number,
     birthDate: row.birth_date,
     sex: row.sex,
@@ -38,6 +38,30 @@ function mapConsultation(row) {
   };
 }
 
+function normalizePrescriptionItems(value) {
+  if (!Array.isArray(value)) return null;
+  if (value.length > 100) throw new HttpError(400, 'validation_error', 'Una receta no puede tener más de 100 medicamentos');
+  return value.filter((item) => item && typeof item === 'object').map((item, index) => {
+    const medication = text(item.medication, 240);
+    const presentation = text(item.presentation, 240);
+    const dose = text(item.dose, 240);
+    const frequency = text(item.frequency, 240);
+    const route = text(item.route, 120);
+    const duration = text(item.duration, 160);
+    const quantityText = text(item.quantity, 40);
+    const quantity = quantityText === null ? null : Number(quantityText);
+    const instructions = text(item.instructions, 2000);
+    const hasDetails = [presentation, dose, frequency, route, duration, quantityText, instructions].some(Boolean);
+    if (!medication && hasDetails) {
+      throw new HttpError(400, 'validation_error', `Indica el nombre del medicamento ${index + 1}`);
+    }
+    if (quantity !== null && (!Number.isFinite(quantity) || quantity < 0)) {
+      throw new HttpError(400, 'validation_error', `La cantidad del medicamento ${index + 1} no es válida`);
+    }
+    return { medication, presentation, dose, frequency, route, duration, quantity, instructions };
+  }).filter((item) => item.medication);
+}
+
 async function currentProfessional(request) {
   if (request.user.professionalId) return request.user.professionalId;
   const professional = await one(
@@ -54,7 +78,7 @@ async function loadConsultation(request, id, client = null) {
   const runner = client ?? { query };
   const result = await runner.query(
     `select
-       c.*, p.full_name as patient_name, p.record_number, p.birth_date, p.sex, p.allergies_notes,
+       c.*, p.full_name as patient_name, p.email as patient_email, p.record_number, p.birth_date, p.sex, p.allergies_notes,
        pr.full_name as professional_name
      from public.consultations c
      join public.patients p on p.id = c.patient_id
@@ -77,26 +101,13 @@ export async function consultationRoutes(app) {
          c.id, c.consulted_at, c.status, c.reason, c.current_illness,
          c.treatment_plan, c.signed_at, c.updated_at,
          p.full_name as patient_name, p.record_number,
-         pr.full_name as professional_name,
-         coalesce(
-           jsonb_agg(
-             jsonb_build_object(
-               'id', d.id,
-               'code', d.cie10_code,
-               'description', d.diagnosis_text,
-               'type', d.diagnosis_type
-             )
-           ) filter (where d.id is not null),
-           '[]'::jsonb
-         ) as diagnoses
+         pr.full_name as professional_name
        from public.consultations c
        join public.patients p on p.id = c.patient_id
        join public.professionals pr on pr.id = c.professional_id
-       left join public.consultation_diagnoses d on d.consultation_id = c.id
        where c.clinic_id = $1
          and c.deleted_at is null
          and ($2::uuid is null or c.patient_id = $2)
-       group by c.id, p.full_name, p.record_number, pr.full_name
        order by c.consulted_at desc
        limit 60`,
       [request.user.clinicId, patientId ?? null]
@@ -108,27 +119,29 @@ export async function consultationRoutes(app) {
   app.get('/api/consultations/:id', { preHandler: [app.authenticate] }, async (request) => {
     const id = uuid(request.params.id, 'consulta');
     const consultation = await loadConsultation(request, id);
-    const diagnoses = await many(
-      `select id, cie10_code as code, diagnosis_text as description,
-              diagnosis_type as type, notes, diagnosed_at
-       from public.consultation_diagnoses
-       where consultation_id = $1
-       order by diagnosis_type, diagnosed_at`,
-      [id]
+    const prescriptionItems = await many(
+      `select pi.medication_name, pi.presentation, pi.dose, pi.frequency, pi.route,
+              pi.duration, pi.quantity, pi.instructions
+       from public.prescriptions rx
+       join public.prescription_items pi on pi.prescription_id = rx.id
+       where rx.consultation_id = $1 and rx.clinic_id = $2 and rx.status <> 'anulada'
+       order by rx.issued_at desc, pi.sort_order asc, pi.created_at asc`,
+      [id, request.user.clinicId]
     );
 
-    const canSign =
-      consultation.status === 'borrador' &&
-      Boolean(consultation.reason && consultation.reason.trim()) &&
-      diagnoses.length > 0;
-
     return {
-      consultation: mapConsultation(consultation),
-      diagnoses,
-      canSign,
-      signBlockers: {
-        reason: !consultation.reason || !consultation.reason.trim(),
-        diagnosis: diagnoses.length === 0
+      consultation: {
+        ...mapConsultation(consultation),
+        prescriptionItems: prescriptionItems.map((item) => ({
+          medication: item.medication_name,
+          presentation: item.presentation ?? '',
+          dose: item.dose ?? '',
+          frequency: item.frequency ?? '',
+          route: item.route ?? '',
+          duration: item.duration ?? '',
+          quantity: item.quantity == null ? '' : String(item.quantity),
+          instructions: item.instructions ?? ''
+        }))
       }
     };
   });
@@ -234,6 +247,9 @@ export async function consultationRoutes(app) {
       }
 
       const body = request.body ?? {};
+      const prescriptionItems = body.prescriptionItems === undefined
+        ? null
+        : normalizePrescriptionItems(body.prescriptionItems);
       const fields = [];
       const values = [];
       const add = (column, value) => {
@@ -261,19 +277,72 @@ export async function consultationRoutes(app) {
         add('next_visit_at', body.nextVisitAt ? isoDate(body.nextVisitAt, 'próxima visita') : null);
       }
 
-      if (fields.length === 0) return { consultation: mapConsultation(before) };
+      if (fields.length === 0 && prescriptionItems === null) return { consultation: mapConsultation(before) };
 
       values.push(id, request.user.clinicId);
       const result = await transaction(async (client) => {
-        const updated = await client.query(
-          `update public.consultations
-           set ${fields.join(', ')}, updated_at = now()
-           where id = $${values.length - 1} and clinic_id = $${values.length}
-           returning *`,
-          values
-        );
+        const updated = fields.length > 0
+          ? await client.query(
+              `update public.consultations
+               set ${fields.join(', ')}, updated_at = now()
+               where id = $${values.length - 1} and clinic_id = $${values.length}
+               returning *`,
+              values
+            )
+          : { rows: [before] };
+        if (prescriptionItems !== null) {
+          const legacyId = `pwa-consultation:${id}`;
+          const existingPrescription = await client.query(
+            `select id from public.prescriptions
+             where clinic_id = $1 and consultation_id = $2 and legacy_id = $3
+             limit 1`,
+            [request.user.clinicId, id, legacyId]
+          );
+          if (prescriptionItems.length === 0) {
+            if (existingPrescription.rows[0]) {
+              await client.query(
+                `update public.prescriptions set status = 'anulada', updated_at = now()
+                 where id = $1`,
+                [existingPrescription.rows[0].id]
+              );
+            }
+          } else {
+            let prescriptionId = existingPrescription.rows[0]?.id;
+            if (prescriptionId) {
+              await client.query(
+                `update public.prescriptions
+                 set status = 'borrador', issued_at = $1, professional_id = $2, updated_at = now()
+                 where id = $3`,
+                [updated.rows[0].consulted_at, updated.rows[0].professional_id, prescriptionId]
+              );
+              await client.query('delete from public.prescription_items where prescription_id = $1', [prescriptionId]);
+            } else {
+              const insertedPrescription = await client.query(
+                `insert into public.prescriptions (
+                   clinic_id, patient_id, consultation_id, professional_id, prescription_number,
+                   issued_at, status, legacy_id
+                 ) values ($1, $2, $3, $4, $5, $6, 'borrador', $7)
+                 returning id`,
+                [request.user.clinicId, updated.rows[0].patient_id, id, updated.rows[0].professional_id,
+                  `RX-${id}`, updated.rows[0].consulted_at, legacyId]
+              );
+              prescriptionId = insertedPrescription.rows[0].id;
+            }
+            for (const [sortOrder, item] of prescriptionItems.entries()) {
+              await client.query(
+                `insert into public.prescription_items (
+                   prescription_id, medication_name, presentation, dose, frequency, route,
+                   duration, quantity, instructions, sort_order, legacy_id
+                 ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                [prescriptionId, item.medication, item.presentation, item.dose, item.frequency, item.route,
+                  item.duration, item.quantity, item.instructions, sortOrder, `pwa:${sortOrder}`]
+              );
+            }
+          }
+        }
         await audit(client, request, 'update', 'consultation', id, null, {
-          status: updated.rows[0].status
+          status: updated.rows[0].status,
+          prescriptionItems: prescriptionItems?.length
         });
         return updated.rows[0];
       });
@@ -305,7 +374,7 @@ export async function consultationRoutes(app) {
 
       const result = await transaction(async (client) => {
         const locked = await client.query(
-          `select c.*, p.full_name as patient_name, p.record_number, p.birth_date, p.sex, p.allergies_notes,
+          `select c.*, p.full_name as patient_name, p.email as patient_email, p.record_number, p.birth_date, p.sex, p.allergies_notes,
                   pr.full_name as professional_name
            from public.consultations c
            join public.patients p on p.id = c.patient_id
@@ -321,14 +390,6 @@ export async function consultationRoutes(app) {
         }
         if (!consultation.reason || !consultation.reason.trim()) {
           throw new HttpError(422, 'missing_reason', 'Agrega el motivo de consulta antes de firmar');
-        }
-
-        const diagnoses = await client.query(
-          'select id from public.consultation_diagnoses where consultation_id = $1 limit 1',
-          [id]
-        );
-        if (diagnoses.rowCount === 0) {
-          throw new HttpError(422, 'missing_diagnosis', 'Agrega al menos un diagnóstico CIE-10 antes de firmar');
         }
 
         const updated = await client.query(
@@ -359,132 +420,6 @@ export async function consultationRoutes(app) {
     }
   );
 
-  app.post(
-    '/api/consultations/:id/diagnoses',
-    { preHandler: [app.authenticate, requireClinician] },
-    async (request, reply) => {
-      const id = uuid(request.params.id, 'consulta');
-      const consultation = await loadConsultation(request, id);
-      if (consultation.status !== 'borrador') {
-        throw new HttpError(409, 'consultation_signed', 'No se pueden agregar diagnósticos a una consulta firmada');
-      }
-
-      const code = requiredText(request.body?.code, 'Código CIE-10', 20).toUpperCase();
-      const cie = await one(
-        'select code, description from public.cie10_codes where code = $1',
-        [code]
-      );
-      if (!cie) throw new HttpError(400, 'invalid_cie10', 'El código CIE-10 no existe en el catálogo');
-
-      const type = DIAGNOSIS_TYPES.includes(request.body?.type) ? request.body.type : 'principal';
-      const duplicate = await one(
-        `select id from public.consultation_diagnoses
-         where consultation_id = $1 and cie10_code = $2`,
-        [id, code]
-      );
-      if (duplicate) throw new HttpError(409, 'duplicate_diagnosis', 'Ese diagnóstico ya está agregado');
-
-      const result = await transaction(async (client) => {
-        const inserted = await client.query(
-          `insert into public.consultation_diagnoses (
-             clinic_id, patient_id, consultation_id, professional_id,
-             code_system, cie10_code, diagnosis_text, diagnosis_type, notes
-           ) values ($1, $2, $3, $4, 'CIE10', $5, $6, $7, $8)
-           returning *`,
-          [
-            request.user.clinicId,
-            consultation.patient_id,
-            id,
-            consultation.professional_id,
-            code,
-            cie.description,
-            type,
-            text(request.body?.notes, 1000)
-          ]
-        );
-        await audit(client, request, 'create', 'diagnosis', inserted.rows[0].id, null, {
-          consultationId: id,
-          code,
-          type
-        });
-        return inserted.rows[0];
-      });
-
-      return reply.code(201).send({
-        diagnosis: {
-          id: result.id,
-          code: result.cie10_code,
-          description: result.diagnosis_text,
-          type: result.diagnosis_type,
-          notes: result.notes,
-          diagnosedAt: result.diagnosed_at
-        }
-      });
-    }
-  );
-
-  app.delete(
-    '/api/consultations/:id/diagnoses/:diagnosisId',
-    { preHandler: [app.authenticate, requireClinician] },
-    async (request, reply) => {
-      const id = uuid(request.params.id, 'consulta');
-      const diagnosisId = uuid(request.params.diagnosisId, 'diagnóstico');
-      const consultation = await loadConsultation(request, id);
-      if (consultation.status !== 'borrador') {
-        throw new HttpError(409, 'consultation_signed', 'No se pueden quitar diagnósticos de una consulta firmada');
-      }
-
-      const result = await transaction(async (client) => {
-        const deleted = await client.query(
-          `delete from public.consultation_diagnoses
-           where id = $1 and consultation_id = $2 and clinic_id = $3
-           returning id`,
-          [diagnosisId, id, request.user.clinicId]
-        );
-        if (deleted.rowCount === 0) throw new HttpError(404, 'not_found', 'Diagnóstico no encontrado');
-        await audit(client, request, 'delete', 'diagnosis', diagnosisId, null, { consultationId: id });
-        return deleted.rows[0];
-      });
-
-      return reply.code(204).send(result);
-    }
-  );
-
-  app.patch(
-    '/api/consultations/:id/diagnoses/:diagnosisId',
-    { preHandler: [app.authenticate, requireClinician] },
-    async (request) => {
-      const id = uuid(request.params.id, 'consulta');
-      const diagnosisId = uuid(request.params.diagnosisId, 'diagnóstico');
-      const consultation = await loadConsultation(request, id);
-      if (consultation.status !== 'borrador') throw new HttpError(409, 'consultation_signed', 'No se pueden editar diagnósticos de una consulta firmada');
-      const type = DIAGNOSIS_TYPES.includes(request.body?.type) ? request.body.type : 'secundario';
-      const description = requiredText(request.body?.description, 'Descripción', 500);
-      const result = await transaction(async (client) => {
-        const updated = await client.query('update public.consultation_diagnoses set diagnosis_text=$1,diagnosis_type=$2,notes=$3,updated_at=now() where id=$4 and consultation_id=$5 and clinic_id=$6 returning *', [description,type,text(request.body?.notes,1000),diagnosisId,id,request.user.clinicId]);
-        if (!updated.rowCount) throw new HttpError(404, 'not_found', 'Diagnóstico no encontrado');
-        await audit(client, request, 'update', 'diagnosis', diagnosisId, null, updated.rows[0]);
-        return updated.rows[0];
-      });
-      return { diagnosis: { id: result.id, code: result.cie10_code, description: result.diagnosis_text, type: result.diagnosis_type, notes: result.notes } };
-    }
-  );
-
-  app.get('/api/cie10', { preHandler: [app.authenticate] }, async (request) => {
-    const q = text(request.query?.q, 100);
-    const rows = await many(
-      `select code, description, chapter, category
-       from public.cie10_codes
-       where $1::text is null
-          or search_text like '%' || lower(public.immutable_unaccent($1)) || '%'
-       order by
-         case when lower(code) = lower($1) then 0 else 1 end,
-         code
-       limit 20`,
-      [q]
-    );
-    return { codes: rows };
-  });
 }
 
 async function requireClinician(request) {

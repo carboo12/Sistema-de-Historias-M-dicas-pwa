@@ -595,6 +595,40 @@ extend type Clinic {
     having: PatientAnamnesisAnswer_Having
   ): [PatientAnamnesisAnswer!]! @fdc_generated(from: "PatientAnamnesisAnswer.clinic", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `PatientStudy` objects in a one-to-many relationship (where `PatientStudy`.`clinic` is this object).
+  """
+  patientStudies_on_clinic(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: PatientStudy_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [PatientStudy_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: PatientStudy_Having
+  ): [PatientStudy!]! @fdc_generated(from: "PatientStudy.clinic", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `Prescription` objects in a one-to-many relationship (where `Prescription`.`clinic` is this object).
   """
   prescriptions_on_clinic(
@@ -981,6 +1015,40 @@ extend type Consultation {
     having: PatientAnamnesisAnswer_Having
   ): [PatientAnamnesisAnswer!]! @fdc_generated(from: "PatientAnamnesisAnswer.consultation", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `PatientStudy` objects in a one-to-many relationship (where `PatientStudy`.`consultation` is this object).
+  """
+  patientStudies_on_consultation(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: PatientStudy_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [PatientStudy_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: PatientStudy_Having
+  ): [PatientStudy!]! @fdc_generated(from: "PatientStudy.consultation", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `Prescription` objects in a one-to-many relationship (where `Prescription`.`consultation` is this object).
   """
   prescriptions_on_consultation(
@@ -1104,6 +1172,15 @@ extend type Consultation {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Consultation.diagnosisNotes", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `Consultation` table where the `evolutionText` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  evolutionText_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consultation.evolutionText", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `Consultation` table where the `evolution` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   evolution_count(
@@ -1194,6 +1271,15 @@ extend type Consultation {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Consultation.plan", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `Consultation` table where the `prescriptionText` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  prescriptionText_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consultation.prescriptionText", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `Consultation` table where the `professionalId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   professionalId_count(
@@ -1256,6 +1342,15 @@ extend type Consultation {
     """
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Consultation.status", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consultation` table where the `studiesText` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  studiesText_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consultation.studiesText", purpose: QUERY_COUNT)
   """
   ✨ Count the number of rows in the `Consultation` table where the `studies` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
@@ -1969,6 +2064,40 @@ extend type Patient {
     having: PatientHistory_Having
   ): [PatientHistory!]! @fdc_generated(from: "PatientHistory.patient", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `PatientStudy` objects in a one-to-many relationship (where `PatientStudy`.`patient` is this object).
+  """
+  patientStudies_on_patient(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: PatientStudy_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [PatientStudy_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: PatientStudy_Having
+  ): [PatientStudy!]! @fdc_generated(from: "PatientStudy.patient", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `Prescription` objects in a one-to-many relationship (where `Prescription`.`patient` is this object).
   """
   prescriptions_on_patient(
@@ -2019,6 +2148,15 @@ extend type Patient {
     """
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Patient.address", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Patient` table where the `ageOverride` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  ageOverride_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Patient.ageOverride", purpose: QUERY_COUNT)
   """
   ✨ Count the number of rows in the `Patient` table where the `allergiesNotes` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
@@ -2416,6 +2554,28 @@ extend type Patient {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Patient.updatedAt", purpose: QUERY_COUNT)
   """
+  ✨ Sum the `ageOverride` field in the `Patient` table.
+  """
+  ageOverride_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "Patient.ageOverride", purpose: QUERY_SUM)
+  """
+  ✨ Average the `ageOverride` field in the `Patient` table.
+  """
+  ageOverride_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Patient.ageOverride", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `ageOverride` field in the `Patient` table.
+  """
+  ageOverride_min: Int @fdc_generated(from: "Patient.ageOverride", purpose: QUERY_MIN)
+  """
   ✨ Minimum of the `birthDate` field in the `Patient` table.
   """
   birthDate_min: Date @fdc_generated(from: "Patient.birthDate", purpose: QUERY_MIN)
@@ -2439,6 +2599,10 @@ extend type Patient {
   ✨ Minimum of the `updatedAt` field in the `Patient` table.
   """
   updatedAt_min: Timestamp @fdc_generated(from: "Patient.updatedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `ageOverride` field in the `Patient` table.
+  """
+  ageOverride_max: Int @fdc_generated(from: "Patient.ageOverride", purpose: QUERY_MAX)
   """
   ✨ Maximum of the `birthDate` field in the `Patient` table.
   """
@@ -2784,6 +2948,204 @@ extend type PatientHistory {
   A generated field that is used for caching results in SDKs.
   """
   _id: ID! @fdc_generated(from: "PatientHistory.id", purpose: ENTITY_ID)
+}
+extend type PatientStudy {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "PatientStudy", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table.
+  """
+  _count: Int! @fdc_generated(from: "PatientStudy.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `clinicId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  clinicId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.clinicId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `consultationId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  consultationId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.consultationId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `legacyId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  legacyId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.legacyId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `metadata` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  metadata_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.metadata", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `orderedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  orderedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.orderedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `patientId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  patientId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.patientId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `performedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  performedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.performedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `professionalId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  professionalId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.professionalId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `resultSummary` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  resultSummary_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.resultSummary", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `resultText` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  resultText_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.resultText", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  status_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.status", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `studyName` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  studyName_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.studyName", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `studyType` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  studyType_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.studyType", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `PatientStudy` table where the `updatedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  updatedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "PatientStudy.updatedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `PatientStudy` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "PatientStudy.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `metadata` field in the `PatientStudy` table.
+  """
+  metadata_min: Any @fdc_generated(from: "PatientStudy.metadata", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `orderedAt` field in the `PatientStudy` table.
+  """
+  orderedAt_min: Timestamp @fdc_generated(from: "PatientStudy.orderedAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `performedAt` field in the `PatientStudy` table.
+  """
+  performedAt_min: Timestamp @fdc_generated(from: "PatientStudy.performedAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `updatedAt` field in the `PatientStudy` table.
+  """
+  updatedAt_min: Timestamp @fdc_generated(from: "PatientStudy.updatedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `PatientStudy` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "PatientStudy.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `metadata` field in the `PatientStudy` table.
+  """
+  metadata_max: Any @fdc_generated(from: "PatientStudy.metadata", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `orderedAt` field in the `PatientStudy` table.
+  """
+  orderedAt_max: Timestamp @fdc_generated(from: "PatientStudy.orderedAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `performedAt` field in the `PatientStudy` table.
+  """
+  performedAt_max: Timestamp @fdc_generated(from: "PatientStudy.performedAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `updatedAt` field in the `PatientStudy` table.
+  """
+  updatedAt_max: Timestamp @fdc_generated(from: "PatientStudy.updatedAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "PatientStudy.id", purpose: ENTITY_ID)
 }
 extend type Prescription {
   """
@@ -3276,6 +3638,40 @@ extend type Professional {
     """
     having: ConsultationDiagnosis_Having
   ): [ConsultationDiagnosis!]! @fdc_generated(from: "ConsultationDiagnosis.professional", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `PatientStudy` objects in a one-to-many relationship (where `PatientStudy`.`professional` is this object).
+  """
+  patientStudies_on_professional(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: PatientStudy_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [PatientStudy_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: PatientStudy_Having
+  ): [PatientStudy!]! @fdc_generated(from: "PatientStudy.professional", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `Prescription` objects in a one-to-many relationship (where `Prescription`.`professional` is this object).
   """

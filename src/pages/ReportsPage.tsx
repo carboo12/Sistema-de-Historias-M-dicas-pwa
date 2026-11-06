@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart3, Download, FileSpreadsheet, Printer, Users } from 'lucide-react';
+import { Download, FileSpreadsheet, Printer, Users } from 'lucide-react';
 import { api } from '../lib/api';
 import type { ReportsDataset } from '../types';
-import { Button, ErrorState, Field, Input, PageHeader, Select, Spinner } from '../components/ui';
+import { Button, Field, Input, PageHeader, Select, Spinner } from '../components/ui';
+import { ApiError } from '../lib/api';
 
 const today = new Date();
 const datePart = (date: Date) => date.toISOString().slice(0, 10);
@@ -49,19 +50,13 @@ export function ReportsPage() {
     enabled: Boolean(from && to && from <= to)
   });
   const dataset: ReportsDataset = query.data ?? { consultations: [], patients: [] };
+  const unauthorized = query.error instanceof ApiError && query.error.status === 401;
+  const isEmpty = !query.isLoading && (!query.isError || unauthorized)
+    && dataset.consultations.length === 0 && dataset.patients.length === 0;
   const doctors = useMemo(() => [...new Set(dataset.consultations.map((row) => row.professionalName).filter(Boolean))].sort(), [dataset.consultations]);
   const consultations = useMemo(() => dataset.consultations.filter((row) =>
     (!doctor || row.professionalName === doctor) && (!reason || row.reason?.toLocaleLowerCase().includes(reason.toLocaleLowerCase()))
   ), [dataset.consultations, doctor, reason]);
-  const diagnoses = useMemo(() => {
-    const counts = new Map<string, { code: string; description: string; count: number }>();
-    for (const consult of consultations) for (const diagnosis of consult.diagnoses) {
-      const key = `${diagnosis.code}|${diagnosis.description}`;
-      const previous = counts.get(key);
-      counts.set(key, { code: diagnosis.code, description: diagnosis.description, count: (previous?.count ?? 0) + 1 });
-    }
-    return [...counts.values()].sort((a, b) => b.count - a.count);
-  }, [consultations]);
   const demographics = useMemo(() => {
     const counts = new Map<string, number>();
     for (const patient of dataset.patients) {
@@ -79,12 +74,11 @@ export function ReportsPage() {
     }
     return [...bands.entries()];
   }, [dataset.patients]);
-  const maxDiagnosis = Math.max(1, ...diagnoses.map((row) => row.count));
   const print = () => window.print();
 
   return (
     <div className="mx-auto max-w-7xl space-y-7">
-      <PageHeader eyebrow="Indicadores clínicos" title="Reportes" description="Consulta la actividad, los diagnósticos y las altas de pacientes en el periodo seleccionado." actions={<Button variant="secondary" icon={<Printer className="h-4 w-4" />} onClick={print}>Imprimir / guardar PDF</Button>} />
+      <PageHeader eyebrow="Indicadores clínicos" title="Reportes" description="Consulta la actividad y las altas de pacientes en el periodo seleccionado." actions={<Button variant="secondary" icon={<Printer className="h-4 w-4" />} onClick={print}>Imprimir / guardar PDF</Button>} />
 
       <section className="no-print card grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
         <Field label="Desde"><Input type="date" value={from} max={to} onChange={(event) => setFrom(event.target.value)} /></Field>
@@ -94,24 +88,21 @@ export function ReportsPage() {
       </section>
 
       {query.isLoading ? <div className="card flex items-center justify-center gap-3 p-12 text-sm text-ink/55"><Spinner />Cargando reportes…</div> : null}
-      {query.isError ? <ErrorState message="No fue posible cargar los reportes para este periodo." onRetry={() => void query.refetch()} /> : null}
-      {query.data ? <>
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {query.isError && !unauthorized ? <div className="card p-6 text-sm text-ink/60"><p>No se pudieron cargar los reportes en este momento.</p><Button className="mt-3" size="sm" variant="secondary" onClick={() => void query.refetch()}>Reintentar</Button></div> : null}
+      {isEmpty ? <section className="card p-8 text-center"><h2 className="font-bold text-ink">No hay datos estadísticos para este período</h2><p className="mt-1 text-sm text-ink/50">Prueba con otro rango de fechas para consultar la actividad de la clínica.</p><Button className="no-print mt-4" variant="secondary" onClick={() => { setFrom(monthStart); setTo(todayPart); }}>Usar el período actual</Button></section> : null}
+      {query.data && !isEmpty ? <>
+        {consultations.length === 0 && dataset.patients.length === 0 ? <section className="card p-8 text-center"><h2 className="font-bold text-ink">No hay datos estadísticos para este período</h2><p className="mt-1 text-sm text-ink/50">Prueba con otro rango de fechas o ajusta los filtros.</p><Button className="no-print mt-4" variant="secondary" onClick={() => { setFrom(monthStart); setTo(todayPart); setDoctor(''); setReason(''); }}>Cambiar período y filtros</Button></section> : null}
+        <section className="grid gap-4 sm:grid-cols-2">
           <Metric icon={<FileSpreadsheet className="h-5 w-5" />} label="Consultas en el periodo" value={consultations.length} note="Con filtros aplicados" />
-          <Metric icon={<BarChart3 className="h-5 w-5" />} label="Diagnósticos registrados" value={diagnoses.reduce((sum, item) => sum + item.count, 0)} note={`${diagnoses.length} categorías CIE-10`} />
           <Metric icon={<Users className="h-5 w-5" />} label="Pacientes nuevos" value={dataset.patients.length} note="Altas durante el periodo" />
         </section>
 
         <section className="card overflow-hidden">
-          <ReportHeading title="Reporte de consultas" description={`${formatDate(from)} al ${formatDate(to)} · ${consultations.length} registros`} onExport={() => downloadCsv('consultas.csv', [['Fecha', 'Paciente', 'Expediente', 'Médico', 'Motivo', 'Diagnósticos CIE-10'], ...consultations.map((row) => [formatDate(row.consultedAt), row.patientName, row.recordNumber, row.professionalName, row.reason, row.diagnoses.map((d) => `${d.code} ${d.description}`).join('; ')])])} />
-          <div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left text-sm"><thead className="bg-canvas/70 text-[11px] uppercase tracking-wide text-ink/45"><tr>{['Fecha', 'Paciente', 'Médico', 'Motivo', 'Diagnóstico'].map((label) => <th key={label} className="px-5 py-3 font-bold">{label}</th>)}</tr></thead><tbody className="divide-y divide-line/60">{consultations.map((row) => <tr key={row.id} className="text-ink/75"><td className="px-5 py-3">{formatDate(row.consultedAt)}</td><td className="px-5 py-3"><span className="font-semibold text-ink">{row.patientName}</span><span className="block text-xs text-ink/45">{row.recordNumber}</span></td><td className="px-5 py-3">{row.professionalName}</td><td className="px-5 py-3">{row.reason || '—'}</td><td className="px-5 py-3">{row.diagnoses.map((d) => d.code).filter(Boolean).join(', ') || '—'}</td></tr>)}</tbody></table>{consultations.length === 0 ? <p className="p-8 text-center text-sm text-ink/45">No hay consultas con esos filtros.</p> : null}</div>
+          <ReportHeading title="Reporte de consultas" description={`${formatDate(from)} al ${formatDate(to)} · ${consultations.length} registros`} onExport={() => downloadCsv('consultas.csv', [['Fecha', 'Paciente', 'Expediente', 'Médico', 'Motivo'], ...consultations.map((row) => [formatDate(row.consultedAt), row.patientName, row.recordNumber, row.professionalName, row.reason])])} />
+          <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left text-sm"><thead className="bg-canvas/70 text-[11px] uppercase tracking-wide text-ink/45"><tr>{['Fecha', 'Paciente', 'Médico', 'Motivo'].map((label) => <th key={label} className="px-5 py-3 font-bold">{label}</th>)}</tr></thead><tbody className="divide-y divide-line/60">{consultations.map((row) => <tr key={row.id} className="text-ink/75"><td className="px-5 py-3">{formatDate(row.consultedAt)}</td><td className="px-5 py-3"><span className="font-semibold text-ink">{row.patientName}</span><span className="block text-xs text-ink/45">{row.recordNumber}</span></td><td className="px-5 py-3">{row.professionalName}</td><td className="px-5 py-3">{row.reason || '—'}</td></tr>)}</tbody></table>{consultations.length === 0 ? <p className="p-8 text-center text-sm text-ink/45">No hay consultas con esos filtros.</p> : null}</div>
         </section>
 
-        <section className="grid items-start gap-5 xl:grid-cols-2">
-          <div className="card overflow-hidden">
-            <ReportHeading title="Frecuencia epidemiológica · CIE-10" description="Diagnósticos asociados a las consultas filtradas." onExport={() => downloadCsv('diagnosticos-cie10.csv', [['Código CIE-10', 'Diagnóstico', 'Frecuencia'], ...diagnoses.map((row) => [row.code, row.description, row.count])])} />
-            <div className="space-y-4 p-5">{diagnoses.slice(0, 12).map((row) => <div key={`${row.code}-${row.description}`}><div className="mb-1 flex justify-between gap-3 text-sm"><span className="truncate"><b className="text-teal-800">{row.code}</b> · {row.description}</span><b>{row.count}</b></div><div className="h-2 overflow-hidden rounded-full bg-canvas"><div className="h-full rounded-full bg-teal-600" style={{ width: `${(row.count / maxDiagnosis) * 100}%` }} /></div></div>)}{diagnoses.length === 0 ? <p className="py-6 text-center text-sm text-ink/45">No hay diagnósticos CIE-10 para este periodo.</p> : null}</div>
-          </div>
+        <section className="grid">
           <div className="card overflow-hidden">
             <ReportHeading title="Altas y datos demográficos" description={`${dataset.patients.length} pacientes registrados en el periodo.`} onExport={() => downloadCsv('pacientes-nuevos.csv', [['Fecha de alta', 'Sexo', 'Edad al día de hoy'], ...dataset.patients.map((patient) => [formatDate(patient.createdAt), sexLabel(patient.sex), ageAt(patient.birthDate) ?? 'Sin dato'])])} />
             <div className="grid gap-6 p-5 sm:grid-cols-2"><div><h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/45">Por sexo</h3>{demographics.map(([label, count]) => <div key={label} className="flex justify-between border-b border-line/60 py-2 text-sm"><span>{label}</span><b>{count}</b></div>)}{!demographics.length ? <p className="text-sm text-ink/45">Sin registros.</p> : null}</div><div><h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/45">Por grupo de edad</h3>{ageBands.filter(([, count]) => count > 0).map(([label, count]) => <div key={label} className="flex justify-between border-b border-line/60 py-2 text-sm"><span>{label} años</span><b>{count}</b></div>)}{!dataset.patients.length ? <p className="text-sm text-ink/45">Sin registros.</p> : null}</div></div>

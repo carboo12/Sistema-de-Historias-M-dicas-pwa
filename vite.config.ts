@@ -7,10 +7,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'logo-orthospine.png'],
       manifest: {
-        name: 'Historias Médicas',
-        short_name: 'Historias',
+        name: 'ORTHO SPINE CENTER · Historias Médicas',
+        short_name: 'ORTHO SPINE',
         description: 'Historia clínica, agenda y consultas para tu clínica.',
         theme_color: '#0f766e',
         background_color: '#f4f7f5',
@@ -21,20 +21,26 @@ export default defineConfig({
         categories: ['medical', 'health', 'productivity'],
         icons: [
           {
-            src: '/pwa-192x192.png',
+            src: '/logo-orthospine.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/logo-orthospine.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/logo-orthospine.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
+          },
+          {
+            src: '/logo-orthospine.png',
+            sizes: '180x180',
+            type: 'image/png',
+            purpose: 'any'
           }
         ]
       },

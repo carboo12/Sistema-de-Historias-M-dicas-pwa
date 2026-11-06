@@ -190,7 +190,9 @@ try {
       const legacyId=consultationLegacyIds.get(x);
       const current=x.enfermac||x.enfermedad||''; const physical=x.exfisico||x.examfisico||''; const studies=x.estudios||''; const diagnosis=x.concdiag||''; const treatment=x.tratamient||'';
       const type='consulta';
-      const cstatus='borrador'; // El volcado no contiene firma electrónica ni autoriza afirmar las notas.
+      // Las consultas del respaldo legacy son atenciones históricas completadas.
+      // "firmada" es el estado final disponible en el modelo actual de la PWA.
+      const cstatus='firmada';
       consultationCopyRows.push([stableUuid(`consultation:${cl}:${legacyId}`),cl,p,professional.id,specialtyIds.get(clean(x.especial))||null,type,stamp,date(x.proxcita),clean(x.motivo),clean(current),clean(physical),clean(studies),clean(diagnosis),clean(treatment),clean(x.motevoluc),clean(treatment),cstatus,'legacy',legacyId,user.id,json({legacyPid:x.pid,legacyDoctor:x.medico,legacyUser:x.usuario,legacyType:x.tipohis})]);
     }});
     await copyCsv(client,'consultations',['id','clinic_id','patient_id','professional_id','consultation_type','consulted_at','next_visit_at','reason','current_illness','physical_exam','studies','diagnosis_notes','treatment_plan','evolution','plan','status','source','legacy_id','metadata','created_by_id','created_at','updated_at'],consultationCopyRows.map(r=>[r[0],r[1],r[2],r[3],r[5],r[6],r[7],r[8],r[9],r[10],r[11],r[12],r[13],r[14],r[15],r[16],r[17],r[18],r[20],r[19],new Date().toISOString(),new Date().toISOString()]));

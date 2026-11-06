@@ -94,13 +94,14 @@ type Patient @table(name: "patients", key: "id") {
   id: UUID! @default(expr: "uuidV4()")
   clinic: Clinic!
   recordNumber: String!
-  documentType: String!
+  documentType: String
   documentNumber: String
   documentVerified: Boolean! @default(value: false)
   fullName: String!
   firstName: String
   lastName: String
   birthDate: Date
+  ageOverride: Int
   birthDateEstimated: Boolean! @default(value: false)
   deceased: Boolean! @default(value: false)
   deathDate: Date
@@ -200,6 +201,9 @@ type Consultation @table(name: "consultations", key: "id") {
   physicalExam: String
   functionalExam: String
   studies: String
+  evolutionText: String
+  studiesText: String
+  prescriptionText: String
   diagnosisNotes: String
   treatmentPlan: String
   evolution: String
@@ -232,6 +236,25 @@ type ConsultationDiagnosis @table(name: "consultation_diagnoses", key: "id") {
   diagnosedAt: Timestamp! @default(expr: "request.time")
   legacyId: String
   createdBy: User
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type PatientStudy @table(name: "patient_studies", key: "id") {
+  id: UUID! @default(expr: "uuidV4()")
+  clinic: Clinic!
+  patient: Patient!
+  consultation: Consultation
+  professional: Professional
+  studyType: String!
+  studyName: String!
+  orderedAt: Timestamp
+  performedAt: Timestamp
+  status: String!
+  resultSummary: String
+  resultText: String
+  legacyId: String
+  metadata: Any! @default(sql: "'{}'::jsonb")
   createdAt: Timestamp! @default(expr: "request.time")
   updatedAt: Timestamp! @default(expr: "request.time")
 }

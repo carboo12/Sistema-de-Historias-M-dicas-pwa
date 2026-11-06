@@ -1,0 +1,19 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /patients/{patientId}/studies/{uploaderUid}/{fileName} {
+      // A download URL saved in the clinic-scoped Data Connect row can be used
+      // by clinic staff; direct SDK reads also accept the uploader's clinic claim.
+      allow read: if request.auth != null && (
+        request.auth.uid == uploaderUid ||
+        (request.auth.token.clinic_id != null && resource.metadata.clinicId == request.auth.token.clinic_id)
+      );
+      allow create: if request.auth != null
+        && request.auth.uid == uploaderUid
+        && request.resource.size <= 50 * 1024 * 1024
+        && request.resource.metadata.clinicId is string
+        && request.resource.contentType.matches('image/(jpeg|png|webp)|application/pdf|application/dicom');
+      allow update, delete: if false;
+    }
+  }
+}

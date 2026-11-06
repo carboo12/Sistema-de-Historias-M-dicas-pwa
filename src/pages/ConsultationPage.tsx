@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -8,17 +8,14 @@ import {
   CheckCircle2,
   ClipboardCheck,
   FileText,
-  HeartPulse,
+  Mail,
   Lock,
-  Pencil,
-  Plus,
   Printer,
   Save,
   Search,
   ShieldCheck,
   Stethoscope,
-  Trash2,
-  X
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import {
@@ -29,12 +26,17 @@ import {
   Field,
   Input,
   Modal,
-  Select,
   SkeletonRows,
-  Spinner,
   Textarea
 } from '../components/ui';
 import { api, ApiError } from '../lib/data';
+import {
+  buildEvolutionEmailBody,
+  buildMailtoUrl,
+  buildPrescriptionEmailBody
+} from '../lib/clinical-email';
+import { openPrescriptionPrintWindow, renderPrescriptionPrint } from '../lib/prescription-print';
+import { printConsultation } from '../lib/consultation-print';
 import {
   ageFromBirthDate,
   consultationStatusLabel,
@@ -44,10 +46,12 @@ import {
   statusBadgeClass
 } from '../lib/format';
 import type { Consultation } from '../types';
-import type { Diagnosis } from '../types';
 
 interface ConsultationForm {
   reason: string;
+  evolutionText: string;
+  studiesText: string;
+  prescriptionText: string;
   currentIllness: string;
   physicalExam: string;
   functionalExam: string;
@@ -60,39 +64,12 @@ interface ConsultationForm {
   vitals: Record<string, string>;
 }
 
-interface PrescriptionItem {
-  medication: string;
-  presentation: string;
-  dose: string;
-  frequency: string;
-  duration: string;
-  quantity: string;
-  instructions: string;
-}
-
-const emptyPrescriptionItem = (): PrescriptionItem => ({ medication: '', presentation: '', dose: '', frequency: '', duration: '', quantity: '', instructions: '' });
-
-const vitalFields = [
-  { key: 'pa', label: 'PA', placeholder: '120/80', unit: 'mmHg' },
-  { key: 'fc', label: 'FC', placeholder: '72', unit: 'lpm' },
-  { key: 'fr', label: 'FR', placeholder: '16', unit: 'rpm' },
-  { key: 'temp', label: 'Temp.', placeholder: '36.5', unit: '°C' },
-  { key: 'spo2', label: 'SpO₂', placeholder: '98', unit: '%' },
-  { key: 'peso', label: 'Peso', placeholder: '70', unit: 'kg' },
-  { key: 'talla', label: 'Talla', placeholder: '170', unit: 'cm' },
-  { key: 'glucosa', label: 'Glucosa', placeholder: '110', unit: 'mg/dL' }
-];
-
-const diagnosisTypes = [
-  { value: 'principal', label: 'Principal' },
-  { value: 'secundario', label: 'Secundario' },
-  { value: 'presuntivo', label: 'Presuntivo' },
-  { value: 'diferencial', label: 'Diferencial' }
-];
-
 function toForm(consultation: Consultation): ConsultationForm {
   return {
     reason: consultation.reason ?? '',
+    evolutionText: consultation.evolutionText ?? [consultation.reason, consultation.currentIllness, consultation.physicalExam, consultation.functionalExam, consultation.diagnosisNotes, consultation.treatmentPlan, consultation.evolution, consultation.plan].filter(Boolean).join('\n\n'),
+    studiesText: consultation.studiesText ?? consultation.studies ?? '',
+    prescriptionText: consultation.prescriptionText ?? consultation.prescriptionItems?.map((item) => [item.medication, item.presentation, item.dose, item.frequency, item.route, item.duration, item.quantity, item.instructions].filter(Boolean).join(' · ')).filter(Boolean).join('\n') ?? [consultation.plan, consultation.treatmentPlan].filter(Boolean).join('\n\n'),
     currentIllness: consultation.currentIllness ?? '',
     physicalExam: consultation.physicalExam ?? '',
     functionalExam: consultation.functionalExam ?? '',
@@ -123,7 +100,6 @@ export function ConsultationPage() {
   const [nextVisitAt, setNextVisitAt] = useState('');
   const [savedSnapshot, setSavedSnapshot] = useState('');
   const [savedNextVisit, setSavedNextVisit] = useState('');
-  const [savedPrescriptionSnapshot, setSavedPrescriptionSnapshot] = useState('');
   const [initialized, setInitialized] = useState(false);
   const [justSigned, setJustSigned] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -131,17 +107,10 @@ export function ConsultationPage() {
   const [signOpen, setSignOpen] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [diagnosisDeleteTarget, setDiagnosisDeleteTarget] = useState<Diagnosis | null>(null);
-  const [diagnosisEditTarget, setDiagnosisEditTarget] = useState<Diagnosis | null>(null);
-  const [diagnosisDescription, setDiagnosisDescription] = useState('');
-  const [diagnosisTypeEdit, setDiagnosisTypeEdit] = useState('secundario');
-  const [diagnosisNotesEdit, setDiagnosisNotesEdit] = useState('');
-  const [prescriptionDeleteTarget, setPrescriptionDeleteTarget] = useState<number | null>(null);
-  const [dxQuery, setDxQuery] = useState('');
-  const [dxType, setDxType] = useState('principal');
-  const [dxError, setDxError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<'evolution' | 'studies' | 'prescription'>('evolution');
-  const [prescriptionItems, setPrescriptionItems] = useState<PrescriptionItem[]>([emptyPrescriptionItem()]);
+  const [emailDialog, setEmailDialog] = useState<'evolution' | 'prescription' | null>(null);
+  const [emailRecipient, setEmailRecipient] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const detail = useQuery({
     queryKey: ['consultation', id],
@@ -149,36 +118,22 @@ export function ConsultationPage() {
     enabled: Boolean(id)
   });
 
-  const cie = useQuery({
-    queryKey: ['cie10', dxQuery],
-    queryFn: () => api.cie10.search(dxQuery.trim()),
-    enabled: !justSigned && dxQuery.trim().length >= 2
-  });
-
   useEffect(() => {
     if (!detail.data || initialized) return;
     const nextForm = toForm(detail.data.consultation);
     const nextDate = toDateInput(detail.data.consultation.nextVisitAt);
-    const storedItems = detail.data.consultation.prescriptionItems ?? [];
     setForm(nextForm);
-    setPrescriptionItems(storedItems.length ? storedItems : [emptyPrescriptionItem()]);
-    setSavedPrescriptionSnapshot(JSON.stringify(storedItems));
     setNextVisitAt(nextDate);
     setSavedSnapshot(JSON.stringify(nextForm));
     setSavedNextVisit(nextDate);
     setInitialized(true);
   }, [detail.data, initialized]);
 
-  const currentDiagnoses = detail.data?.diagnoses ?? [];
-  const hasPrincipal = currentDiagnoses.some((diagnosis) => diagnosis.type === 'principal');
-  const existingCodes = new Set(currentDiagnoses.map((diagnosis) => diagnosis.code));
-  const serializedPrescription = JSON.stringify(prescriptionItems.filter((item) => Object.values(item).some((value) => value.trim())));
-  const isDirty = form !== null && (JSON.stringify(form) !== savedSnapshot || nextVisitAt !== savedNextVisit || serializedPrescription !== savedPrescriptionSnapshot);
+  const isDirty = form !== null && (JSON.stringify(form) !== savedSnapshot || nextVisitAt !== savedNextVisit);
 
   const buildPayload = () => ({
     ...(form ?? {}),
     nextVisitAt: nextVisitAt ? `${nextVisitAt}T12:00:00.000Z` : null,
-    prescriptionItems: prescriptionItems.filter((item) => Object.values(item).some((value) => value.trim()))
   });
 
   const saveMutation = useMutation({
@@ -186,7 +141,6 @@ export function ConsultationPage() {
     onSuccess: () => {
       setSavedSnapshot(JSON.stringify(form));
       setSavedNextVisit(nextVisitAt);
-      setSavedPrescriptionSnapshot(serializedPrescription);
       setSaveMessage('Guardado');
       setError(null);
       void queryClient.invalidateQueries({ queryKey: ['consultation', id] });
@@ -204,7 +158,7 @@ export function ConsultationPage() {
       setJustSigned(true);
       setSignOpen(false);
       setSignError(null);
-      setSaveMessage('Consulta firmada');
+      setSaveMessage('Consulta completada');
       void queryClient.invalidateQueries({ queryKey: ['consultation', id] });
       void queryClient.invalidateQueries({ queryKey: ['consultations'] });
       void queryClient.invalidateQueries({ queryKey: ['patient'] });
@@ -221,42 +175,6 @@ export function ConsultationPage() {
       navigate(`/pacientes/${consultation.patientId}`);
     },
     onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo archivar la consulta')
-  });
-
-  const addDiagnosis = useMutation({
-    mutationFn: (code: string) =>
-      api.consultations.addDiagnosis(id as string, {
-        code,
-        type: dxType === 'principal' && hasPrincipal ? 'secundario' : dxType
-      }),
-    onSuccess: () => {
-      setDxQuery('');
-      setDxError(null);
-      void queryClient.invalidateQueries({ queryKey: ['consultation', id] });
-    },
-    onError: (cause) => setDxError(cause instanceof ApiError ? cause.message : 'No se pudo agregar el diagnóstico')
-  });
-
-  const deleteDiagnosis = useMutation({
-    mutationFn: (diagnosisId: string) => api.consultations.deleteDiagnosis(id as string, diagnosisId),
-    onSuccess: () => {
-      setDxError(null);
-      void queryClient.invalidateQueries({ queryKey: ['consultation', id] });
-    },
-    onError: (cause) => setDxError(cause instanceof ApiError ? cause.message : 'No se pudo quitar el diagnóstico')
-  });
-
-  const editDiagnosis = useMutation({
-    mutationFn: () => api.consultations.updateDiagnosis(id as string, diagnosisEditTarget!.id, {
-      description: diagnosisDescription,
-      type: diagnosisTypeEdit,
-      notes: diagnosisNotesEdit
-    }),
-    onSuccess: async () => {
-      setDiagnosisEditTarget(null);
-      await queryClient.invalidateQueries({ queryKey: ['consultation', id] });
-    },
-    onError: (cause) => setDxError(cause instanceof ApiError ? cause.message : 'No se pudo actualizar el diagnóstico')
   });
 
   if (detail.isLoading || (!detail.isError && !initialized)) {
@@ -281,21 +199,11 @@ export function ConsultationPage() {
     );
   }
 
-  const { consultation, diagnoses } = detail.data;
+  const { consultation } = detail.data;
+  const renderedForm = form;
   const readOnly = justSigned || consultation.status !== 'borrador';
-  const legacyPrescriptionText = [consultation.plan, consultation.treatmentPlan, consultation.evolution]
-    .map((value) => value?.trim())
-    .filter((value): value is string => Boolean(value))
-    .filter((value, index, values) => values.indexOf(value) === index)
-    .join('\n\n');
-  const legacyStudiesText = [consultation.studies, consultation.evolution]
-    .map((value) => value?.trim())
-    .filter((value): value is string => Boolean(value))
-    .filter((value, index, values) => values.indexOf(value) === index)
-    .join('\n\n');
-  const hasStructuredPrescription = prescriptionItems.some((item) => Object.values(item).some((value) => value.trim()));
   const age = ageFromBirthDate(consultation.birthDate);
-  const localCanSign = !readOnly && Boolean(form.reason.trim()) && diagnoses.length > 0;
+  const localCanSign = !readOnly && Boolean(renderedForm.evolutionText.trim());
 
   function update<K extends keyof ConsultationForm>(key: K, value: ConsultationForm[K]) {
     setForm((current) => (current ? { ...current, [key]: value } : current));
@@ -303,24 +211,81 @@ export function ConsultationPage() {
     setError(null);
   }
 
-  function updateVital(key: string, value: string) {
-    setForm((current) =>
-      current ? { ...current, vitals: { ...current.vitals, [key]: value } } : current
-    );
-    setSaveMessage(null);
-  }
-
   function requestSign() {
     setSignError(null);
-    if (!form || !form.reason.trim()) {
-      setError('Agrega el motivo de consulta antes de firmar');
-      return;
-    }
-    if (diagnoses.length === 0) {
-      setError('Agrega al menos un diagnóstico CIE-10 antes de firmar');
+    if (!form || !renderedForm.evolutionText.trim()) {
+      setError('Agrega la evolución o nota médica antes de firmar');
       return;
     }
     setSignOpen(true);
+  }
+
+  function printPrescription() {
+    const target = openPrescriptionPrintWindow();
+    if (!target) { setError('Permite las ventanas emergentes para imprimir la receta.'); return; }
+    renderPrescriptionPrint(target, {
+      clinicName: user?.clinicName ?? 'Clínica', patientName: consultation.patientName,
+      recordNumber: consultation.recordNumber, consultedAt: consultation.consultedAt,
+      professionalName: consultation.professionalName,
+      items: [],
+      legacyText: form?.prescriptionText ?? '',
+      patientBirthDate: consultation.birthDate,
+      timezone
+    });
+  }
+
+  function printFullConsultation() {
+    const opened = printConsultation({ clinicName: user?.clinicName ?? 'Clínica', patientName: consultation.patientName, recordNumber: consultation.recordNumber, professionalName: consultation.professionalName, consultedAt: consultation.consultedAt, timezone, evolutionText: renderedForm.evolutionText, studiesText: renderedForm.studiesText, prescriptionText: renderedForm.prescriptionText });
+    if (!opened) setError('Permite las ventanas emergentes para imprimir la consulta.');
+  }
+
+  function openEmailDraft(kind: 'evolution' | 'prescription') {
+    setEmailRecipient(consultation.patientEmail ?? '');
+    setEmailError(null);
+    setEmailDialog(kind);
+  }
+
+  async function sendEmailDraft(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const currentForm = form;
+    if (!emailDialog || !emailRecipient.trim() || !currentForm) return;
+    if (isDirty) {
+      try { await saveMutation.mutateAsync(); }
+      catch { setEmailError('No se pudieron guardar los cambios. Corrígelos antes de preparar el correo.'); return; }
+    }
+    const emailConsultation = {
+      ...consultation,
+      reason: currentForm.reason,
+      currentIllness: currentForm.currentIllness,
+      physicalExam: currentForm.physicalExam,
+      functionalExam: currentForm.functionalExam,
+      studies: currentForm.studies,
+      diagnosisNotes: currentForm.diagnosisNotes,
+      treatmentPlan: currentForm.treatmentPlan,
+      evolution: currentForm.evolution,
+      plan: currentForm.plan,
+      notes: currentForm.notes,
+      vitals: currentForm.vitals,
+      nextVisitAt: nextVisitAt ? `${nextVisitAt}T12:00:00.000Z` : null
+    };
+    const subject = emailDialog === 'prescription'
+      ? `Receta médica · ${consultation.patientName}`
+      : `Nota médica · ${consultation.patientName}`;
+    const body = emailDialog === 'prescription'
+      ? buildPrescriptionEmailBody({
+        clinicName: user?.clinicName ?? 'Clínica',
+        consultation: emailConsultation,
+        items: [],
+        legacyText: currentForm.prescriptionText,
+        timezone
+      })
+      : buildEvolutionEmailBody({
+        clinicName: user?.clinicName ?? 'Clínica',
+        consultation: emailConsultation,
+        timezone
+      });
+    window.location.href = buildMailtoUrl({ to: emailRecipient, subject, body });
+    setEmailDialog(null);
   }
 
   return (
@@ -335,7 +300,8 @@ export function ConsultationPage() {
           Volver a consultas
         </button>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" onClick={() => { setActiveSection('prescription'); window.setTimeout(() => window.print(), 50); }} icon={<Printer className="h-4 w-4" />}>Imprimir receta</Button>
+          <Button variant="secondary" onClick={printPrescription} icon={<Printer className="h-4 w-4" />}>Imprimir receta</Button>
+          <Button variant="secondary" onClick={printFullConsultation} icon={<Printer className="h-4 w-4" />}>Imprimir consulta completa</Button>
           {!readOnly ? (
             isDirty ? (
               <Badge className="badge-amber" dot>
@@ -378,7 +344,7 @@ export function ConsultationPage() {
         <div className="flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50 p-4 text-teal-900">
           <Lock className="mt-0.5 h-5 w-5 shrink-0" />
           <div>
-            <p className="text-sm font-extrabold">Consulta firmada e inmutable</p>
+            <p className="text-sm font-extrabold">Consulta completada e inmutable</p>
             <p className="mt-0.5 text-xs">
               Firmada {consultation.signedAt ? formatDateTime(consultation.signedAt, timezone) : ''} por{' '}
               {consultation.professionalName}. Para corregir, crea una nueva evolución.
@@ -413,213 +379,38 @@ export function ConsultationPage() {
         </div>
       </header>
 
-      <nav className="no-print flex flex-wrap gap-2 rounded-2xl border border-line/70 bg-white p-2" aria-label="Secciones de consulta">
+      <nav className={`${readOnly ? 'hidden ' : ''}no-print flex flex-wrap gap-2 rounded-2xl border border-line/70 bg-white p-2`} aria-label="Secciones de consulta">
         {([['evolution', 'Evolución / Nota médica'], ['studies', 'Estudios clínicos'], ['prescription', 'Receta de medicamentos']] as const).map(([key, label]) => (
           <button key={key} type="button" onClick={() => setActiveSection(key)} className={`rounded-xl px-4 py-2.5 text-xs font-extrabold transition ${activeSection === key ? 'bg-teal-700 text-white' : 'text-ink/55 hover:bg-canvas'}`}>{label}</button>
         ))}
       </nav>
 
-      {activeSection === 'prescription' ? (
+      {readOnly ? (
+        <section className="clinical-sheet space-y-5">
+          {[['Evolución / Nota médica', renderedForm.evolutionText], ['Estudios clínicos', renderedForm.studiesText], ['Receta de medicamentos', renderedForm.prescriptionText]].map(([title, value]) => (
+            <article key={title} className="card p-5 sm:p-7"><h2 className="text-sm font-extrabold uppercase tracking-widest text-teal-800">{title}</h2><p className="mt-4 min-h-12 whitespace-pre-wrap text-sm leading-7 text-ink/80">{value || 'Sin información registrada.'}</p></article>
+          ))}
+        </section>
+      ) : null}
+
+      {!readOnly && activeSection === 'prescription' ? (
         <section className="prescription-print card p-5 sm:p-6">
           <div className="mb-5 flex items-start justify-between gap-3">
             <div><p className="text-xs font-extrabold uppercase tracking-widest text-teal-700">Récipe médico</p><h2 className="mt-1 text-xl font-extrabold">{consultation.professionalName}</h2><p className="text-xs text-ink/55">{consultation.patientName} · {consultation.recordNumber}</p></div>
-            <Button className="no-print" variant="secondary" icon={<Printer className="h-4 w-4" />} onClick={() => window.print()}>Imprimir receta</Button>
+            <div className="no-print flex gap-2"><Button variant="secondary" icon={<Mail className="h-4 w-4" />} onClick={() => openEmailDraft('prescription')}>Enviar receta por correo</Button><Button variant="secondary" icon={<Printer className="h-4 w-4" />} onClick={printPrescription}>Imprimir receta</Button></div>
           </div>
           <p className="mb-4 text-xs text-ink/50">Fecha: {formatDate(consultation.consultedAt, timezone)}{consultation.specialtyId ? ` · Especialidad registrada` : ''}</p>
-          <div className="space-y-3">
-            {prescriptionItems.map((item, index) => <div key={index} className="grid gap-3 rounded-xl border border-line/70 p-4 sm:grid-cols-2">
-              {!readOnly ? <div className="flex items-center justify-between sm:col-span-2"><p className="text-xs font-extrabold uppercase tracking-wider text-ink/45">Medicamento {index + 1}</p><button type="button" onClick={() => setPrescriptionDeleteTarget(index)} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-red-600 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" />Eliminar</button></div> : null}
-              <Field label={`Medicamento ${index + 1}`}><Input value={item.medication} readOnly={readOnly} placeholder="Nombre del medicamento" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, medication: e.target.value} : row))} /></Field>
-              <Field label="Presentación"><Input value={item.presentation} readOnly={readOnly} placeholder="Tabletas, solución…" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, presentation: e.target.value} : row))} /></Field>
-              <Field label="Dosis"><Input value={item.dose} readOnly={readOnly} placeholder="Dosis" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, dose: e.target.value} : row))} /></Field>
-              <Field label="Frecuencia y vía"><Input value={item.frequency} readOnly={readOnly} placeholder="Cada 8 horas · vía oral" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, frequency: e.target.value} : row))} /></Field>
-              <Field label="Duración"><Input value={item.duration} readOnly={readOnly} placeholder="Ej. 7 días" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, duration: e.target.value} : row))} /></Field>
-              <Field label="Cantidad"><Input value={item.quantity} readOnly={readOnly} placeholder="Cantidad" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, quantity: e.target.value} : row))} /></Field>
-              <div className="sm:col-span-2"><Field label="Indicaciones"><Textarea value={item.instructions} readOnly={readOnly} placeholder="Indicaciones para el paciente" onChange={e => setPrescriptionItems(rows => rows.map((row, i) => i === index ? {...row, instructions: e.target.value} : row))} /></Field></div>
-            </div>)}
-          </div>
-          {!hasStructuredPrescription && legacyPrescriptionText ? (
-            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
-              <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-amber-900">Texto de receta / plan importado</p>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-amber-950">{legacyPrescriptionText}</p>
-              {!readOnly ? <p className="mt-3 text-xs text-amber-800">El respaldo legacy no tenía medicamentos separados por campos. Conservamos aquí el texto original.</p> : null}
-            </div>
-          ) : null}
-          {!readOnly && <Button className="no-print mt-4" variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={() => setPrescriptionItems(rows => [...rows, emptyPrescriptionItem()])}>Agregar medicamento</Button>}
-          <div className="mt-12 grid grid-cols-2 gap-12 text-center text-xs"><div className="border-t border-ink/40 pt-2">Firma y sello del médico<br/>{consultation.professionalName}</div><div className="border-t border-ink/40 pt-2">Paciente<br/>{consultation.patientName}</div></div>
+          <Field label="Receta de medicamentos" hint="Medicamentos, dosis e indicaciones para el paciente."><Textarea value={renderedForm.prescriptionText} onChange={(event) => update('prescriptionText', event.target.value)} readOnly={readOnly} placeholder="Escribe aquí la receta completa…" className="min-h-72" maxLength={12000} /></Field>
+          {!readOnly ? <div className="no-print mt-4 flex justify-end"><Button icon={<Save className="h-4 w-4" />} loading={saveMutation.isPending} disabled={!isDirty} onClick={() => saveMutation.mutate()}>Guardar receta</Button></div> : null}          <div className="mt-12 grid grid-cols-2 gap-12 text-center text-xs"><div className="border-t border-ink/40 pt-2">Firma y sello del médico<br/>{consultation.professionalName}</div><div className="border-t border-ink/40 pt-2">Paciente<br/>{consultation.patientName}</div></div>
         </section>
       ) : null}
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_370px]">
-        <div className={`space-y-5 ${activeSection === 'prescription' ? 'hidden' : ''}`}>
-          {activeSection === 'evolution' ? <>
-          <section className="card p-5 sm:p-6">
-            <SectionHeading
-              icon={<Stethoscope className="h-4 w-4" />}
-              title="Motivo y enfermedad actual"
-              description="El relato que explica la consulta de hoy."
-            />
-            <div className="mt-5 space-y-4">
-              <Field label="Motivo de consulta" required>
-                <Input
-                  value={form.reason}
-                  onChange={(event) => update('reason', event.target.value)}
-                  readOnly={readOnly}
-                  placeholder="Ej. Dolor torácico de dos días de evolución"
-                  maxLength={500}
-                />
-              </Field>
-              <Field label="Enfermedad actual">
-                <Textarea
-                  value={form.currentIllness}
-                  onChange={(event) => update('currentIllness', event.target.value)}
-                  readOnly={readOnly}
-                  placeholder="Inicio, curso, síntomas asociados, tratamientos previos…"
-                  className="min-h-32"
-                  maxLength={6000}
-                />
-              </Field>
-            </div>
-          </section>
+        <div className={`space-y-5 ${readOnly || activeSection === 'prescription' ? 'hidden' : ''}`}>
+          {activeSection === 'evolution' ? <section className="card p-5 sm:p-6"><SectionHeading icon={<Stethoscope className="h-4 w-4" />} title="Evolución / Nota médica" description="Escribe libremente el detalle clínico y la evolución del paciente." /><Field label="Nota médica" required><Textarea value={renderedForm.evolutionText} onChange={(event) => update('evolutionText', event.target.value)} readOnly={readOnly} placeholder="Describe la atención y evolución clínica…" className="mt-4 min-h-80" maxLength={16000} /></Field></section> : null}
 
-          <section className="card p-5 sm:p-6">
-            <SectionHeading icon={<HeartPulse className="h-4 w-4" />} title="Signos vitales" description="Registra los valores medidos durante la atención." />
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">{vitalFields.map(vital => <label key={vital.key} className="rounded-xl border border-line/70 bg-canvas/40 p-3"><span className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-[0.1em] text-ink/35">{vital.label}<span>{vital.unit}</span></span><input value={form.vitals[vital.key] ?? ''} onChange={event => updateVital(vital.key, event.target.value)} readOnly={readOnly} placeholder={vital.placeholder} className="mt-1 w-full border-0 bg-transparent p-0 text-lg font-extrabold text-ink outline-none" /></label>)}</div>
-          </section>
-          <section className="card p-5 sm:p-6">
-            <SectionHeading
-              icon={<FileText className="h-4 w-4" />}
-              title="Examen clínico"
-              description="Hallazgos físicos y funcionales relevantes."
-            />
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <Field label="Examen físico">
-                <Textarea
-                  value={form.physicalExam}
-                  onChange={(event) => update('physicalExam', event.target.value)}
-                  readOnly={readOnly}
-                  placeholder="Hallazgos por sistemas…"
-                  className="min-h-36"
-                  maxLength={6000}
-                />
-              </Field>
-              <Field label="Examen funcional">
-                <Textarea
-                  value={form.functionalExam}
-                  onChange={(event) => update('functionalExam', event.target.value)}
-                  readOnly={readOnly}
-                  placeholder="Movilidad, estado mental, dolor…"
-                  className="min-h-36"
-                  maxLength={4000}
-                />
-              </Field>
-            </div>
-          </section>
+          {activeSection === 'studies' ? <section className="card p-5 sm:p-6"><SectionHeading icon={<Search className="h-4 w-4" />} title="Estudios clínicos" description="Escribe las órdenes de exámenes y estudios." /><Field label="Órdenes de estudios"><Textarea value={renderedForm.studiesText} onChange={(event) => update('studiesText', event.target.value)} readOnly={readOnly} placeholder="Anota los exámenes y estudios solicitados…" className="mt-4 min-h-80" maxLength={12000} /></Field></section> : null}
 
-          </> : null}
-
-          {activeSection === 'studies' ? <section className="card p-5 sm:p-6">
-            <SectionHeading
-              icon={<Search className="h-4 w-4" />}
-              title="Estudios y análisis"
-              description="Resultados disponibles y notas para el diagnóstico."
-            />
-            <div className="mt-5 space-y-4">
-              <Field label="Estudios complementarios">
-                <Textarea
-                  value={form.studies}
-                  onChange={(event) => update('studies', event.target.value)}
-                  readOnly={readOnly}
-                  placeholder="Laboratorios, imágenes, electrocardiograma…"
-                  className="min-h-24"
-                  maxLength={4000}
-                />
-              </Field>
-              <Field label="Notas de diagnóstico">
-                <Textarea
-                  value={form.diagnosisNotes}
-                  onChange={(event) => update('diagnosisNotes', event.target.value)}
-                  readOnly={readOnly}
-                  placeholder="Razonamiento clínico y diagnósticos diferenciales…"
-                  className="min-h-24"
-                  maxLength={4000}
-                />
-              </Field>
-            </div>
-            {!form.studies.trim() && legacyStudiesText ? (
-              <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
-                <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-amber-900">Nota histórica de evolución</p>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-amber-950">{legacyStudiesText}</p>
-                <p className="mt-3 text-xs text-amber-800">El sistema anterior guardaba esta información dentro de un texto único; se muestra aquí para conservarla.</p>
-              </div>
-            ) : null}
-          </section> : null}
-
-          {activeSection === 'evolution' ? <>
-          <section className="card p-5 sm:p-6">
-            <SectionHeading
-              icon={<ClipboardCheck className="h-4 w-4" />}
-              title="Plan y evolución"
-              description="Tratamiento, indicaciones y seguimiento."
-            />
-            <div className="mt-5 space-y-4">
-              <Field label="Plan de tratamiento">
-                <Textarea
-                  value={form.treatmentPlan}
-                  onChange={(event) => update('treatmentPlan', event.target.value)}
-                  readOnly={readOnly}
-                  placeholder="Medicamentos, dosis, indicaciones no farmacológicas…"
-                  className="min-h-36"
-                  maxLength={6000}
-                />
-              </Field>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Evolución">
-                  <Textarea
-                    value={form.evolution}
-                    onChange={(event) => update('evolution', event.target.value)}
-                    readOnly={readOnly}
-                    placeholder="Respuesta al tratamiento y cambios…"
-                    className="min-h-28"
-                    maxLength={6000}
-                  />
-                </Field>
-                <Field label="Plan / seguimiento">
-                  <Textarea
-                    value={form.plan}
-                    onChange={(event) => update('plan', event.target.value)}
-                    readOnly={readOnly}
-                    placeholder="Próximos pasos y signos de alarma…"
-                    className="min-h-28"
-                    maxLength={4000}
-                  />
-                </Field>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Próxima visita">
-                  <Input
-                    type="date"
-                    value={nextVisitAt}
-                    onChange={(event) => {
-                      setNextVisitAt(event.target.value);
-                      setSaveMessage(null);
-                    }}
-                    readOnly={readOnly}
-                  />
-                </Field>
-                <Field label="Notas internas" hint="No se muestran en la impresión clínica.">
-                  <Input
-                    value={form.notes}
-                    onChange={(event) => update('notes', event.target.value)}
-                    readOnly={readOnly}
-                    placeholder="Recordatorios administrativos…"
-                    maxLength={3000}
-                  />
-                </Field>
-              </div>
-            </div>
-          </section>
-          </> : null}
         </div>
 
         <aside className="no-print space-y-4 xl:sticky xl:top-24 xl:self-start">
@@ -653,127 +444,6 @@ export function ConsultationPage() {
             </Button>
           </section>
 
-          <section className="card overflow-hidden">
-            <div className="border-b border-line/70 px-5 py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-sm font-extrabold uppercase tracking-[0.14em] text-ink/45">Diagnósticos</h2>
-                  <p className="mt-1 text-[11px] font-semibold text-ink/40">CIE-10 · {diagnoses.length} registrados</p>
-                </div>
-                <Badge className="badge-slate">{diagnoses.length}</Badge>
-              </div>
-            </div>
-
-            <div className="space-y-2.5 p-4">
-              {diagnoses.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-line px-3 py-6 text-center">
-                  <Search className="mx-auto h-5 w-5 text-ink/20" />
-                  <p className="mt-2 text-xs font-bold text-ink/45">Sin diagnósticos</p>
-                  <p className="mt-0.5 text-[10px] text-ink/35">Busca por código o descripción.</p>
-                </div>
-              ) : (
-                diagnoses.map((diagnosis) => (
-                  <div key={diagnosis.id} className="rounded-xl border border-line/70 bg-canvas/40 p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="rounded-md bg-white px-1.5 py-0.5 text-[10px] font-extrabold text-teal-800 ring-1 ring-inset ring-line">
-                            {diagnosis.code}
-                          </span>
-                          <Badge className={diagnosis.type === 'principal' ? 'badge-teal' : 'badge-slate'}>
-                            {diagnosis.type}
-                          </Badge>
-                        </div>
-                        <p className="mt-1.5 text-xs font-bold leading-snug text-ink/70">{diagnosis.description}</p>
-                      </div>
-                      {!readOnly ? (
-                        <div className="flex shrink-0 items-center gap-1">
-                          <button type="button" onClick={() => { setDiagnosisEditTarget(diagnosis); setDiagnosisDescription(diagnosis.description); setDiagnosisTypeEdit(diagnosis.type); setDiagnosisNotesEdit(diagnosis.notes ?? ''); }} className="focus-ring rounded-lg p-1.5 text-ink/35 transition hover:bg-teal-50 hover:text-teal-700" aria-label={`Editar ${diagnosis.code}`}><Pencil className="h-3.5 w-3.5" /></button>
-                          <button type="button" onClick={() => setDiagnosisDeleteTarget(diagnosis)} disabled={deleteDiagnosis.isPending && deleteDiagnosis.variables === diagnosis.id} className="focus-ring rounded-lg p-1.5 text-ink/25 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-40" aria-label={`Eliminar ${diagnosis.code}`}><Trash2 className="h-3.5 w-3.5" /></button>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                ))
-              )}
-
-              {!readOnly ? (
-                <div className="pt-1">
-                  <div className="flex gap-2">
-                    <Select
-                      value={dxType}
-                      onChange={(event) => setDxType(event.target.value)}
-                      className="h-9 w-32 py-1 text-xs"
-                    >
-                      {diagnosisTypes.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </Select>
-                    <div className="relative min-w-0 flex-1">
-                      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink/30" />
-                      <Input
-                        value={dxQuery}
-                        onChange={(event) => setDxQuery(event.target.value)}
-                        placeholder="Buscar CIE-10…"
-                        className="h-9 py-1 pl-8 pr-8 text-xs"
-                      />
-                      {dxQuery ? (
-                        <button
-                          type="button"
-                          onClick={() => setDxQuery('')}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-ink/30 hover:text-ink"
-                          aria-label="Limpiar búsqueda"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {dxQuery.trim().length >= 2 ? (
-                    <div className="mt-2 max-h-56 overflow-y-auto rounded-xl border border-line bg-white shadow-sm">
-                      {cie.isLoading ? (
-                        <div className="flex items-center justify-center gap-2 px-3 py-4 text-xs font-semibold text-ink/40">
-                          <Spinner className="h-4 w-4" /> Buscando…
-                        </div>
-                      ) : cie.data?.codes.length ? (
-                        cie.data.codes.map((code) => {
-                          const added = existingCodes.has(code.code);
-                          return (
-                            <button
-                              key={code.code}
-                              type="button"
-                              disabled={added || addDiagnosis.isPending}
-                              onClick={() => addDiagnosis.mutate(code.code)}
-                              className="flex w-full items-start gap-2 border-b border-line/50 px-3 py-2.5 text-left transition last:border-0 hover:bg-teal-50/50 disabled:opacity-45"
-                            >
-                              <span className="mt-0.5 rounded bg-canvas px-1.5 py-0.5 text-[10px] font-extrabold text-ink/60">
-                                {code.code}
-                              </span>
-                              <span className="min-w-0 flex-1 text-[11px] font-semibold leading-snug text-ink/65">
-                                {code.description}
-                              </span>
-                              {added ? (
-                                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-600" />
-                              ) : (
-                                <Plus className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink/30" />
-                              )}
-                            </button>
-                          );
-                        })
-                      ) : (
-                        <p className="px-3 py-4 text-center text-xs text-ink/40">Sin coincidencias en CIE-10.</p>
-                      )}
-                    </div>
-                  ) : null}
-                  {dxError ? <p className="mt-2 text-[11px] font-semibold text-red-600">{dxError}</p> : null}
-                </div>
-              ) : null}
-            </div>
-          </section>
-
           <section className="card p-5">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-teal-700" />
@@ -786,7 +456,7 @@ export function ConsultationPage() {
               <div className="mt-4 rounded-xl bg-teal-50 p-4">
                 <div className="flex items-center gap-2 text-teal-800">
                   <CheckCircle2 className="h-4 w-4" />
-                  <p className="text-xs font-extrabold">Consulta firmada</p>
+                  <p className="text-xs font-extrabold">Consulta completada</p>
                 </div>
                 <p className="mt-1.5 text-[11px] font-semibold text-teal-800/60">
                   {consultation.signedAt ? formatDateTime(consultation.signedAt, timezone) : ''}
@@ -795,13 +465,9 @@ export function ConsultationPage() {
             ) : (
               <>
                 <ul className="mt-4 space-y-2 text-[11px] font-semibold">
-                  <li className={form.reason.trim() ? 'flex items-center gap-2 text-teal-700' : 'flex items-center gap-2 text-ink/40'}>
+                  <li className={renderedForm.reason.trim() ? 'flex items-center gap-2 text-teal-700' : 'flex items-center gap-2 text-ink/40'}>
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Motivo de consulta
-                  </li>
-                  <li className={diagnoses.length ? 'flex items-center gap-2 text-teal-700' : 'flex items-center gap-2 text-ink/40'}>
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Al menos un diagnóstico
                   </li>
                   <li className="flex items-center gap-2 text-ink/40">
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -850,17 +516,7 @@ export function ConsultationPage() {
           <div className="rounded-xl border border-line/70 bg-canvas/50 p-4">
             <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/35">Paciente</p>
             <p className="mt-1 text-sm font-extrabold text-ink">{consultation.patientName}</p>
-            <p className="mt-1 text-xs font-semibold text-ink/45">{form.reason || 'Sin motivo registrado'}</p>
-          </div>
-          <div className="rounded-xl border border-line/70 p-4">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/35">Diagnósticos</p>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {diagnoses.map((diagnosis) => (
-                <Badge key={diagnosis.id} className="badge-teal">
-                  {diagnosis.code}
-                </Badge>
-              ))}
-            </div>
+            <p className="mt-1 text-xs font-semibold text-ink/45">{renderedForm.reason || 'Sin motivo registrado'}</p>
           </div>
           {isDirty ? (
             <p className="text-xs font-semibold text-amber-700">
@@ -877,19 +533,13 @@ export function ConsultationPage() {
       <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Archivar consulta" description="Solo es posible archivar borradores. La nota firmada no se puede modificar ni eliminar." footer={<><Button variant="secondary" onClick={() => setDeleteOpen(false)}>Volver</Button><Button variant="danger" loading={archiveConsultation.isPending} onClick={() => archiveConsultation.mutate()}>Archivar borrador</Button></>}>
         <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Estás seguro de archivar este borrador? Se ocultará de las consultas activas, conservando el registro de auditoría.</p>
       </Modal>
-      <Modal open={Boolean(diagnosisDeleteTarget)} onClose={() => setDiagnosisDeleteTarget(null)} title="Eliminar diagnóstico" description="El diagnóstico se retirará de este borrador." footer={<><Button variant="secondary" onClick={() => setDiagnosisDeleteTarget(null)}>Cancelar</Button><Button variant="danger" loading={deleteDiagnosis.isPending} onClick={() => { if (diagnosisDeleteTarget) { deleteDiagnosis.mutate(diagnosisDeleteTarget.id); setDiagnosisDeleteTarget(null); } }}>Eliminar diagnóstico</Button></>}>
-        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Estás seguro de eliminar {diagnosisDeleteTarget?.code} · {diagnosisDeleteTarget?.description}?</p>
-      </Modal>
-      <Modal open={Boolean(diagnosisEditTarget)} onClose={() => setDiagnosisEditTarget(null)} title="Editar diagnóstico" description="Actualiza la descripción y clasificación del diagnóstico." footer={<><Button variant="secondary" onClick={() => setDiagnosisEditTarget(null)}>Cancelar</Button><Button loading={editDiagnosis.isPending} onClick={() => editDiagnosis.mutate()}>Guardar cambios</Button></>}>
-        <div className="space-y-4">
-          <Field label="Código CIE-10"><Input value={diagnosisEditTarget?.code ?? ''} readOnly /></Field>
-          <Field label="Descripción"><Input value={diagnosisDescription} onChange={(event) => setDiagnosisDescription(event.target.value)} /></Field>
-          <Field label="Tipo"><Select value={diagnosisTypeEdit} onChange={(event) => setDiagnosisTypeEdit(event.target.value)}>{diagnosisTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</Select></Field>
-          <Field label="Notas"><Textarea value={diagnosisNotesEdit} onChange={(event) => setDiagnosisNotesEdit(event.target.value)} /></Field>
-        </div>
-      </Modal>
-      <Modal open={prescriptionDeleteTarget !== null} onClose={() => setPrescriptionDeleteTarget(null)} title="Eliminar medicamento" description="El medicamento se quitará de la receta al guardar la consulta." footer={<><Button variant="secondary" onClick={() => setPrescriptionDeleteTarget(null)}>Cancelar</Button><Button variant="danger" onClick={() => { const index = prescriptionDeleteTarget; if (index !== null) setPrescriptionItems((items) => items.filter((_, itemIndex) => itemIndex !== index)); setPrescriptionDeleteTarget(null); }}>Eliminar medicamento</Button></>}>
-        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Estás seguro de eliminar {prescriptionDeleteTarget === null ? 'este medicamento' : prescriptionItems[prescriptionDeleteTarget]?.medication || 'este medicamento'} de la receta?</p>
+      <Modal open={emailDialog !== null} onClose={() => setEmailDialog(null)} title={emailDialog === 'prescription' ? 'Enviar receta por correo' : 'Enviar evolución por correo'} description="Revisa el destinatario y el contenido en tu aplicación de correo antes de enviarlo." footer={null}>
+        <form className="space-y-4" onSubmit={sendEmailDraft}>
+          <Field label="Destinatario" required><Input type="email" required value={emailRecipient} onChange={(event) => setEmailRecipient(event.target.value)} placeholder="correo@ejemplo.com" /></Field>
+          <p className="text-xs text-ink/50">Se abrirá la aplicación de correo configurada en este dispositivo. La PWA no envía correos automáticamente.</p>
+          {emailError ? <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{emailError}</p> : null}
+          <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={() => setEmailDialog(null)}>Cancelar</Button><Button type="submit" loading={saveMutation.isPending} icon={<Mail className="h-4 w-4" />}>Preparar correo</Button></div>
+        </form>
       </Modal>
     </div>
   );

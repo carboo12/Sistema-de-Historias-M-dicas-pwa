@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, Eye, EyeOff, HeartPulse, LockKeyhole, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, LockKeyhole, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { ApiError } from '../lib/data';
 import { useFirebaseBackend } from '../services/firebase/client';
@@ -40,9 +40,7 @@ export function LoginPage() {
         <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '26px 26px' }} />
 
         <div className="relative z-10 flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-400/15 text-teal-300 ring-1 ring-inset ring-teal-300/20">
-            <HeartPulse className="h-5 w-5" />
-          </span>
+          <img src="/logo-orthospine.png" alt="ORTHO SPINE CENTER" className="h-14 w-auto rounded-md bg-white object-contain p-1.5" />
           <div>
             <p className="font-display text-xl font-medium leading-none tracking-tight">Historias Médicas</p>
             <p className="mt-1 text-[9px] font-extrabold uppercase tracking-[0.2em] text-teal-300/70">Clinical workspace</p>
@@ -58,14 +56,13 @@ export function LoginPage() {
             La historia clínica que acompaña tu consulta.
           </h1>
           <p className="mt-5 max-w-md text-[15px] leading-relaxed text-teal-100/60">
-            Pacientes, agenda, evolución y diagnósticos CIE-10 en un solo lugar. Rápido en el consultorio, seguro fuera de él.
+            Pacientes, agenda y consultas en un solo lugar. Rápido en el consultorio, seguro fuera de él.
           </p>
 
-          <div className="mt-10 grid max-w-lg grid-cols-3 gap-3">
+          <div className="mt-10 grid max-w-lg grid-cols-2 gap-3">
             {[
               ['4.652', 'pacientes'],
               ['11.493', 'consultas'],
-              ['12.463', 'códigos CIE-10']
             ].map(([value, label]) => (
               <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 backdrop-blur">
                 <p className="font-display text-2xl font-medium text-white">{value}</p>
@@ -83,9 +80,7 @@ export function LoginPage() {
 
       <section className="flex min-h-screen flex-col px-5 py-6 sm:px-10 lg:px-16 xl:px-24">
         <div className="flex items-center gap-3 lg:hidden">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-teal-700 text-white">
-            <HeartPulse className="h-5 w-5" />
-          </span>
+          <img src="/logo-orthospine.png" alt="ORTHO SPINE CENTER" className="h-12 w-auto rounded-md bg-white object-contain p-1" />
           <div>
             <p className="font-display text-xl font-medium tracking-tight text-ink">Historias Médicas</p>
             <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-teal-700/60">Clinical workspace</p>

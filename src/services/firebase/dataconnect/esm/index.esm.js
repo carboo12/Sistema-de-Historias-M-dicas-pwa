@@ -137,40 +137,16 @@ export function signConsultation(dcOrVars, vars) {
   return executeMutation(signConsultationRef(dcInstance, inputVars));
 }
 
-export const addDiagnosisRef = (dcOrVars, vars) => {
+export const createPatientStudyRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();
-  return mutationRef(dcInstance, 'AddDiagnosis', inputVars);
+  return mutationRef(dcInstance, 'CreatePatientStudy', inputVars);
 }
-addDiagnosisRef.operationName = 'AddDiagnosis';
+createPatientStudyRef.operationName = 'CreatePatientStudy';
 
-export function addDiagnosis(dcOrVars, vars) {
+export function createPatientStudy(dcOrVars, vars) {
   const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
-  return executeMutation(addDiagnosisRef(dcInstance, inputVars));
-}
-
-export const deleteDiagnosisRef = (dcOrVars, vars) => {
-  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
-  dcInstance._useGeneratedSdk();
-  return mutationRef(dcInstance, 'DeleteDiagnosis', inputVars);
-}
-deleteDiagnosisRef.operationName = 'DeleteDiagnosis';
-
-export function deleteDiagnosis(dcOrVars, vars) {
-  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
-  return executeMutation(deleteDiagnosisRef(dcInstance, inputVars));
-}
-
-export const updateDiagnosisRef = (dcOrVars, vars) => {
-  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
-  dcInstance._useGeneratedSdk();
-  return mutationRef(dcInstance, 'UpdateDiagnosis', inputVars);
-}
-updateDiagnosisRef.operationName = 'UpdateDiagnosis';
-
-export function updateDiagnosis(dcOrVars, vars) {
-  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
-  return executeMutation(updateDiagnosisRef(dcInstance, inputVars));
+  return executeMutation(createPatientStudyRef(dcInstance, inputVars));
 }
 
 export const getSessionRef = (dc) => {
@@ -264,17 +240,17 @@ export function getConsultation(dcOrVars, varsOrOptions, options) {
   return executeQuery(getConsultationRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
 }
 
-export const searchCie10Ref = (dcOrVars, vars) => {
+export const listPatientStudiesRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();
-  return queryRef(dcInstance, 'SearchCie10', inputVars);
+  return queryRef(dcInstance, 'ListPatientStudies', inputVars);
 }
-searchCie10Ref.operationName = 'SearchCie10';
+listPatientStudiesRef.operationName = 'ListPatientStudies';
 
-export function searchCie10(dcOrVars, varsOrOptions, options) {
+export function listPatientStudies(dcOrVars, varsOrOptions, options) {
   
   const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
-  return executeQuery(searchCie10Ref(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
+  return executeQuery(listPatientStudiesRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
 }
 
 export const getCatalogsRef = (dc) => {

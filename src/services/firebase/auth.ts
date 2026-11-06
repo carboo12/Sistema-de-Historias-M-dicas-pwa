@@ -27,18 +27,18 @@ function logAuthFailure(stage: string, cause: unknown) {
 function toApiError(cause: unknown): ApiError {
   const code = (cause as { code?: string } | null)?.code ?? '';
   const messages: Record<string, string> = {
-    'auth/invalid-credential': 'Correo o contraseÃ±a incorrectos',
-    'auth/invalid-email': 'El correo electrÃ³nico no es vÃ¡lido',
-    'auth/user-disabled': 'Este usuario estÃ¡ deshabilitado',
-    'auth/user-not-found': 'Correo o contraseÃ±a incorrectos',
-    'auth/wrong-password': 'Correo o contraseÃ±a incorrectos',
-    'auth/operation-not-allowed': 'El inicio de sesiÃ³n con correo y contraseÃ±a no estÃ¡ habilitado en Firebase',
-    'auth/api-key-not-valid': 'La clave de API de Firebase no es vÃ¡lida para este proyecto',
-    'auth/too-many-requests': 'Demasiados intentos. Espera unos minutos e intÃ©ntalo de nuevo',
-    'auth/network-request-failed': 'No hay conexiÃ³n con Firebase. Revisa tu red'
+    'auth/invalid-credential': 'Correo o contraseña incorrectos',
+    'auth/invalid-email': 'El correo electrónico no es válido',
+    'auth/user-disabled': 'Este usuario está deshabilitado',
+    'auth/user-not-found': 'Correo o contraseña incorrectos',
+    'auth/wrong-password': 'Correo o contraseña incorrectos',
+    'auth/operation-not-allowed': 'El inicio de sesión con correo y contraseña no está habilitado en Firebase',
+    'auth/api-key-not-valid': 'La clave de API de Firebase no es válida para este proyecto',
+    'auth/too-many-requests': 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo',
+    'auth/network-request-failed': 'No hay conexión con Firebase. Revisa tu red'
   };
   return new ApiError(
-    messages[code] ?? (code ? `Error de Firebase (${code})` : 'No se pudo iniciar sesiÃ³n con Firebase'),
+    messages[code] ?? (code ? `Error de Firebase (${code})` : 'No se pudo iniciar sesión con Firebase'),
     401,
     code || 'firebase_auth_error',
     cause
@@ -73,7 +73,7 @@ async function linkAndReadSession(firebaseUser: FirebaseUser): Promise<User | nu
 
   if (!firebaseUser.emailVerified) {
     throw new ApiError(
-      'Verifica tu correo electrÃ³nico antes de entrar. Revisa el mensaje que enviamos a tu bandeja.',
+      'Verifica tu correo electrónico antes de entrar. Revisa el mensaje que enviamos a tu bandeja.',
       403,
       'email_not_verified'
     );
@@ -89,7 +89,7 @@ export async function signInWithFirebase(identifier: string, password: string): 
 
   if (!email.includes('@')) {
     throw new ApiError(
-      'Firebase Authentication requiere tu correo electrÃ³nico. Ingresa el correo asociado a tu cuenta.',
+      'Firebase Authentication requiere tu correo electrónico. Ingresa el correo asociado a tu cuenta.',
       400,
       'email_required'
     );
@@ -102,7 +102,7 @@ export async function signInWithFirebase(identifier: string, password: string): 
     const session = (await readSession()) ?? (await linkAndReadSession(credential.user));
     if (!session) {
       throw new ApiError(
-        'No encontramos un usuario clÃ­nico activo asociado a este correo.',
+        'No encontramos un usuario clínico activo asociado a este correo.',
         403,
         'user_not_linked'
       );
@@ -120,14 +120,14 @@ export async function getFirebaseSession(): Promise<User> {
   const firebaseUser = auth.currentUser;
 
   if (!firebaseUser) {
-    throw new ApiError('SesiÃ³n no iniciada', 401, 'anonymous');
+    throw new ApiError('Sesión no iniciada', 401, 'anonymous');
   }
 
   try {
     const session = (await readSession()) ?? (await linkAndReadSession(firebaseUser));
     if (!session) {
       throw new ApiError(
-        'No encontramos un usuario clÃ­nico activo asociado a este correo.',
+        'No encontramos un usuario clínico activo asociado a este correo.',
         403,
         'user_not_linked'
       );

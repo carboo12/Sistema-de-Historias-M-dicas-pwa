@@ -8,7 +8,7 @@ const processFlows = {
     { title: 'Registra al paciente', text: 'Busca primero por nombre o expediente para evitar duplicados. Si no existe, crea su ficha demográfica.', icon: UserRoundSearch, link: '/pacientes', action: 'Abrir pacientes' },
     { title: 'Abre su expediente', text: 'Revisa antecedentes, alergias, citas y consultas previas antes de iniciar la atención.', icon: FileSearch, link: '/pacientes', action: 'Buscar expediente' },
     { title: 'Crea la consulta', text: 'Selecciona paciente y profesional; registra motivo, evolución y examen.', icon: Plus, link: '/consultas/nueva', action: 'Nueva consulta' },
-    { title: 'Completa el plan', text: 'Añade diagnósticos, estudios y medicamentos en sus secciones. Imprime la receta de forma independiente.', icon: Printer, link: '/consultas', action: 'Ver consultas' }
+    { title: 'Completa la consulta', text: 'Registra la evolución, las órdenes de estudios y la receta en sus secciones. Imprime la receta de forma independiente.', icon: Printer, link: '/consultas', action: 'Ver consultas' }
   ] },
   actualizacion: { label: 'Actualización', title: 'Corregir y completar', intro: 'Mantén al día la ficha y la documentación clínica.', steps: [
     { title: 'Edita datos demográficos', text: 'Abre el expediente y usa Editar para corregir contacto, dirección u otros datos de la ficha.', icon: UserRoundSearch, link: '/pacientes', action: 'Abrir pacientes' },
@@ -18,7 +18,7 @@ const processFlows = {
   ] },
   eliminacion: { label: 'Eliminación', title: 'Retirar registros con cuidado', intro: 'Confirma siempre el registro y su relación antes de borrarlo.', steps: [
     { title: 'Identifica el registro', text: 'Busca por paciente, fecha y expediente. Comprueba que sea el elemento duplicado o incorrecto.', icon: FileSearch, link: '/pacientes', action: 'Buscar registro' },
-    { title: 'Elige la acción adecuada', text: 'Cancela citas que no ocurrieron; elimina un diagnóstico duplicado desde la consulta. Evita borrar información clínica válida.', icon: CalendarDays, link: '/agenda', action: 'Abrir agenda' },
+    { title: 'Elige la acción adecuada', text: 'Cancela citas que no ocurrieron y corrige la nota desde la consulta mientras siga editable. Evita borrar información clínica válida.', icon: CalendarDays, link: '/agenda', action: 'Abrir agenda' },
     { title: 'Revisa la confirmación', text: 'Lee el diálogo con atención antes de confirmar. La eliminación puede no ser reversible y puede afectar el historial.', icon: FilePenLine, link: '/consultas', action: 'Ver consultas' },
     { title: 'Verifica el expediente', text: 'Vuelve a consultar la ficha y la lista relacionada para comprobar que la corrección quedó reflejada.', icon: BookOpenCheck, link: '/pacientes', action: 'Verificar paciente' }
   ] }

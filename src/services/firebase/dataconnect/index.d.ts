@@ -10,21 +10,6 @@ export type DateString = string;
 
 
 
-export interface AddDiagnosisData {
-  consultationDiagnosis_insert: ConsultationDiagnosis_Key;
-}
-
-export interface AddDiagnosisVariables {
-  clinicId: UUIDString;
-  patientId: UUIDString;
-  consultationId: UUIDString;
-  professionalId?: UUIDString | null;
-  cie10Code?: string | null;
-  diagnosisText: string;
-  diagnosisType: string;
-  notes?: string | null;
-}
-
 export interface Appointment_Key {
   id: UUIDString;
   __typename?: 'Appointment_Key';
@@ -49,11 +34,6 @@ export interface ClinicReportsData {
       sex: string;
       birthDate?: DateString | null;
     };
-    consultationDiagnoses_on_consultation: ({
-      cie10Code?: string | null;
-      diagnosisText: string;
-      diagnosisType: string;
-    })[];
   } & Consultation_Key)[];
   patients: ({
     id: UUIDString;
@@ -101,11 +81,13 @@ export interface CountPatientsVariables {
 }
 
 export interface CreateAppointmentData {
+  user_update?: User_Key | null;
   appointment_insert: Appointment_Key;
 }
 
 export interface CreateAppointmentVariables {
   clinicId: UUIDString;
+  createdById: UUIDString;
   patientId: UUIDString;
   professionalId: UUIDString;
   specialtyId?: UUIDString | null;
@@ -120,11 +102,13 @@ export interface CreateAppointmentVariables {
 }
 
 export interface CreateConsultationData {
+  user_update?: User_Key | null;
   consultation_insert: Consultation_Key;
 }
 
 export interface CreateConsultationVariables {
   clinicId: UUIDString;
+  createdById: UUIDString;
   patientId: UUIDString;
   professionalId: UUIDString;
   appointmentId?: UUIDString | null;
@@ -138,19 +122,39 @@ export interface CreateConsultationVariables {
 }
 
 export interface CreatePatientData {
+  user_update?: User_Key | null;
   patient_insert: Patient_Key;
+}
+
+export interface CreatePatientStudyData {
+  patient_update?: Patient_Key | null;
+  patientStudy_insert: PatientStudy_Key;
+}
+
+export interface CreatePatientStudyVariables {
+  clinicId: UUIDString;
+  patientId: UUIDString;
+  professionalId?: UUIDString | null;
+  studyType: string;
+  studyName: string;
+  performedAt: TimestampString;
+  resultSummary?: string | null;
+  resultText?: string | null;
+  metadata: unknown;
 }
 
 export interface CreatePatientVariables {
   clinicId: UUIDString;
+  createdById: UUIDString;
   recordNumber: string;
-  documentType: string;
+  documentType?: string | null;
   documentNumber?: string | null;
   documentVerified: boolean;
   fullName: string;
   firstName?: string | null;
   lastName?: string | null;
   birthDate?: DateString | null;
+  ageOverride?: number | null;
   birthDateEstimated: boolean;
   sex: string;
   maritalStatus: string;
@@ -178,14 +182,6 @@ export interface DeleteConsultationData {
 }
 
 export interface DeleteConsultationVariables {
-  id: UUIDString;
-}
-
-export interface DeleteDiagnosisData {
-  consultationDiagnosis_delete?: ConsultationDiagnosis_Key | null;
-}
-
-export interface DeleteDiagnosisVariables {
   id: UUIDString;
 }
 
@@ -242,6 +238,9 @@ export interface GetConsultationData {
     physicalExam?: string | null;
     functionalExam?: string | null;
     studies?: string | null;
+    evolutionText?: string | null;
+    studiesText?: string | null;
+    prescriptionText?: string | null;
     diagnosisNotes?: string | null;
     treatmentPlan?: string | null;
     evolution?: string | null;
@@ -254,6 +253,7 @@ export interface GetConsultationData {
     updatedAt: TimestampString;
     patient: {
       fullName: string;
+      email?: string | null;
       recordNumber: string;
       birthDate?: DateString | null;
       sex: string;
@@ -262,14 +262,6 @@ export interface GetConsultationData {
     professional: {
       fullName: string;
     };
-    consultationDiagnoses_on_consultation: ({
-      id: UUIDString;
-      cie10Code?: string | null;
-      diagnosisText: string;
-      diagnosisType: string;
-      notes?: string | null;
-      diagnosedAt: TimestampString;
-    } & ConsultationDiagnosis_Key)[];
     prescriptions_on_consultation: ({
       legacyId?: string | null;
       prescriptionItems_on_prescription: ({
@@ -294,13 +286,14 @@ export interface GetPatientData {
   patients: ({
     id: UUIDString;
     recordNumber: string;
-    documentType: string;
+    documentType?: string | null;
     documentNumber?: string | null;
     documentVerified: boolean;
     fullName: string;
     firstName?: string | null;
     lastName?: string | null;
     birthDate?: DateString | null;
+    ageOverride?: number | null;
     birthDateEstimated: boolean;
     deceased: boolean;
     deathDate?: DateString | null;
@@ -350,12 +343,6 @@ export interface GetPatientData {
       professional: {
         fullName: string;
       };
-      consultationDiagnoses_on_consultation: ({
-        id: UUIDString;
-        cie10Code?: string | null;
-        diagnosisText: string;
-        diagnosisType: string;
-      } & ConsultationDiagnosis_Key)[];
     } & Consultation_Key)[];
     appointments_on_patient: ({
       id: UUIDString;
@@ -416,6 +403,7 @@ export interface ListAgendaData {
     notes?: string | null;
     patient: {
       fullName: string;
+      email?: string | null;
       recordNumber: string;
       phone?: string | null;
     };
@@ -456,26 +444,45 @@ export interface ListConsultationsData {
     professional: {
       fullName: string;
     };
-    consultationDiagnoses_on_consultation: ({
-      id: UUIDString;
-      cie10Code?: string | null;
-      diagnosisText: string;
-      diagnosisType: string;
-    } & ConsultationDiagnosis_Key)[];
   } & Consultation_Key)[];
+}
+
+export interface ListPatientStudiesData {
+  patientStudies: ({
+    id: UUIDString;
+    studyType: string;
+    studyName: string;
+    performedAt?: TimestampString | null;
+    resultSummary?: string | null;
+    resultText?: string | null;
+    metadata: unknown;
+    consultation?: {
+      id: UUIDString;
+    } & Consultation_Key;
+    professional?: {
+      fullName: string;
+    };
+  } & PatientStudy_Key)[];
+}
+
+export interface ListPatientStudiesVariables {
+  patientId: UUIDString;
+  limit: number;
+  offset: number;
 }
 
 export interface ListPatientsData {
   patients: ({
     id: UUIDString;
     recordNumber: string;
-    documentType: string;
+    documentType?: string | null;
     documentNumber?: string | null;
     documentVerified: boolean;
     fullName: string;
     firstName?: string | null;
     lastName?: string | null;
     birthDate?: DateString | null;
+    ageOverride?: number | null;
     birthDateEstimated: boolean;
     deceased: boolean;
     sex: string;
@@ -527,6 +534,11 @@ export interface PatientHistory_Key {
   __typename?: 'PatientHistory_Key';
 }
 
+export interface PatientStudy_Key {
+  id: UUIDString;
+  __typename?: 'PatientStudy_Key';
+}
+
 export interface Patient_Key {
   id: UUIDString;
   __typename?: 'Patient_Key';
@@ -547,25 +559,14 @@ export interface Professional_Key {
   __typename?: 'Professional_Key';
 }
 
-export interface SearchCie10Data {
-  cie10Codes: ({
-    code: string;
-    description: string;
-    chapter?: string | null;
-    category?: string | null;
-  } & Cie10Code_Key)[];
-}
-
-export interface SearchCie10Variables {
-  q: string;
-}
-
 export interface SignConsultationData {
+  user_update?: User_Key | null;
   consultation_update?: Consultation_Key | null;
 }
 
 export interface SignConsultationVariables {
   id: UUIDString;
+  signedById: UUIDString;
 }
 
 export interface Specialty_Key {
@@ -608,6 +609,9 @@ export interface UpdateConsultationVariables {
   physicalExam?: string | null;
   functionalExam?: string | null;
   studies?: string | null;
+  evolutionText?: string | null;
+  studiesText?: string | null;
+  prescriptionText?: string | null;
   diagnosisNotes?: string | null;
   treatmentPlan?: string | null;
   evolution?: string | null;
@@ -616,30 +620,20 @@ export interface UpdateConsultationVariables {
   vitals: unknown;
 }
 
-export interface UpdateDiagnosisData {
-  consultationDiagnosis_update?: ConsultationDiagnosis_Key | null;
-}
-
-export interface UpdateDiagnosisVariables {
-  id: UUIDString;
-  diagnosisText: string;
-  diagnosisType: string;
-  notes?: string | null;
-}
-
 export interface UpdatePatientData {
   patient_update?: Patient_Key | null;
 }
 
 export interface UpdatePatientVariables {
   id: UUIDString;
-  documentType: string;
+  documentType?: string | null;
   documentNumber?: string | null;
   documentVerified: boolean;
   fullName: string;
   firstName?: string | null;
   lastName?: string | null;
   birthDate?: DateString | null;
+  ageOverride?: number | null;
   birthDateEstimated: boolean;
   sex: string;
   maritalStatus: string;
@@ -799,41 +793,17 @@ export const signConsultationRef: SignConsultationRef;
 export function signConsultation(vars: SignConsultationVariables): MutationPromise<SignConsultationData, SignConsultationVariables>;
 export function signConsultation(dc: DataConnect, vars: SignConsultationVariables): MutationPromise<SignConsultationData, SignConsultationVariables>;
 
-interface AddDiagnosisRef {
+interface CreatePatientStudyRef {
   /* Allow users to create refs without passing in DataConnect */
-  (vars: AddDiagnosisVariables): MutationRef<AddDiagnosisData, AddDiagnosisVariables>;
+  (vars: CreatePatientStudyVariables): MutationRef<CreatePatientStudyData, CreatePatientStudyVariables>;
   /* Allow users to pass in custom DataConnect instances */
-  (dc: DataConnect, vars: AddDiagnosisVariables): MutationRef<AddDiagnosisData, AddDiagnosisVariables>;
+  (dc: DataConnect, vars: CreatePatientStudyVariables): MutationRef<CreatePatientStudyData, CreatePatientStudyVariables>;
   operationName: string;
 }
-export const addDiagnosisRef: AddDiagnosisRef;
+export const createPatientStudyRef: CreatePatientStudyRef;
 
-export function addDiagnosis(vars: AddDiagnosisVariables): MutationPromise<AddDiagnosisData, AddDiagnosisVariables>;
-export function addDiagnosis(dc: DataConnect, vars: AddDiagnosisVariables): MutationPromise<AddDiagnosisData, AddDiagnosisVariables>;
-
-interface DeleteDiagnosisRef {
-  /* Allow users to create refs without passing in DataConnect */
-  (vars: DeleteDiagnosisVariables): MutationRef<DeleteDiagnosisData, DeleteDiagnosisVariables>;
-  /* Allow users to pass in custom DataConnect instances */
-  (dc: DataConnect, vars: DeleteDiagnosisVariables): MutationRef<DeleteDiagnosisData, DeleteDiagnosisVariables>;
-  operationName: string;
-}
-export const deleteDiagnosisRef: DeleteDiagnosisRef;
-
-export function deleteDiagnosis(vars: DeleteDiagnosisVariables): MutationPromise<DeleteDiagnosisData, DeleteDiagnosisVariables>;
-export function deleteDiagnosis(dc: DataConnect, vars: DeleteDiagnosisVariables): MutationPromise<DeleteDiagnosisData, DeleteDiagnosisVariables>;
-
-interface UpdateDiagnosisRef {
-  /* Allow users to create refs without passing in DataConnect */
-  (vars: UpdateDiagnosisVariables): MutationRef<UpdateDiagnosisData, UpdateDiagnosisVariables>;
-  /* Allow users to pass in custom DataConnect instances */
-  (dc: DataConnect, vars: UpdateDiagnosisVariables): MutationRef<UpdateDiagnosisData, UpdateDiagnosisVariables>;
-  operationName: string;
-}
-export const updateDiagnosisRef: UpdateDiagnosisRef;
-
-export function updateDiagnosis(vars: UpdateDiagnosisVariables): MutationPromise<UpdateDiagnosisData, UpdateDiagnosisVariables>;
-export function updateDiagnosis(dc: DataConnect, vars: UpdateDiagnosisVariables): MutationPromise<UpdateDiagnosisData, UpdateDiagnosisVariables>;
+export function createPatientStudy(vars: CreatePatientStudyVariables): MutationPromise<CreatePatientStudyData, CreatePatientStudyVariables>;
+export function createPatientStudy(dc: DataConnect, vars: CreatePatientStudyVariables): MutationPromise<CreatePatientStudyData, CreatePatientStudyVariables>;
 
 interface GetSessionRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -919,17 +889,17 @@ export const getConsultationRef: GetConsultationRef;
 export function getConsultation(vars: GetConsultationVariables, options?: ExecuteQueryOptions): QueryPromise<GetConsultationData, GetConsultationVariables>;
 export function getConsultation(dc: DataConnect, vars: GetConsultationVariables, options?: ExecuteQueryOptions): QueryPromise<GetConsultationData, GetConsultationVariables>;
 
-interface SearchCie10Ref {
+interface ListPatientStudiesRef {
   /* Allow users to create refs without passing in DataConnect */
-  (vars: SearchCie10Variables): QueryRef<SearchCie10Data, SearchCie10Variables>;
+  (vars: ListPatientStudiesVariables): QueryRef<ListPatientStudiesData, ListPatientStudiesVariables>;
   /* Allow users to pass in custom DataConnect instances */
-  (dc: DataConnect, vars: SearchCie10Variables): QueryRef<SearchCie10Data, SearchCie10Variables>;
+  (dc: DataConnect, vars: ListPatientStudiesVariables): QueryRef<ListPatientStudiesData, ListPatientStudiesVariables>;
   operationName: string;
 }
-export const searchCie10Ref: SearchCie10Ref;
+export const listPatientStudiesRef: ListPatientStudiesRef;
 
-export function searchCie10(vars: SearchCie10Variables, options?: ExecuteQueryOptions): QueryPromise<SearchCie10Data, SearchCie10Variables>;
-export function searchCie10(dc: DataConnect, vars: SearchCie10Variables, options?: ExecuteQueryOptions): QueryPromise<SearchCie10Data, SearchCie10Variables>;
+export function listPatientStudies(vars: ListPatientStudiesVariables, options?: ExecuteQueryOptions): QueryPromise<ListPatientStudiesData, ListPatientStudiesVariables>;
+export function listPatientStudies(dc: DataConnect, vars: ListPatientStudiesVariables, options?: ExecuteQueryOptions): QueryPromise<ListPatientStudiesData, ListPatientStudiesVariables>;
 
 interface GetCatalogsRef {
   /* Allow users to create refs without passing in DataConnect */

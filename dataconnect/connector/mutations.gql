@@ -14,14 +14,16 @@ mutation LinkCurrentUser @auth(level: USER_EMAIL_VERIFIED) @transaction {
 
 mutation CreatePatient(
   $clinicId: UUID!
+  $createdById: UUID!
   $recordNumber: String!
-  $documentType: String!
+  $documentType: String
   $documentNumber: String
   $documentVerified: Boolean!
   $fullName: String!
   $firstName: String
   $lastName: String
   $birthDate: Date
+  $ageOverride: Int
   $birthDateEstimated: Boolean!
   $sex: String!
   $maritalStatus: String!
@@ -43,6 +45,17 @@ mutation CreatePatient(
   $isSuspended: Boolean!
   $suspensionReason: String
 ) @auth(level: USER) @transaction {
+  user_update(
+    first: {
+      where: {
+        id: { eq: $createdById }
+        firebaseUid: { eq_expr: "auth.uid" }
+        clinic: { id: { eq: $clinicId } }
+        isActive: { eq: true }
+      }
+    }
+    data: { lastLoginAt_expr: "request.time" }
+  ) @check(message: "El usuario no pertenece a esta clínica")
   patient_insert(
     data: {
       clinicId: $clinicId
@@ -54,6 +67,7 @@ mutation CreatePatient(
       firstName: $firstName
       lastName: $lastName
       birthDate: $birthDate
+      ageOverride: $ageOverride
       birthDateEstimated: $birthDateEstimated
       sex: $sex
       maritalStatus: $maritalStatus
@@ -74,20 +88,21 @@ mutation CreatePatient(
       notes: $notes
       isSuspended: $isSuspended
       suspensionReason: $suspensionReason
-      createdById_expr: "auth.uid"
+      createdById: $createdById
     }
   )
 }
 
 mutation UpdatePatient(
   $id: UUID!
-  $documentType: String!
+  $documentType: String
   $documentNumber: String
   $documentVerified: Boolean!
   $fullName: String!
   $firstName: String
   $lastName: String
   $birthDate: Date
+  $ageOverride: Int
   $birthDateEstimated: Boolean!
   $sex: String!
   $maritalStatus: String!
@@ -125,6 +140,7 @@ mutation UpdatePatient(
       firstName: $firstName
       lastName: $lastName
       birthDate: $birthDate
+      ageOverride: $ageOverride
       birthDateEstimated: $birthDateEstimated
       sex: $sex
       maritalStatus: $maritalStatus
@@ -164,6 +180,7 @@ mutation DeletePatient($id: UUID!) @auth(level: USER) @transaction {
 
 mutation CreateAppointment(
   $clinicId: UUID!
+  $createdById: UUID!
   $patientId: UUID!
   $professionalId: UUID!
   $specialtyId: UUID
@@ -176,6 +193,17 @@ mutation CreateAppointment(
   $status: String!
   $source: String!
 ) @auth(level: USER) @transaction {
+  user_update(
+    first: {
+      where: {
+        id: { eq: $createdById }
+        firebaseUid: { eq_expr: "auth.uid" }
+        clinic: { id: { eq: $clinicId } }
+        isActive: { eq: true }
+      }
+    }
+    data: { lastLoginAt_expr: "request.time" }
+  ) @check(message: "El usuario no pertenece a esta clínica")
   appointment_insert(
     data: {
       clinicId: $clinicId
@@ -190,7 +218,7 @@ mutation CreateAppointment(
       notes: $notes
       status: $status
       source: $source
-      createdById_expr: "auth.uid"
+      createdById: $createdById
     }
   )
 }
@@ -237,6 +265,7 @@ mutation UpdateAppointment(
 
 mutation CreateConsultation(
   $clinicId: UUID!
+  $createdById: UUID!
   $patientId: UUID!
   $professionalId: UUID!
   $appointmentId: UUID
@@ -248,6 +277,17 @@ mutation CreateConsultation(
   $status: String!
   $source: String!
 ) @auth(level: USER) @transaction {
+  user_update(
+    first: {
+      where: {
+        id: { eq: $createdById }
+        firebaseUid: { eq_expr: "auth.uid" }
+        clinic: { id: { eq: $clinicId } }
+        isActive: { eq: true }
+      }
+    }
+    data: { lastLoginAt_expr: "request.time" }
+  ) @check(message: "El usuario no pertenece a esta clínica")
   consultation_insert(
     data: {
       clinicId: $clinicId
@@ -261,7 +301,7 @@ mutation CreateConsultation(
       notes: $notes
       status: $status
       source: $source
-      createdById_expr: "auth.uid"
+      createdById: $createdById
     }
   )
 }
@@ -274,6 +314,9 @@ mutation UpdateConsultation(
   $physicalExam: String
   $functionalExam: String
   $studies: String
+  $evolutionText: String
+  $studiesText: String
+  $prescriptionText: String
   $diagnosisNotes: String
   $treatmentPlan: String
   $evolution: String
@@ -297,6 +340,9 @@ mutation UpdateConsultation(
       physicalExam: $physicalExam
       functionalExam: $functionalExam
       studies: $studies
+      evolutionText: $evolutionText
+      studiesText: $studiesText
+      prescriptionText: $prescriptionText
       diagnosisNotes: $diagnosisNotes
       treatmentPlan: $treatmentPlan
       evolution: $evolution
@@ -321,7 +367,17 @@ mutation DeleteConsultation($id: UUID!) @auth(level: USER) @transaction {
   ) @check(message: "Solo se pueden eliminar consultas en borrador")
 }
 
-mutation SignConsultation($id: UUID!) @auth(level: USER) @transaction {
+mutation SignConsultation($id: UUID!, $signedById: UUID!) @auth(level: USER) @transaction {
+  user_update(
+    first: {
+      where: {
+        id: { eq: $signedById }
+        firebaseUid: { eq_expr: "auth.uid" }
+        isActive: { eq: true }
+      }
+    }
+    data: { lastLoginAt_expr: "request.time" }
+  ) @check(message: "El usuario autenticado no está activo")
   consultation_update(
     first: {
       where: {
@@ -334,57 +390,47 @@ mutation SignConsultation($id: UUID!) @auth(level: USER) @transaction {
     data: {
       status: "firmada"
       signedAt_expr: "request.time"
-      signedById_expr: "auth.uid"
+      signedById: $signedById
     }
   ) @check(message: "No se encontró una consulta en borrador para firmar")
 }
 
-mutation AddDiagnosis(
+mutation CreatePatientStudy(
   $clinicId: UUID!
   $patientId: UUID!
-  $consultationId: UUID!
+  $consultationId: UUID @retired
   $professionalId: UUID
-  $cie10Code: String
-  $diagnosisText: String!
-  $diagnosisType: String!
-  $notes: String
+  $studyType: String!
+  $studyName: String!
+  $performedAt: Timestamp!
+  $resultSummary: String
+  $resultText: String
+  $metadata: Any!
 ) @auth(level: USER) @transaction {
-  consultationDiagnosis_insert(
-    data: {
-      clinicId: $clinicId
-      patientId: $patientId
-      consultationId: $consultationId
-      professionalId: $professionalId
-      cie10Code: $cie10Code
-      diagnosisText: $diagnosisText
-      diagnosisType: $diagnosisType
-      notes: $notes
-      createdById_expr: "auth.uid"
-    }
-  )
-}
-
-mutation DeleteDiagnosis($id: UUID!) @auth(level: USER) @transaction {
-  consultationDiagnosis_delete(
+  patient_update(
     first: {
       where: {
-        id: { eq: $id }
-        clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
-        consultation: { status: { eq: "borrador" } }
+        id: { eq: $patientId }
+        clinic: {
+          _and: [
+            { id: { eq: $clinicId } }
+            { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+          ]
+        }
       }
     }
-  ) @check(message: "No se encontró el diagnóstico en esta clínica")
-}
-
-mutation UpdateDiagnosis($id: UUID!, $diagnosisText: String!, $diagnosisType: String!, $notes: String) @auth(level: USER) @transaction {
-  consultationDiagnosis_update(
-    first: {
-      where: {
-        id: { eq: $id }
-        clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
-        consultation: { status: { eq: "borrador" } }
-      }
-    }
-    data: { diagnosisText: $diagnosisText, diagnosisType: $diagnosisType, notes: $notes }
-  ) @check(message: "No se encontró un diagnóstico editable en esta clínica")
+    data: { updatedAt_expr: "request.time" }
+  ) @check(message: "No se encontró el paciente en esta clínica")
+  patientStudy_insert(data: {
+    clinicId: $clinicId
+    patientId: $patientId
+    professionalId: $professionalId
+    studyType: $studyType
+    studyName: $studyName
+    performedAt: $performedAt
+    status: "completado"
+    resultSummary: $resultSummary
+    resultText: $resultText
+    metadata: $metadata
+  })
 }

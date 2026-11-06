@@ -17,6 +17,7 @@ createdb historias_medicas
 $env:DATABASE_URL = "postgres://postgres:postgres@localhost:5432/historias_medicas"
 
 psql $env:DATABASE_URL -v ON_ERROR_STOP=1 -f db/001_schema.sql
+psql $env:DATABASE_URL -v ON_ERROR_STOP=1 -f db/migrations/008_optional_patient_document_and_age.sql
 psql $env:DATABASE_URL -v ON_ERROR_STOP=1 -f db/002_staging.sql
 ```
 

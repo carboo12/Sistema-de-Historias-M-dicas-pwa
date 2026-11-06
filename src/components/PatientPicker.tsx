@@ -38,7 +38,7 @@ export function PatientPicker({
   }, []);
 
   if (value) {
-    const age = ageFromBirthDate(value.birthDate);
+    const age = value.ageOverride ?? ageFromBirthDate(value.birthDate);
     return (
       <div className="flex items-center gap-3 rounded-xl border border-teal-200 bg-teal-50/60 p-3">
         <Avatar name={value.fullName} size="sm" />
@@ -87,7 +87,7 @@ export function PatientPicker({
         <div className="absolute z-30 mt-2 max-h-72 w-full overflow-y-auto rounded-2xl border border-line bg-surface p-1.5 shadow-lift">
           {data?.patients.length ? (
             data.patients.map((patient) => {
-              const age = ageFromBirthDate(patient.birthDate);
+              const age = patient.ageOverride ?? ageFromBirthDate(patient.birthDate);
               return (
                 <button
                   key={patient.id}

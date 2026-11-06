@@ -67,7 +67,7 @@ export function PatientsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Directorio clÃ­nico"
+        eyebrow="Directorio clínico"
         title="Pacientes"
         description="Encuentra una historia en segundos, revisa antecedentes y abre la siguiente consulta."
         actions={
@@ -88,7 +88,7 @@ export function PatientsPage() {
                 setPage(0);
               }}
               className="pl-10 pr-10"
-              placeholder="Buscar por nombre, cÃ©dula o nÃºmero de historiaâ€¦"
+              placeholder="Buscar por nombre, apellido, cédula o número de historia…"
               autoComplete="off"
             />
             {q ? (
@@ -99,7 +99,7 @@ export function PatientsPage() {
                   setPage(0);
                 }}
                 className="focus-ring absolute right-2.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-ink/35 hover:bg-ink/5 hover:text-ink"
-                aria-label="Limpiar bÃºsqueda"
+                aria-label="Limpiar búsqueda"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -123,16 +123,16 @@ export function PatientsPage() {
         <div className="card">
           <EmptyState
             icon={<Users className="h-7 w-7" />}
-            title={q ? 'No encontramos coincidencias' : 'AÃºn no hay pacientes'}
+            title={q ? 'No encontramos coincidencias' : 'Aún no hay pacientes'}
             description={
               q
-                ? 'Prueba con otro nombre, documento o nÃºmero de historia.'
-                : 'Crea la primera ficha para comenzar a construir la historia clÃ­nica.'
+                ? 'Prueba con otro nombre, documento o número de historia.'
+                : 'Crea la primera ficha para comenzar a construir la historia clínica.'
             }
             action={
               q ? (
                 <Button variant="secondary" onClick={() => setQ('')}>
-                  Limpiar bÃºsqueda
+                  Limpiar búsqueda
                 </Button>
               ) : (
                 <Button icon={<UserPlus className="h-4 w-4" />} onClick={() => setDialogOpen(true)}>
@@ -153,8 +153,8 @@ export function PatientsPage() {
                     <th>Documento</th>
                     <th>Edad / sexo</th>
                     <th>Contacto</th>
-                    <th>Ãšltima visita</th>
-                    <th>PrÃ³xima cita</th>
+                    <th>Última visita</th>
+                    <th>Próxima cita</th>
                     <th aria-label="Acciones" />
                   </tr>
                 </thead>
@@ -183,12 +183,12 @@ export function PatientsPage() {
                         </td>
                         <td className="text-xs font-semibold text-ink/55">{patientDocument(patient)}</td>
                         <td className="text-xs font-semibold text-ink/55">
-                          {age !== null ? `${age} aÃ±os` : 'â€”'} Â· {sexLabel(patient.sex)}
+                          {age !== null ? `${age} años` : '—'} · {sexLabel(patient.sex)}
                         </td>
                         <td>
                           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink/55">
                             <Phone className="h-3.5 w-3.5 text-ink/30" />
-                            {patient.mobile || patient.phone || 'â€”'}
+                            {patient.mobile || patient.phone || '—'}
                           </span>
                         </td>
                         <td className="text-xs font-semibold text-ink/55">
@@ -197,7 +197,7 @@ export function PatientsPage() {
                         <td className="text-xs font-semibold text-ink/55">
                           {patient.nextAppointmentAt
                             ? formatDate(patient.nextAppointmentAt, timezone, { month: 'short', day: '2-digit' })
-                            : 'â€”'}
+                            : '—'}
                         </td>
                         <td>
                           <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
@@ -227,21 +227,21 @@ export function PatientsPage() {
                         <div className="min-w-0">
                           <p className="truncate text-sm font-extrabold text-ink">{patient.fullName}</p>
                           <p className="mt-0.5 text-[11px] font-semibold text-ink/40">
-                            {patient.recordNumber} Â· {patientDocument(patient)}
+                            {patient.recordNumber} · {patientDocument(patient)}
                           </p>
                         </div>
                         <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-ink/25" />
                       </div>
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         <Badge className="badge-slate">
-                          {age !== null ? `${age} aÃ±os` : 'Edad no registrada'}
+                          {age !== null ? `${age} años` : 'Edad no registrada'}
                         </Badge>
                         <Badge className="badge-slate">{sexLabel(patient.sex)}</Badge>
                         {patient.isSuspended ? <Badge className="badge-red">Suspendido</Badge> : null}
                       </div>
                       <p className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-semibold text-ink/45">
                         <Phone className="h-3.5 w-3.5" />
-                        {patient.mobile || patient.phone || 'Sin telÃ©fono'}
+                        {patient.mobile || patient.phone || 'Sin teléfono'}
                       </p>
                     </div>
                     </Link>
@@ -257,14 +257,14 @@ export function PatientsPage() {
 
           <div className="flex items-center justify-between rounded-2xl border border-line/70 bg-white px-4 py-3">
             <p className="text-xs font-semibold text-ink/45">
-              PÃ¡gina {page + 1} de {pages} Â· {total.toLocaleString('es-NI')} resultados
+              Página {page + 1} de {pages} · {total.toLocaleString('es-NI')} resultados
             </p>
             <div className="flex items-center gap-1">
-              <IconButton label="PÃ¡gina anterior" disabled={page === 0} onClick={() => setPage((value) => value - 1)}>
+              <IconButton label="Página anterior" disabled={page === 0} onClick={() => setPage((value) => value - 1)}>
                 <ChevronLeft className="h-4 w-4" />
               </IconButton>
               <IconButton
-                label="PÃ¡gina siguiente"
+                label="Página siguiente"
                 disabled={page + 1 >= pages}
                 onClick={() => setPage((value) => value + 1)}
               >

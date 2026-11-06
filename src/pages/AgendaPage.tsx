@@ -97,13 +97,13 @@ export function AgendaPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Hoy en la clÃ­nica"
+        eyebrow="Hoy en la clínica"
         title="Agenda"
-        description="Organiza el dÃ­a, recibe a tus pacientes y abre la consulta en un clic."
+        description="Organiza el día, recibe a tus pacientes y abre la consulta en un clic."
         actions={
           <>
             <div className="flex items-center gap-1 rounded-xl border border-line bg-white p-1 shadow-sm">
-              <IconButton label="DÃ­a anterior" onClick={() => setDate(shiftDate(date, -1))}>
+              <IconButton label="Día anterior" onClick={() => setDate(shiftDate(date, -1))}>
                 <ChevronLeft className="h-4 w-4" />
               </IconButton>
               <button
@@ -113,7 +113,7 @@ export function AgendaPage() {
               >
                 Hoy
               </button>
-              <IconButton label="DÃ­a siguiente" onClick={() => setDate(shiftDate(date, 1))}>
+              <IconButton label="Día siguiente" onClick={() => setDate(shiftDate(date, 1))}>
                 <ChevronRight className="h-4 w-4" />
               </IconButton>
             </div>
@@ -146,7 +146,7 @@ export function AgendaPage() {
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <StatCard
-          label="Citas del dÃ­a"
+          label="Citas del día"
           value={stats?.total ?? 0}
           icon={<CalendarDays className="h-5 w-5" />}
           tone="teal"
@@ -175,7 +175,7 @@ export function AgendaPage() {
         <section className="card overflow-hidden">
           <div className="flex items-center justify-between border-b border-line/70 px-5 py-4 sm:px-6">
             <div>
-              <h2 className="text-sm font-extrabold uppercase tracking-[0.14em] text-ink/45">Timeline del dÃ­a</h2>
+              <h2 className="text-sm font-extrabold uppercase tracking-[0.14em] text-ink/45">Horario del día</h2>
               <p className="mt-1 text-sm text-ink/55">
                 {appointments.length ? `${appointments.length} citas programadas` : 'Sin citas para esta fecha'}
               </p>
@@ -199,8 +199,8 @@ export function AgendaPage() {
           ) : appointments.length === 0 ? (
             <EmptyState
               icon={<CalendarDays className="h-7 w-7" />}
-              title="La agenda estÃ¡ libre"
-              description="Agenda una cita para comenzar el dÃ­a o elige otra fecha en el calendario."
+              title="La agenda está libre"
+              description="Agenda una cita para comenzar el día o elige otra fecha en el calendario."
               action={
                 <Button icon={<CalendarPlus className="h-4 w-4" />} onClick={() => setDialogOpen(true)}>
                   Agendar cita
@@ -229,7 +229,7 @@ export function AgendaPage() {
                       </Badge>
                     </div>
                     <p className="mt-1 truncate text-sm text-ink/55">
-                      {appointment.reason || 'Consulta mÃ©dica'}
+                      {appointment.reason || 'Consulta médica'}
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-semibold text-ink/40">
                       <span className="inline-flex items-center gap-1.5">
@@ -287,7 +287,7 @@ export function AgendaPage() {
         <aside className="space-y-4">
           <div className="card p-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-extrabold uppercase tracking-[0.14em] text-ink/45">Estado del dÃ­a</h2>
+              <h2 className="text-sm font-extrabold uppercase tracking-[0.14em] text-ink/45">Estado del día</h2>
               <Sparkles className="h-4 w-4 text-amber-500" />
             </div>
             <div className="mt-5 flex items-end justify-between">
@@ -337,7 +337,7 @@ export function AgendaPage() {
               </span>
               <h3 className="mt-4 font-display text-xl font-medium leading-tight">Una historia, todo el contexto.</h3>
               <p className="mt-2 text-xs leading-relaxed text-teal-100/55">
-                Abre la ficha antes de recibir al paciente. Alergias, antecedentes y consultas previas estarÃ¡n a la vista.
+                Abre la ficha antes de recibir al paciente. Alergias, antecedentes y consultas previas estarán a la vista.
               </p>
               <button
                 type="button"

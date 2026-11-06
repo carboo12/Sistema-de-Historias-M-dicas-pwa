@@ -161,45 +161,17 @@ exports.signConsultation = function signConsultation(dcOrVars, vars) {
 }
 ;
 
-const addDiagnosisRef = (dcOrVars, vars) => {
+const createPatientStudyRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();
-  return mutationRef(dcInstance, 'AddDiagnosis', inputVars);
+  return mutationRef(dcInstance, 'CreatePatientStudy', inputVars);
 }
-addDiagnosisRef.operationName = 'AddDiagnosis';
-exports.addDiagnosisRef = addDiagnosisRef;
+createPatientStudyRef.operationName = 'CreatePatientStudy';
+exports.createPatientStudyRef = createPatientStudyRef;
 
-exports.addDiagnosis = function addDiagnosis(dcOrVars, vars) {
+exports.createPatientStudy = function createPatientStudy(dcOrVars, vars) {
   const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
-  return executeMutation(addDiagnosisRef(dcInstance, inputVars));
-}
-;
-
-const deleteDiagnosisRef = (dcOrVars, vars) => {
-  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
-  dcInstance._useGeneratedSdk();
-  return mutationRef(dcInstance, 'DeleteDiagnosis', inputVars);
-}
-deleteDiagnosisRef.operationName = 'DeleteDiagnosis';
-exports.deleteDiagnosisRef = deleteDiagnosisRef;
-
-exports.deleteDiagnosis = function deleteDiagnosis(dcOrVars, vars) {
-  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
-  return executeMutation(deleteDiagnosisRef(dcInstance, inputVars));
-}
-;
-
-const updateDiagnosisRef = (dcOrVars, vars) => {
-  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
-  dcInstance._useGeneratedSdk();
-  return mutationRef(dcInstance, 'UpdateDiagnosis', inputVars);
-}
-updateDiagnosisRef.operationName = 'UpdateDiagnosis';
-exports.updateDiagnosisRef = updateDiagnosisRef;
-
-exports.updateDiagnosis = function updateDiagnosis(dcOrVars, vars) {
-  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
-  return executeMutation(updateDiagnosisRef(dcInstance, inputVars));
+  return executeMutation(createPatientStudyRef(dcInstance, inputVars));
 }
 ;
 
@@ -308,18 +280,18 @@ exports.getConsultation = function getConsultation(dcOrVars, varsOrOptions, opti
 }
 ;
 
-const searchCie10Ref = (dcOrVars, vars) => {
+const listPatientStudiesRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();
-  return queryRef(dcInstance, 'SearchCie10', inputVars);
+  return queryRef(dcInstance, 'ListPatientStudies', inputVars);
 }
-searchCie10Ref.operationName = 'SearchCie10';
-exports.searchCie10Ref = searchCie10Ref;
+listPatientStudiesRef.operationName = 'ListPatientStudies';
+exports.listPatientStudiesRef = listPatientStudiesRef;
 
-exports.searchCie10 = function searchCie10(dcOrVars, varsOrOptions, options) {
+exports.listPatientStudies = function listPatientStudies(dcOrVars, varsOrOptions, options) {
   
   const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
-  return executeQuery(searchCie10Ref(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
+  return executeQuery(listPatientStudiesRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
 }
 ;
 

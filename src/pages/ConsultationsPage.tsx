@@ -72,7 +72,7 @@ export function ConsultationsPage() {
       <PageHeader
         eyebrow="Bandeja clínica"
         title="Consultas"
-        description="Retoma borradores y revisa las atenciones firmadas más recientes."
+        description="Retoma borradores y revisa las atenciones completadas más recientes."
         actions={
           <Button icon={<ClipboardPlus className="h-4 w-4" />} onClick={() => navigate('/consultas/nueva')}>
             Nueva consulta
@@ -83,7 +83,7 @@ export function ConsultationsPage() {
       <div className="grid grid-cols-3 gap-3">
         <SummaryTile label="Total" value={all.length} icon={<FileText className="h-4 w-4" />} tone="slate" />
         <SummaryTile label="Borradores" value={drafts} icon={<PenLine className="h-4 w-4" />} tone="amber" />
-        <SummaryTile label="Firmadas" value={signed} icon={<CheckCircle2 className="h-4 w-4" />} tone="teal" />
+        <SummaryTile label="Completadas" value={signed} icon={<CheckCircle2 className="h-4 w-4" />} tone="teal" />
       </div>
 
       <div className="card p-4 sm:p-5">
@@ -164,7 +164,6 @@ export function ConsultationsPage() {
                   <th>Paciente</th>
                   <th>Motivo</th>
                   <th>Profesional</th>
-                  <th>Diagnóstico</th>
                   <th>Fecha</th>
                   <th>Estado</th>
                   <th aria-label="Abrir" />
@@ -187,27 +186,6 @@ export function ConsultationsPage() {
                       </p>
                     </td>
                     <td className="text-xs font-semibold text-ink/55">{consultation.professional_name}</td>
-                    <td>
-                      {consultation.diagnoses.length ? (
-                        <div className="flex max-w-[220px] flex-wrap gap-1">
-                          {consultation.diagnoses.slice(0, 2).map((diagnosis) => (
-                            <span
-                              key={diagnosis.id}
-                              className="rounded-md bg-canvas px-1.5 py-1 text-[10px] font-bold text-ink/55 ring-1 ring-inset ring-line"
-                            >
-                              {diagnosis.code}
-                            </span>
-                          ))}
-                          {consultation.diagnoses.length > 2 ? (
-                            <span className="px-1 py-1 text-[10px] font-bold text-ink/30">
-                              +{consultation.diagnoses.length - 2}
-                            </span>
-                          ) : null}
-                        </div>
-                      ) : (
-                        <span className="text-[11px] font-semibold text-ink/30">Sin diagnóstico</span>
-                      )}
-                    </td>
                     <td>
                       <p className="text-xs font-semibold text-ink/55">{formatDate(consultation.consulted_at, timezone)}</p>
                       <p className="mt-0.5 text-[10px] font-semibold text-ink/35">

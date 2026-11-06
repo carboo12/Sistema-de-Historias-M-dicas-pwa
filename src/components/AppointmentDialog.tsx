@@ -7,6 +7,7 @@ import { dateTimeToIso, todayInTimeZone } from '../lib/format';
 import type { Appointment, Patient } from '../types';
 import { PatientPicker } from './PatientPicker';
 import { Button, Field, Input, Modal, Select, Textarea } from './ui';
+import { appointmentFormSchema } from '../lib/form-validation';
 
 export function AppointmentDialog({
   open,
@@ -98,6 +99,19 @@ export function AppointmentDialog({
       setError('Selecciona un profesional');
       return;
     }
+    const parsed = appointmentFormSchema.safeParse({
+      patientId: patient.id,
+      professionalId,
+      date,
+      time,
+      durationMinutes: duration,
+      reason,
+      notes
+    });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? 'Revisa los datos de la cita');
+      return;
+    }
     mutation.mutate();
   }
 
@@ -139,13 +153,8 @@ export function AppointmentDialog({
               ))}
             </Select>
           </Field>
-          <Field label="Duración">
-            <Select value={duration} onChange={(event) => setDuration(event.target.value)}>
-              <option value="15">15 minutos</option>
-              <option value="30">30 minutos</option>
-              <option value="45">45 minutos</option>
-              <option value="60">60 minutos</option>
-            </Select>
+          <Field label="Duración (minutos)" hint="Puedes ingresar un valor entre 1 y 480.">
+            <Input type="number" min={1} max={480} step={1} value={duration} onChange={(event) => setDuration(event.target.value)} required placeholder="30" />
           </Field>
         </div>
 

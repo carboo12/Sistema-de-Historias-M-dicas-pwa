@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -15,6 +15,7 @@ import {
   MapPin,
   Pencil,
   Phone,
+  Printer,
   ShieldAlert,
   Stethoscope,
   Trash2,
@@ -29,11 +30,22 @@ import {
   Button,
   EmptyState,
   ErrorState,
+  Field,
+  IconButton,
+  Input,
   Modal,
   PageHeader,
+  Select,
   SkeletonRows
 } from '../components/ui';
 import { api, ApiError } from '../lib/data';
+import {
+  buildEvolutionEmailBody,
+  buildMailtoUrl,
+  buildPrescriptionEmailBody
+} from '../lib/clinical-email';
+import { openPrescriptionPrintWindow, renderPrescriptionPrint } from '../lib/prescription-print';
+import type { ConsultationSummary } from '../types';
 import {
   ageFromBirthDate,
   consultationStatusLabel,
@@ -59,7 +71,7 @@ const historyLabels: Record<string, string> = {
 };
 
 export function PatientDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id: routePatientId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -68,11 +80,17 @@ export function PatientDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [printingId, setPrintingId] = useState<string | null>(null);
+  const [emailTarget, setEmailTarget] = useState<ConsultationSummary | null>(null);
+  const [emailKind, setEmailKind] = useState<'evolution' | 'prescription'>('prescription');
+  const [emailRecipient, setEmailRecipient] = useState('');
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const detail = useQuery({
-    queryKey: ['patient', id],
-    queryFn: () => api.patients.get(id as string),
-    enabled: Boolean(id)
+    queryKey: ['patient', routePatientId],
+    queryFn: () => api.patients.get(routePatientId as string),
+    enabled: Boolean(routePatientId)
   });
 
   const startConsultation = useMutation({
@@ -82,14 +100,22 @@ export function PatientDetailPage() {
         reason: 'Consulta de seguimiento'
       }),
     onSuccess: async (response) => {
-      await queryClient.invalidateQueries({ queryKey: ['patient', id] });
+      await queryClient.invalidateQueries({ queryKey: ['patient', routePatientId] });
       navigate(`/consultas/${response.consultation.id}`);
     },
-    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo abrir la consulta')
+    onError: (cause) => {
+      console.error('No se pudo abrir una consulta desde el expediente', {
+        patientId: routePatientId,
+        clinicId: user?.clinicId,
+        professionalId: user?.professionalId,
+        cause
+      });
+      setError(cause instanceof ApiError ? cause.message : 'No se pudo abrir la consulta');
+    }
   });
 
   const deletePatient = useMutation({
-    mutationFn: () => api.patients.delete(id as string),
+    mutationFn: () => api.patients.delete(routePatientId as string),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['patients'] });
       navigate('/pacientes');
@@ -117,7 +143,9 @@ export function PatientDetailPage() {
   }
 
   const { patient, history, consultations, appointments } = detail.data;
-  const age = ageFromBirthDate(patient.birthDate);
+  // Use the canonical UUID returned by Data Connect, not a potentially stale route value.
+  const patientId = patient.id;
+  const age = patient.ageOverride ?? ageFromBirthDate(patient.birthDate);
   const draft = consultations.find((consultation) => consultation.status === 'borrador');
 
   function openConsultation() {
@@ -126,7 +154,80 @@ export function PatientDetailPage() {
       navigate(`/consultas/${draft.id}`);
       return;
     }
-    startConsultation.mutate(patient.id);
+    startConsultation.mutate(patientId);
+  }
+
+  async function printHistoryPrescription(consultation: ConsultationSummary) {
+    setError(null);
+    const target = openPrescriptionPrintWindow();
+    if (!target) {
+      setError('Permite las ventanas emergentes para imprimir la receta.');
+      return;
+    }
+    target.document.write('<p style="font-family:Arial,sans-serif;padding:24px;color:#334155">Generando receta…</p>');
+    setPrintingId(consultation.id);
+    try {
+      const { consultation: detail } = await api.consultations.get(consultation.id);
+      const legacyText = [detail.plan, detail.treatmentPlan, detail.evolution]
+        .map((value) => value?.trim())
+        .filter((value): value is string => Boolean(value))
+        .filter((value, index, values) => values.indexOf(value) === index)
+        .join('\n\n');
+      renderPrescriptionPrint(target, {
+        clinicName: user?.clinicName ?? 'Clínica',
+        patientName: detail.patientName,
+        recordNumber: detail.recordNumber,
+        consultedAt: detail.consultedAt,
+        professionalName: detail.professionalName,
+        items: [],
+        legacyText: detail.prescriptionText || legacyText,
+        patientDocument: patientDocument(patient),
+        patientBirthDate: detail.birthDate,
+        timezone
+      });
+    } catch (cause) {
+      target.close();
+      setError(cause instanceof ApiError ? cause.message : 'No se pudo generar la receta');
+    } finally {
+      setPrintingId(null);
+    }
+  }
+
+  function openHistoryEmail(consultation: ConsultationSummary, kind: 'evolution' | 'prescription' = 'prescription') {
+    setEmailTarget(consultation);
+    setEmailKind(kind);
+    setEmailRecipient(patient.email ?? '');
+    setEmailError(null);
+  }
+
+  async function sendHistoryEmail(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!emailTarget || !emailRecipient.trim()) return;
+    setEmailSending(true);
+    setEmailError(null);
+    try {
+      const { consultation: detail } = await api.consultations.get(emailTarget.id);
+      const subject = emailKind === 'prescription'
+        ? `Receta médica · ${detail.patientName}`
+        : `Nota médica · ${detail.patientName}`;
+      const body = emailKind === 'prescription'
+        ? buildPrescriptionEmailBody({
+          clinicName: user?.clinicName ?? 'Clínica',
+          consultation: detail,
+          timezone
+        })
+        : buildEvolutionEmailBody({
+          clinicName: user?.clinicName ?? 'Clínica',
+          consultation: detail,
+          timezone
+        });
+      window.location.href = buildMailtoUrl({ to: emailRecipient, subject, body });
+      setEmailTarget(null);
+    } catch (cause) {
+      setEmailError(cause instanceof ApiError ? cause.message : 'No se pudo preparar el correo');
+    } finally {
+      setEmailSending(false);
+    }
   }
 
   return (
@@ -252,7 +353,7 @@ export function PatientDetailPage() {
               <EmptyState
                 icon={<HeartPulse className="h-7 w-7" />}
                 title="La historia comienza aquí"
-                description="Abre una consulta para registrar motivo, evolución, diagnóstico y plan."
+                description="Abre una consulta para registrar la evolución, las órdenes de estudios y la receta."
                 action={
                   <Button icon={<ClipboardPlus className="h-4 w-4" />} onClick={openConsultation}>
                     Nueva consulta
@@ -262,46 +363,58 @@ export function PatientDetailPage() {
             ) : (
               <div className="divide-y divide-line/60">
                 {consultations.map((consultation) => (
-                  <button
+                  <div
                     key={consultation.id}
-                    type="button"
-                    onClick={() => navigate(`/consultas/${consultation.id}`)}
-                    className="group flex w-full items-start gap-4 px-5 py-4 text-left transition hover:bg-teal-50/35 sm:px-6"
+                    className="group flex items-start gap-2 px-3 py-2 transition hover:bg-teal-50/35 sm:px-4"
                   >
-                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-100">
-                      <Stethoscope className="h-4 w-4" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-extrabold text-ink">
-                          {consultation.reason || 'Consulta médica'}
-                        </p>
-                        <Badge className={statusBadgeClass(consultation.status)} dot>
-                          {consultationStatusLabel(consultation.status)}
-                        </Badge>
-                      </div>
-                      <p className="mt-1 text-[11px] font-semibold text-ink/40">
-                        {formatDateTime(consultation.consulted_at, timezone)} · {consultation.professional_name}
-                      </p>
-                      {consultation.diagnoses.length ? (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {consultation.diagnoses.slice(0, 3).map((diagnosis) => (
-                            <span
-                              key={diagnosis.id}
-                              className="rounded-md bg-canvas px-2 py-1 text-[10px] font-bold text-ink/55 ring-1 ring-inset ring-line"
-                            >
-                              {diagnosis.code} · {diagnosis.description}
-                            </span>
-                          ))}
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/consultas/${consultation.id}`)}
+                      className="flex min-w-0 flex-1 items-start gap-4 rounded-xl px-2 py-2 text-left focus-ring"
+                    >
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-100">
+                        <Stethoscope className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-extrabold text-ink">
+                            {consultation.reason || 'Consulta médica'}
+                          </p>
+                          <Badge className={statusBadgeClass(consultation.status)} dot>
+                            {consultationStatusLabel(consultation.status)}
+                          </Badge>
                         </div>
-                      ) : null}
+                        <p className="mt-1 text-[11px] font-semibold text-ink/40">
+                          {formatDateTime(consultation.consulted_at, timezone)} · {consultation.professional_name}
+                        </p>
+                        <p className="mt-2 text-[10px] font-semibold text-ink/30">
+                          Usa los botones para imprimir la receta o enviarla por correo.
+                        </p>
+                      </div>
+                      <ChevronRight className="mt-2 h-4 w-4 shrink-0 text-ink/20 transition group-hover:text-teal-700" />
+                    </button>
+                    <div className="flex shrink-0 flex-col gap-1 pt-1">
+                      <IconButton
+                          label={printingId === consultation.id ? 'Generando receta…' : 'Imprimir sólo receta'}
+                        disabled={printingId === consultation.id}
+                        onClick={() => void printHistoryPrescription(consultation)}
+                      >
+                        <Printer className={`h-4 w-4 ${printingId === consultation.id ? 'animate-pulse' : ''}`} />
+                      </IconButton>
+                      <IconButton
+                        label="Enviar por correo"
+                        onClick={() => openHistoryEmail(consultation, 'prescription')}
+                      >
+                        <Mail className="h-4 w-4" />
+                      </IconButton>
                     </div>
-                    <ChevronRight className="mt-2 h-4 w-4 shrink-0 text-ink/20 transition group-hover:text-teal-700" />
-                  </button>
+                  </div>
                 ))}
               </div>
             )}
           </section>
+
+          {/* Temporalmente oculto; se conserva el componente y su integración para reactivarlos. */}
 
           <section className="card p-5 sm:p-6">
             <div className="flex items-center justify-between">
@@ -357,6 +470,11 @@ export function PatientDetailPage() {
           </section>
 
           <section className="card p-5">
+            <h2 className="text-sm font-extrabold uppercase tracking-[0.14em] text-ink/45">Enfermedades / antecedentes</h2>
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink/70">{patient.currentDiagnosisSummary || 'Sin enfermedades o antecedentes registrados.'}</p>
+          </section>
+
+          <section className="card p-5">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-extrabold uppercase tracking-[0.14em] text-ink/45">Próximas citas</h2>
               <CalendarPlus className="h-4 w-4 text-teal-700" />
@@ -396,9 +514,9 @@ export function PatientDetailPage() {
         open={appointmentOpen}
         onClose={() => setAppointmentOpen(false)}
         defaultPatient={patient}
-        onCreated={() => void queryClient.invalidateQueries({ queryKey: ['patient', id] })}
+        onCreated={() => void queryClient.invalidateQueries({ queryKey: ['patient', routePatientId] })}
       />
-      <PatientFormDialog open={editOpen} onClose={() => setEditOpen(false)} patient={patient} onCreated={() => void queryClient.invalidateQueries({ queryKey: ['patient', id] })} />
+      <PatientFormDialog open={editOpen} onClose={() => setEditOpen(false)} patient={patient} onCreated={() => void queryClient.invalidateQueries({ queryKey: ['patient', routePatientId] })} />
       <Modal
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
@@ -407,6 +525,42 @@ export function PatientDetailPage() {
         footer={<><Button variant="secondary" onClick={() => setDeleteOpen(false)}>Cancelar</Button><Button variant="danger" loading={deletePatient.isPending} onClick={() => deletePatient.mutate()}>Archivar paciente</Button></>}
       >
         <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Estás seguro de archivar a {patient.fullName}? No aparecerá en el directorio activo, pero se conservarán sus datos clínicos.</p>
+      </Modal>
+      <Modal
+        open={Boolean(emailTarget)}
+        onClose={() => { setEmailTarget(null); setEmailError(null); }}
+        title={emailKind === 'prescription' ? 'Enviar receta por correo' : 'Enviar evolución por correo'}
+        description="Revisa el destinatario y el contenido en tu aplicación de correo antes de enviarlo."
+        footer={null}
+      >
+        <form className="space-y-4" onSubmit={sendHistoryEmail}>
+          <Field label="Contenido">
+            <Select value={emailKind} onChange={(event) => setEmailKind(event.target.value as 'evolution' | 'prescription')}>
+              <option value="prescription">Receta de medicamentos</option>
+              <option value="evolution">Evolución / nota médica</option>
+            </Select>
+          </Field>
+          <Field label="Destinatario" required>
+            <Input
+              type="email"
+              required
+              value={emailRecipient}
+              onChange={(event) => setEmailRecipient(event.target.value)}
+              placeholder="correo@ejemplo.com"
+            />
+          </Field>
+          <p className="text-xs text-ink/50">
+            {patient.email
+              ? 'El correo registrado del paciente se usa por defecto; puedes modificarlo antes de enviar.'
+              : 'El paciente no tiene correo registrado. Escribe el destinatario antes de continuar.'}
+          </p>
+          <p className="text-xs text-ink/50">Se abrirá la aplicación de correo configurada en este dispositivo.</p>
+          {emailError ? <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{emailError}</p> : null}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="secondary" onClick={() => setEmailTarget(null)}>Cancelar</Button>
+            <Button type="submit" loading={emailSending} icon={<Mail className="h-4 w-4" />}>Preparar correo</Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

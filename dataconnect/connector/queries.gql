@@ -32,6 +32,7 @@ query ListPatients($q: String!, $limit: Int!, $offset: Int!) @auth(level: USER) 
         {
           _or: [
             { fullName: { contains: $q } }
+            { searchText: { contains: $q } }
             { documentNumber: { contains: $q } }
             { recordNumber: { contains: $q } }
           ]
@@ -51,6 +52,7 @@ query ListPatients($q: String!, $limit: Int!, $offset: Int!) @auth(level: USER) 
     firstName
     lastName
     birthDate
+    ageOverride
     birthDateEstimated
     deceased
     sex
@@ -94,6 +96,7 @@ query CountPatients($q: String!) @auth(level: USER) {
         {
           _or: [
             { fullName: { contains: $q } }
+            { searchText: { contains: $q } }
             { documentNumber: { contains: $q } }
             { recordNumber: { contains: $q } }
           ]
@@ -124,6 +127,7 @@ query GetPatient($id: UUID!) @auth(level: USER) {
     firstName
     lastName
     birthDate
+    ageOverride
     birthDateEstimated
     deceased
     deathDate
@@ -177,12 +181,6 @@ query GetPatient($id: UUID!) @auth(level: USER) {
       professional {
         fullName
       }
-      consultationDiagnoses_on_consultation {
-        id
-        cie10Code
-        diagnosisText
-        diagnosisType
-      }
     }
     appointments_on_patient(
       where: { status: { in: ["programada", "confirmada", "en_espera"] }, startsAt: { ge_expr: "request.time" } }
@@ -221,6 +219,7 @@ query ListAgenda($start: Timestamp!, $end: Timestamp!) @auth(level: USER) {
     notes
     patient {
       fullName
+      email
       recordNumber
       phone
     }
@@ -263,12 +262,6 @@ query ListConsultations @auth(level: USER) {
     professional {
       fullName
     }
-    consultationDiagnoses_on_consultation {
-      id
-      cie10Code
-      diagnosisText
-      diagnosisType
-    }
   }
 }
 
@@ -295,6 +288,9 @@ query GetConsultation($id: UUID!) @auth(level: USER) {
     physicalExam
     functionalExam
     studies
+    evolutionText
+    studiesText
+    prescriptionText
     diagnosisNotes
     treatmentPlan
     evolution
@@ -307,6 +303,7 @@ query GetConsultation($id: UUID!) @auth(level: USER) {
     updatedAt
     patient {
       fullName
+      email
       recordNumber
       birthDate
       sex
@@ -314,14 +311,6 @@ query GetConsultation($id: UUID!) @auth(level: USER) {
     }
     professional {
       fullName
-    }
-    consultationDiagnoses_on_consultation(orderBy: [{ diagnosedAt: ASC }]) {
-      id
-      cie10Code
-      diagnosisText
-      diagnosisType
-      notes
-      diagnosedAt
     }
     prescriptions_on_consultation(orderBy: [{ issuedAt: ASC }]) {
       legacyId
@@ -339,16 +328,27 @@ query GetConsultation($id: UUID!) @auth(level: USER) {
   }
 }
 
-query SearchCie10($q: String!) @auth(level: USER, insecureReason: "Catálogo CIE-10 público y compartido") {
-  cie10Codes(
-    where: { _or: [{ code: { contains: $q } }, { description: { contains: $q } }] }
-    orderBy: [{ code: ASC }]
-    limit: 20
+query ListPatientStudies($patientId: UUID!, $limit: Int!, $offset: Int!) @auth(level: USER) {
+  patientStudies(
+    where: {
+      _and: [
+        { patient: { id: { eq: $patientId } } }
+        { clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } } }
+      ]
+    }
+    orderBy: [{ performedAt: DESC }]
+    limit: $limit
+    offset: $offset
   ) {
-    code
-    description
-    chapter
-    category
+    id
+    studyType
+    studyName
+    performedAt
+    resultSummary
+    resultText
+    metadata
+    consultation { id }
+    professional { fullName }
   }
 }
 
@@ -400,11 +400,6 @@ query ClinicReports($from: Timestamp!, $to: Timestamp!, $limit: Int!, $offset: I
     reason
     professional { fullName }
     patient { fullName recordNumber sex birthDate }
-    consultationDiagnoses_on_consultation(orderBy: [{ diagnosedAt: ASC }]) {
-      cie10Code
-      diagnosisText
-      diagnosisType
-    }
   }
   patients(
     where: {

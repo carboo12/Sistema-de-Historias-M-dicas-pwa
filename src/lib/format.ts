@@ -11,6 +11,10 @@ export function initials(name: string) {
     .join('');
 }
 
+export function normalizePatientSearch(value: string) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('es');
+}
+
 export function ageFromBirthDate(value: string | null) {
   if (!value) return null;
   const birth = new Date(`${value.slice(0, 10)}T00:00:00`);
@@ -90,9 +94,9 @@ export function sexLabel(value: string) {
   return { M: 'Masculino', F: 'Femenino', X: 'Otro', U: 'Sin especificar' }[value] ?? 'Sin especificar';
 }
 
-export function patientDocument(patient: { documentType: string; documentNumber: string | null }) {
+export function patientDocument(patient: { documentType: string | null; documentNumber: string | null }) {
   if (!patient.documentNumber) return 'Sin documento';
-  return `${patient.documentType.toUpperCase()} ${patient.documentNumber}`;
+  return `${patient.documentType?.toUpperCase() ?? 'DOCUMENTO'} ${patient.documentNumber}`;
 }
 
 export function appointmentStatusLabel(status: string) {
@@ -110,11 +114,11 @@ export function appointmentStatusLabel(status: string) {
 }
 
 export function consultationStatusLabel(status: string) {
-  return { borrador: 'Borrador', firmada: 'Firmada', anulada: 'Anulada' }[status] ?? status;
+  return { borrador: 'Borrador', firmada: 'Completada', completada: 'Completada', completed: 'Completada', anulada: 'Anulada' }[status] ?? status;
 }
 
 export function statusBadgeClass(status: string) {
-  if (['atendida', 'firmada'].includes(status)) return 'badge-teal';
+  if (['atendida', 'firmada', 'completada', 'completed'].includes(status)) return 'badge-teal';
   if (['programada', 'confirmada'].includes(status)) return 'badge-blue';
   if (['en_espera', 'borrador'].includes(status)) return 'badge-amber';
   if (['cancelada', 'no_asistio', 'anulada'].includes(status)) return 'badge-red';

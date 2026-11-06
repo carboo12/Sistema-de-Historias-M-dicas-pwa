@@ -5,18 +5,19 @@ import {
   CircleHelp,
   ClipboardPlus,
   FileText,
-  HeartPulse,
   LogOut,
   Plus,
   Settings,
-  Stethoscope,
   Users,
   WifiOff
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { useOnline } from '../lib/hooks';
+import { notifyUpcomingAppointments, requestAppointmentNotifications } from '../lib/appointment-notifications';
+import { api } from '../lib/api';
 import { cn } from '../lib/format';
 import { Avatar, Button } from './ui';
+import { useEffect, useState } from 'react';
 
 const primaryNavigation = [
   { to: '/agenda', label: 'Agenda', icon: CalendarDays },
@@ -47,6 +48,29 @@ export function AppShell() {
   const online = useOnline();
   const location = useLocation();
   const navigate = useNavigate();
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(() =>
+    'Notification' in window ? Notification.permission : 'unsupported'
+  );
+
+  useEffect(() => {
+    if (notificationPermission !== 'granted') return;
+    let active = true;
+    const checkAppointments = async () => {
+      try {
+        const today = new Intl.DateTimeFormat('en-CA', { timeZone: user?.timezone ?? 'America/Managua', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+        const agenda = await api.agenda.get(today);
+        if (active) await notifyUpcomingAppointments(agenda.appointments);
+      } catch { /* Reminders should never interrupt normal navigation. */ }
+    };
+    void checkAppointments();
+    const timer = window.setInterval(() => void checkAppointments(), 60_000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [notificationPermission, user?.timezone]);
+
+  async function enableAppointmentNotifications() {
+    const permission = await requestAppointmentNotifications();
+    setNotificationPermission(permission);
+  }
 
   return (
     <div className="min-h-screen lg:pl-[264px]">
@@ -116,6 +140,8 @@ export function AppShell() {
             <h1 className="truncate text-sm font-bold text-ink">{sectionTitle(location.pathname)}</h1>
           </div>
           <div className="ml-auto flex items-center gap-2">
+            {notificationPermission === 'default' ? <Button size="sm" variant="secondary" className="hidden sm:inline-flex" onClick={() => void enableAppointmentNotifications()}>Activar avisos</Button> : null}
+            {notificationPermission === 'default' ? <button type="button" aria-label="Activar notificaciones de citas" title="Activar avisos de citas" className="rounded-lg px-2 py-1 text-xs font-bold text-teal-800 hover:bg-teal-50 sm:hidden" onClick={() => void enableAppointmentNotifications()}>Avisos</button> : null}
             {!online ? (
               <span className="hidden items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-800 ring-1 ring-inset ring-amber-200 sm:inline-flex">
                 <WifiOff className="h-3 w-3" />
@@ -136,6 +162,8 @@ export function AppShell() {
           </div>
         </div>
       </header>
+
+      {notificationPermission === 'denied' ? <div className="no-print px-4 pt-3 text-center text-xs text-ink/45">Los avisos de citas están bloqueados en el navegador. Puedes habilitarlos desde la configuración del sitio.</div> : null}
 
       {!online ? (
         <div className="no-print bg-amber-500/10 px-4 py-2 text-center text-xs font-semibold text-amber-900 sm:hidden">
@@ -173,36 +201,12 @@ export function AppShell() {
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="flex items-center gap-3 px-1">
-      <span
-        className={cn(
-          'flex h-10 w-10 items-center justify-center rounded-2xl ring-1 ring-inset',
-          compact
-            ? 'bg-teal-50 text-teal-700 ring-teal-100'
-            : 'bg-teal-400/15 text-teal-300 ring-teal-300/20'
-        )}
-      >
-        <HeartPulse className="h-5 w-5" />
-      </span>
-      <div>
-        <p
-          className={cn(
-            'font-display text-lg font-medium leading-none tracking-tight',
-            compact ? 'text-ink' : 'text-white'
-          )}
-        >
-          Historias
-        </p>
-        <p
-          className={cn(
-            'mt-0.5 text-[9px] font-extrabold uppercase tracking-[0.18em]',
-            compact ? 'text-teal-700/60' : 'text-teal-300/70'
-          )}
-        >
-          Médicas PWA
-        </p>
-      </div>
-      {!compact ? <Stethoscope className="ml-auto h-4 w-4 text-white/20" /> : null}
+    <div className={cn('flex items-center px-1', compact ? 'h-12' : 'h-14')}>
+      <img
+        src="/logo-orthospine.png"
+        alt="ORTHO SPINE CENTER"
+        className={cn('max-w-full object-contain', compact ? 'h-10' : 'h-12')}
+      />
     </div>
   );
 }

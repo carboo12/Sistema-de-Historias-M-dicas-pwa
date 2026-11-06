@@ -14,6 +14,15 @@ function validDateOnly(value, field) {
   return clean;
 }
 
+function optionalAge(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const age = Number(value);
+  if (!Number.isInteger(age) || age < 0 || age > 150) {
+    throw new HttpError(400, 'validation_error', 'La edad debe ser un número entero entre 0 y 150');
+  }
+  return age;
+}
+
 function generatedRecordNumber() {
   return `PAC-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
 }
@@ -29,6 +38,7 @@ function mapPatient(row) {
     firstName: row.first_name,
     lastName: row.last_name,
     birthDate: row.birth_date,
+    ageOverride: row.age_override ?? null,
     sex: row.sex,
     maritalStatus: row.marital_status,
     bloodType: row.blood_type,
@@ -82,7 +92,10 @@ export async function patientRoutes(app) {
          and (
            $2::text is null
            or p.search_text like '%' || lower(public.immutable_unaccent($2)) || '%'
-           or p.document_number ilike '%' || $2 || '%'
+           or lower(public.immutable_unaccent(coalesce(p.first_name, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
+           or lower(public.immutable_unaccent(coalesce(p.last_name, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
+           or lower(public.immutable_unaccent(coalesce(p.document_number, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
+           or lower(public.immutable_unaccent(coalesce(p.record_number, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
          )
        order by p.updated_at desc
        limit $3 offset $4`,
@@ -94,11 +107,14 @@ export async function patientRoutes(app) {
        from public.patients p
        where p.clinic_id = $1
          and p.deleted_at is null
-         and (
-           $2::text is null
-           or p.search_text like '%' || lower(public.immutable_unaccent($2)) || '%'
-           or p.document_number ilike '%' || $2 || '%'
-         )`,
+          and (
+            $2::text is null
+            or p.search_text like '%' || lower(public.immutable_unaccent($2)) || '%'
+            or lower(public.immutable_unaccent(coalesce(p.first_name, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
+            or lower(public.immutable_unaccent(coalesce(p.last_name, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
+            or lower(public.immutable_unaccent(coalesce(p.document_number, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
+            or lower(public.immutable_unaccent(coalesce(p.record_number, ''))) like '%' || lower(public.immutable_unaccent($2)) || '%'
+          )`,
       [clinicId, q]
     );
 
@@ -128,23 +144,10 @@ export async function patientRoutes(app) {
       `select
          c.id, c.consulted_at, c.status, c.reason, c.current_illness,
          c.treatment_plan, c.signed_at,
-         pr.full_name as professional_name,
-         coalesce(
-           jsonb_agg(
-             jsonb_build_object(
-               'id', d.id,
-               'code', d.cie10_code,
-               'description', d.diagnosis_text,
-               'type', d.diagnosis_type
-             )
-           ) filter (where d.id is not null),
-           '[]'::jsonb
-         ) as diagnoses
+         pr.full_name as professional_name
        from public.consultations c
        join public.professionals pr on pr.id = c.professional_id
-       left join public.consultation_diagnoses d on d.consultation_id = c.id
        where c.patient_id = $1 and c.clinic_id = $2 and c.deleted_at is null
-       group by c.id, pr.full_name
        order by c.consulted_at desc, c.id desc`,
       [id, clinicId]
     );
@@ -176,38 +179,42 @@ export async function patientRoutes(app) {
     async (request, reply) => {
       const body = request.body ?? {};
       const fullName = requiredText(body.fullName, 'Nombre completo', 240);
-      const documentType = DOCUMENT_TYPES.includes(body.documentType) ? body.documentType : 'cedula';
+      const documentType = text(body.documentType, 60);
+      if (documentType && !DOCUMENT_TYPES.includes(documentType)) {
+        throw new HttpError(400, 'validation_error', 'Tipo de documento inválido');
+      }
       const documentNumber = text(body.documentNumber, 60);
       const sex = SEX_VALUES.includes(body.sex) ? body.sex : 'U';
       const maritalStatus = MARITAL_VALUES.includes(body.maritalStatus) ? body.maritalStatus : 'desconocido';
       const birthDate = validDateOnly(body.birthDate, 'Fecha de nacimiento');
       const recordNumber = text(body.recordNumber, 40) ?? generatedRecordNumber();
       const hasDocument = Boolean(documentNumber);
-      const finalDocumentType = hasDocument ? documentType : 'sin_documento';
+      const ageOverride = optionalAge(body.ageOverride);
 
       const result = await transaction(async (client) => {
         const inserted = await client.query(
           `insert into public.patients (
              clinic_id, record_number, document_type, document_number, document_verified,
-             full_name, first_name, last_name, birth_date, sex, marital_status,
+             full_name, first_name, last_name, birth_date, age_override, sex, marital_status,
              phone, mobile, email, address, city, state, country, nationality,
-             occupation, allergies_notes, notes, is_private, created_by
+             occupation, allergies_notes, current_diagnosis_summary, notes, is_private, created_by
            ) values (
              $1, $2, $3, $4, $5,
-             $6, $7, $8, $9, $10, $11,
-             $12, $13, $14, $15, $16, $17, $18, $19,
-             $20, $21, $22, $23, $24
+             $6, $7, $8, $9, $10, $11, $12,
+             $13, $14, $15, $16, $17, $18, $19, $20,
+             $21, $22, $23, $24, $25, $26
            ) returning *`,
           [
             request.user.clinicId,
             recordNumber,
-            finalDocumentType,
+            documentType,
             documentNumber,
             Boolean(body.documentVerified) && hasDocument,
             fullName,
             text(body.firstName, 120),
             text(body.lastName, 120),
             birthDate,
+            ageOverride,
             sex,
             maritalStatus,
             text(body.phone, 40),
@@ -220,6 +227,7 @@ export async function patientRoutes(app) {
             text(body.nationality, 120),
             text(body.occupation, 160),
             text(body.allergiesNotes, 2000),
+            text(body.currentDiagnosisSummary, 4000),
             text(body.notes, 2000),
             body.isPrivate !== false,
             request.user.sub
@@ -261,14 +269,20 @@ export async function patientRoutes(app) {
       if (body.firstName !== undefined) add('first_name', text(body.firstName, 120));
       if (body.lastName !== undefined) add('last_name', text(body.lastName, 120));
       if (body.documentType !== undefined) {
-        if (!DOCUMENT_TYPES.includes(body.documentType)) {
+        const documentType = text(body.documentType, 60);
+        if (documentType && !DOCUMENT_TYPES.includes(documentType)) {
           throw new HttpError(400, 'validation_error', 'Tipo de documento inválido');
         }
-        add('document_type', body.documentType);
+        add('document_type', documentType);
       }
       if (body.documentNumber !== undefined) add('document_number', text(body.documentNumber, 60));
-      if (body.documentVerified !== undefined) add('document_verified', Boolean(body.documentVerified));
+      if (body.documentVerified !== undefined || body.documentNumber !== undefined) {
+        const nextDocumentNumber = body.documentNumber !== undefined ? text(body.documentNumber, 60) : before.document_number;
+        const verified = body.documentVerified === undefined ? before.document_verified : Boolean(body.documentVerified);
+        add('document_verified', verified && Boolean(nextDocumentNumber));
+      }
       if (body.birthDate !== undefined) add('birth_date', validDateOnly(body.birthDate, 'Fecha de nacimiento'));
+      if (body.ageOverride !== undefined) add('age_override', optionalAge(body.ageOverride));
       if (body.sex !== undefined) {
         if (!SEX_VALUES.includes(body.sex)) throw new HttpError(400, 'validation_error', 'Sexo inválido');
         add('sex', body.sex);

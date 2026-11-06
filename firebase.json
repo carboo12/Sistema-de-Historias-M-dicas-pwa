@@ -1,5 +1,15 @@
 {
   "dataconnect": {
     "source": "dataconnect"
+  },
+  "apphosting": [
+    {
+      "backendId": "historias-medicas-pwa",
+      "rootDir": ".",
+      "alwaysDeployFromSource": true
+    }
+  ],
+  "storage": {
+    "rules": "storage.rules"
   }
 }

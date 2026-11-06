@@ -2,10 +2,8 @@ import type {
   AgendaResponse,
   Appointment,
   Catalogs,
-  Cie10Code,
   Consultation,
   ConsultationSummary,
-  Diagnosis,
   Patient,
   PatientDetail,
   ReportsDataset,
@@ -118,9 +116,6 @@ export const api = {
     get: (id: string) =>
       request<{
         consultation: Consultation;
-        diagnoses: Diagnosis[];
-        canSign: boolean;
-        signBlockers: { reason: boolean; diagnosis: boolean };
       }>(`/api/consultations/${id}`),
     create: (payload: Record<string, unknown>) =>
       request<{ consultation: Consultation }>('/api/consultations', {
@@ -137,18 +132,6 @@ export const api = {
       request<{ consultation: Consultation; signedAt: string }>(`/api/consultations/${id}/sign`, {
         method: 'POST'
       }),
-    addDiagnosis: (id: string, payload: { code: string; type?: string; notes?: string }) =>
-      request<{ diagnosis: Diagnosis }>(`/api/consultations/${id}/diagnoses`, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      }),
-    deleteDiagnosis: (id: string, diagnosisId: string) =>
-      request<void>(`/api/consultations/${id}/diagnoses/${diagnosisId}`, { method: 'DELETE' }),
-    updateDiagnosis: (id: string, diagnosisId: string, payload: { description: string; type: string; notes?: string | null }) =>
-      request<void>(`/api/consultations/${id}/diagnoses/${diagnosisId}`, { method: 'PATCH', body: JSON.stringify(payload) })
-  },
-  cie10: {
-    search: (q: string) => request<{ codes: Cie10Code[] }>(`/api/cie10${queryString({ q })}`)
   },
   catalogs: () => request<Catalogs>('/api/catalogs'),
   reports: {
