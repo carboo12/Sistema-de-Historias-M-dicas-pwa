@@ -295,7 +295,11 @@ export function PatientsPage() {
         open={dialogOpen || Boolean(editingPatient)}
         patient={editingPatient}
         onClose={() => { setDialogOpen(false); setEditingPatient(null); }}
-        onCreated={(patient) => { setEditingPatient(null); if (dialogOpen) navigate(`/pacientes/${patient.id}`); }}
+        onCreated={(patient) => {
+          setEditingPatient(null);
+          if (!dialogOpen) return;
+          navigate(`/pacientes/${patient.id}`);
+        }}
       />
       <Modal open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} title="Eliminar paciente del directorio" description="El expediente se dará de baja y sus relaciones clínicas se conservarán en el historial." footer={<><Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancelar</Button><Button variant="danger" loading={archivePatient.isPending} onClick={() => deleteTarget && archivePatient.mutate(deleteTarget.id)}>Confirmar eliminación</Button></>}>
         <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Confirmas retirar a {deleteTarget?.fullName} del directorio activo? Su historial médico se conservará.</p>

@@ -50,8 +50,10 @@ export function PatientFormDialog({
     mutationFn: (payload: ReturnType<typeof patientFormSchema.parse>) => {
       return patient ? api.patients.update(patient.id, payload) : api.patients.create(payload);
     },
-    onSuccess: async (response) => {
-      await Promise.all([
+    onSuccess: (response) => {
+      // Keep the SPA responsive: refresh caches in the background so the user
+      // can move straight to the new patient's chart without waiting on lists.
+      void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['patients'] }),
         queryClient.invalidateQueries({ queryKey: ['patient', patient?.id] })
       ]);

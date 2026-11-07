@@ -35,7 +35,7 @@ import {
   buildMailtoUrl,
   buildPrescriptionEmailBody
 } from '../lib/clinical-email';
-import { openPrescriptionPrintWindow, renderPrescriptionPrint } from '../lib/prescription-print';
+import { openClinicalPrintWindow, openPrescriptionPrintWindow, renderClinicalTextPrint, renderPrescriptionPrint } from '../lib/prescription-print';
 import { printConsultation } from '../lib/consultation-print';
 import {
   ageFromBirthDate,
@@ -230,12 +230,26 @@ export function ConsultationPage() {
       items: [],
       legacyText: form?.prescriptionText ?? '',
       patientBirthDate: consultation.birthDate,
+      nextVisitAt,
       timezone
     });
   }
 
+  function printStudies() {
+    const target = openClinicalPrintWindow();
+    if (!target) { setError('Permite las ventanas emergentes para imprimir los estudios.'); return; }
+    renderClinicalTextPrint(target, {
+      patientName: consultation.patientName,
+      consultedAt: consultation.consultedAt,
+      nextVisitAt,
+      timezone,
+      sectionTitle: 'Estudios clínicos',
+      content: renderedForm.studiesText
+    });
+  }
+
   function printFullConsultation() {
-    const opened = printConsultation({ clinicName: user?.clinicName ?? 'Clínica', patientName: consultation.patientName, recordNumber: consultation.recordNumber, professionalName: consultation.professionalName, consultedAt: consultation.consultedAt, timezone, evolutionText: renderedForm.evolutionText, studiesText: renderedForm.studiesText, prescriptionText: renderedForm.prescriptionText });
+    const opened = printConsultation({ clinicName: user?.clinicName ?? 'Clínica', patientName: consultation.patientName, recordNumber: consultation.recordNumber, professionalName: consultation.professionalName, consultedAt: consultation.consultedAt, nextVisitAt, timezone, evolutionText: renderedForm.evolutionText, studiesText: renderedForm.studiesText, prescriptionText: renderedForm.prescriptionText });
     if (!opened) setError('Permite las ventanas emergentes para imprimir la consulta.');
   }
 
@@ -301,6 +315,7 @@ export function ConsultationPage() {
         </button>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" onClick={printPrescription} icon={<Printer className="h-4 w-4" />}>Imprimir receta</Button>
+          <Button variant="secondary" onClick={printStudies} icon={<Printer className="h-4 w-4" />}>Imprimir estudios</Button>
           <Button variant="secondary" onClick={printFullConsultation} icon={<Printer className="h-4 w-4" />}>Imprimir consulta completa</Button>
           {!readOnly ? (
             isDirty ? (
@@ -313,9 +328,6 @@ export function ConsultationPage() {
               </Badge>
             )
           ) : null}
-          <Button variant="secondary" onClick={() => window.print()} icon={<Printer className="h-4 w-4" />}>
-            Imprimir
-          </Button>
           {!readOnly ? <Button variant="danger" onClick={() => setDeleteOpen(true)} icon={<Trash2 className="h-4 w-4" />}>Eliminar borrador</Button> : null}
           {!readOnly ? (
             <>
@@ -409,7 +421,7 @@ export function ConsultationPage() {
         <div className={`space-y-5 ${readOnly || activeSection === 'prescription' ? 'hidden' : ''}`}>
           {activeSection === 'evolution' ? <section className="card p-5 sm:p-6"><SectionHeading icon={<Stethoscope className="h-4 w-4" />} title="Evolución / Nota médica" description="Escribe libremente el detalle clínico y la evolución del paciente." /><Field label="Nota médica" required><Textarea value={renderedForm.evolutionText} onChange={(event) => update('evolutionText', event.target.value)} readOnly={readOnly} placeholder="Describe la atención y evolución clínica…" className="mt-4 min-h-80" maxLength={16000} /></Field></section> : null}
 
-          {activeSection === 'studies' ? <section className="card p-5 sm:p-6"><SectionHeading icon={<Search className="h-4 w-4" />} title="Estudios clínicos" description="Escribe las órdenes de exámenes y estudios." /><Field label="Órdenes de estudios"><Textarea value={renderedForm.studiesText} onChange={(event) => update('studiesText', event.target.value)} readOnly={readOnly} placeholder="Anota los exámenes y estudios solicitados…" className="mt-4 min-h-80" maxLength={12000} /></Field></section> : null}
+          {activeSection === 'studies' ? <section className="card p-5 sm:p-6"><div className="mb-4 flex flex-wrap items-start justify-between gap-3"><SectionHeading icon={<Search className="h-4 w-4" />} title="Estudios clínicos" description="Escribe las órdenes de exámenes y estudios." /><Button className="no-print" variant="secondary" icon={<Printer className="h-4 w-4" />} onClick={printStudies}>Imprimir sólo estudios</Button></div><Field label="Órdenes de estudios"><Textarea value={renderedForm.studiesText} onChange={(event) => update('studiesText', event.target.value)} readOnly={readOnly} placeholder="Anota los exámenes y estudios solicitados…" className="mt-4 min-h-80" maxLength={12000} /></Field></section> : null}
 
         </div>
 

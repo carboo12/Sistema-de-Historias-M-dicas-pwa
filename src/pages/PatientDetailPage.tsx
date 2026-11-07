@@ -183,6 +183,7 @@ export function PatientDetailPage() {
         legacyText: detail.prescriptionText || legacyText,
         patientDocument: patientDocument(patient),
         patientBirthDate: detail.birthDate,
+        nextVisitAt: detail.nextVisitAt,
         timezone
       });
     } catch (cause) {

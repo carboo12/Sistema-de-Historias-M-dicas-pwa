@@ -1,10 +1,25 @@
 import type { Consultation } from '../types';
 import { formatDate, formatDateOnly } from './format';
 
-export function openPrescriptionPrintWindow() {
-  const target = window.open('', '_blank', 'width=900,height=760');
+const OFFICIAL_DOCTOR = 'Dr. Jhaxel Ameed García Rizo';
+
+export function openClinicalPrintWindow() {
+  const target = window.open('', '_blank', 'width=900,height=900');
   if (target) target.opener = null;
   return target;
+}
+
+export const openPrescriptionPrintWindow = openClinicalPrintWindow;
+
+interface ClinicalTextPrintInput {
+  patientName: string;
+  consultedAt: string;
+  nextVisitAt?: string | null;
+  timezone?: string;
+  sectionTitle: string;
+  content?: string;
+  sections?: Array<{ title: string; content: string }>;
+  logoUrl?: string;
 }
 
 interface PrescriptionPrintInput {
@@ -19,6 +34,7 @@ interface PrescriptionPrintInput {
   patientBirthDate?: string | null;
   timezone?: string;
   logoUrl?: string;
+  nextVisitAt?: string | null;
 }
 
 function escapeHtml(value: string) {
@@ -35,157 +51,139 @@ function hasContent(item: NonNullable<Consultation['prescriptionItems']>[number]
     .some((value) => Boolean(value && value.trim()));
 }
 
-export function renderPrescriptionPrint(target: Window, input: PrescriptionPrintInput) {
+export function renderClinicalTextPrint(target: Window, input: ClinicalTextPrintInput) {
   const doc = target.document;
   const timezone = input.timezone ?? 'America/Managua';
-  const items = input.items.filter(hasContent);
-  const clinicName = escapeHtml(input.clinicName || 'Clínica');
   const patientName = escapeHtml(input.patientName);
-  const professionalName = escapeHtml(input.professionalName);
-  const patientDocument = input.patientDocument ? escapeHtml(input.patientDocument) : '';
-  const birthDate = input.patientBirthDate ? escapeHtml(formatDateOnly(input.patientBirthDate)) : '';
   const date = escapeHtml(formatDate(input.consultedAt, timezone, {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
+    day: '2-digit', month: 'long', year: 'numeric'
   }));
-    const logoUrl = escapeHtml(input.logoUrl ?? `${window.location.origin}/logo-orthospine.png`);
-
-  const itemsHtml = items.length
-    ? items.map((item, index) => {
-      const details = [
-        item.presentation && `<span><span class="label">Presentación:</span> ${escapeHtml(item.presentation)}</span>`,
-        item.dose && `<span><span class="label">Dosis:</span> ${escapeHtml(item.dose)}</span>`,
-        item.frequency && `<span><span class="label">Frecuencia:</span> ${escapeHtml(item.frequency)}</span>`,
-        item.route && `<span><span class="label">Vía:</span> ${escapeHtml(item.route)}</span>`,
-        item.duration && `<span><span class="label">Duración:</span> ${escapeHtml(item.duration)}</span>`,
-        item.quantity && `<span><span class="label">Cantidad:</span> ${escapeHtml(item.quantity)}</span>`
-      ].filter(Boolean).join('');
-      return `<li class="item">
-        <h2>${index + 1}. ${escapeHtml(item.medication || 'Medicamento')}</h2>
-        ${details ? `<p class="meta-line">${details}</p>` : ''}
-        ${item.instructions ? `<p class="instructions"><span class="label">Indicaciones:</span> ${escapeHtml(item.instructions)}</p>` : ''}
-      </li>`;
-    }).join('')
-    : `<li class="empty">${input.legacyText ? `<span class="legacy">${escapeHtml(input.legacyText)}</span>` : 'Sin medicamentos registrados.'}</li>`;
+  const nextVisit = input.nextVisitAt
+    ? escapeHtml(formatDateOnly(input.nextVisitAt))
+    : '__________';
+  const logoUrl = escapeHtml(input.logoUrl ?? `${window.location.origin}/logo-orthospine.png`);
+  const content = input.sections?.length
+    ? input.sections.map((section) => `<section class="clinical-section"><h2>${escapeHtml(section.title)}</h2><div class="content">${escapeHtml(section.content.trim() || 'Sin información registrada.')}</div></section>`).join('')
+    : `<div class="content">${escapeHtml(input.content?.trim() || ' ')}</div>`;
 
   doc.open();
   doc.write(`<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Receta médica · ${patientName}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(input.sectionTitle)} · ${patientName}</title>
 <style>
-  @page { size: A4; margin: 14mm; }
+  @page { size: A4; margin: 10mm 12mm; }
   * { box-sizing: border-box; }
-  body {
-    color: #111827;
-    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
-    font-size: 14px;
-    line-height: 1.45;
-    margin: 24px auto;
-    max-width: 800px;
-    padding: 0 28px;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  header {
-    align-items: flex-start;
-    border-bottom: 3px solid #0f766e;
-    display: flex;
-    gap: 24px;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-  }
-  .clinic h1 { color: #0f766e; font-size: 22px; letter-spacing: .02em; margin: 0; }
-  .brand { align-items: center; display: flex; gap: 14px; }
-  .brand img { display: block; height: 58px; max-width: 190px; object-fit: contain; }
-  .subtitle { color: #64748b; font-size: 10px; letter-spacing: .18em; margin: 5px 0 0; text-transform: uppercase; }
-  .doctor { color: #475569; font-size: 11px; text-align: right; }
-  .doctor strong { color: #111827; display: block; font-size: 14px; }
-  .patient {
-    background: #f4faf9;
-    border: 1px solid #d7ece8;
-    border-radius: 10px;
-    display: grid;
-    gap: 14px 24px;
-    grid-template-columns: 1.35fr 1fr;
-    margin-bottom: 22px;
-    padding: 12px 14px;
-  }
-  dl { margin: 0; }
-  dt { color: #64748b; font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; }
-  dd { font-size: 12.5px; font-weight: 600; margin: 1px 0 7px; }
-  dd:last-child { margin-bottom: 0; }
-  .items { list-style: none; margin: 0; padding: 0; }
-  .item {
-    border: 1px solid #e2e8e7;
-    border-radius: 10px;
-    break-inside: avoid;
-    margin-bottom: 10px;
-    padding: 12px 14px;
-  }
-  .item h2 { color: #0f766e; font-size: 14px; margin: 0 0 6px; }
-  .item p { margin: 4px 0 0; }
-  .meta-line { color: #475569; display: flex; flex-wrap: wrap; font-size: 12px; gap: 4px 16px; }
-  .label { color: #334155; font-weight: 700; }
-  .instructions { font-size: 12.5px; }
-  .empty { border: 1px dashed #cbd5e1; border-radius: 10px; color: #64748b; padding: 16px; }
-  .legacy { white-space: pre-wrap; }
-  .signature { break-inside: avoid; display: flex; justify-content: flex-end; margin-top: 64px; }
-  .signature .box { border-top: 1px solid #334155; color: #64748b; font-size: 11px; padding-top: 8px; text-align: center; width: 280px; }
-  .signature .box strong { color: #111827; display: block; font-size: 13px; }
-  footer { border-top: 1px solid #e2e8e7; color: #94a3b8; font-size: 9.5px; margin-top: 26px; padding-top: 10px; text-align: center; }
-  @media print {
-    body { margin: 0 auto; max-width: none; padding: 0; }
-  }
+  html, body { margin: 0; min-height: 100%; }
+  body { color: #252525; font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.4; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sheet { min-height: 277mm; display: flex; flex-direction: column; }
+  .header { display: grid; grid-template-columns: 42mm 1fr; align-items: center; gap: 7mm; min-height: 39mm; }
+  .logo { display: block; width: 42mm; height: auto; object-fit: contain; }
+  .doctor { text-align: center; }
+  .doctor-name { color: #333; font-family: "Segoe Script", "Brush Script MT", "URW Chancery L", cursive; font-size: 19pt; font-style: italic; font-weight: 500; line-height: 1.2; margin: 0 0 1.5mm; }
+  .specialty { font-size: 9.2pt; font-weight: 700; line-height: 1.25; margin: 0; }
+  .subspecialty { font-size: 8.2pt; line-height: 1.25; margin: 2mm 0 0; }
+  .training { font-size: 7.4pt; line-height: 1.2; margin: .5mm 0 0; }
+  .patient-row { align-items: baseline; border-bottom: .35mm solid #444; display: grid; grid-template-columns: 1fr 47mm; gap: 5mm; margin-top: 8mm; min-height: 12mm; padding-bottom: 1.5mm; }
+  .patient-field, .date-field { display: flex; align-items: baseline; gap: 2mm; min-width: 0; }
+  .field-label { flex: none; font-size: 9pt; }
+  .field-value { font-size: 10pt; font-weight: 600; overflow-wrap: anywhere; }
+  .main { flex: 1; min-height: 145mm; padding: 8mm 2mm; }
+  .section-title { color: #555; font-size: 8.5pt; font-weight: 700; letter-spacing: .08em; margin: 0 0 4mm; text-transform: uppercase; }
+  .content { font-size: 12pt; line-height: 1.65; min-height: 75mm; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .clinical-section { margin: 0 0 8mm; break-inside: avoid; }
+  .clinical-section h2 { border-bottom: .25mm solid #bbb; color: #555; font-size: 9pt; letter-spacing: .06em; margin: 0 0 3mm; padding-bottom: 1.5mm; text-transform: uppercase; }
+  .clinical-section .content { min-height: 0; }
+  .footer { align-items: flex-end; display: grid; grid-template-columns: 1fr 72mm; gap: 8mm; margin-top: auto; min-height: 32mm; }
+  .contact { font-size: 8.2pt; line-height: 1.32; }
+  .next-visit { align-items: baseline; display: flex; gap: 2mm; margin-bottom: 2mm; }
+  .next-label { font-weight: 600; }
+  .next-value { border-bottom: .3mm solid #555; flex: 1; min-height: 5mm; padding-left: 1mm; }
+  .contact p { margin: .5mm 0; }
+  .signature { padding-bottom: 1mm; text-align: center; }
+  .signature-space { height: 22mm; }
+  .signature-line { border-top: .35mm solid #444; padding-top: 2mm; }
+  .signature-name { font-family: "Segoe Script", "Brush Script MT", "URW Chancery L", cursive; font-size: 12pt; font-style: italic; margin: 0; }
+  @media print { .sheet { min-height: 277mm; } }
 </style>
 </head>
 <body>
-  <header>
-    <div class="brand"><img src="${logoUrl}" alt="ORTHO SPINE CENTER"><div class="clinic">
-      <h1>${clinicName}</h1>
-      <p class="subtitle">Récipe médico</p>
-    </div></div>
-    <div class="doctor">
-      <strong>${professionalName}</strong>
-      <span>Médico tratante</span>
-    </div>
-  </header>
+  <article class="sheet">
+    <header class="header">
+      <img class="logo" src="${logoUrl}" alt="ORTHO SPINE CENTER">
+      <div class="doctor">
+        <h1 class="doctor-name">${OFFICIAL_DOCTOR}</h1>
+        <p class="specialty">Cirujano de Columna Vertebral<br>Ortopedista y Traumatólogo</p>
+        <p class="subspecialty">Cirugía Mínimamente Invasiva de Columna / Alta Especialidad en Cirugía de Columna Vertebral</p>
+        <p class="training">(INR / MÉXICO, STANFORD UNIVERSITY, / UMASS MEMORIAL MEDICAL CENTER, USA)</p>
+      </div>
+    </header>
 
-  <section class="patient">
-    <dl>
-      <dt>Paciente</dt>
-      <dd>${patientName}</dd>
-      <dt>Expediente</dt>
-      <dd>${escapeHtml(input.recordNumber)}</dd>
-    </dl>
-    <dl>
-      <dt>Fecha</dt>
-      <dd>${date}</dd>
-      ${patientDocument ? `<dt>Documento</dt><dd>${patientDocument}</dd>` : ''}
-      ${birthDate ? `<dt>Fecha de nacimiento</dt><dd>${birthDate}</dd>` : ''}
-    </dl>
-  </section>
+    <section class="patient-row" aria-label="Datos del paciente">
+      <div class="patient-field"><span class="field-label">Paciente:</span><span class="field-value">${patientName}</span></div>
+      <div class="date-field"><span class="field-label">Fecha:</span><span class="field-value">${date}</span></div>
+    </section>
 
-  <ul class="items">${itemsHtml}</ul>
+    <main class="main">
+      ${input.sections?.length ? content : `<h2 class="section-title">${escapeHtml(input.sectionTitle)}</h2>${content}`}
+    </main>
 
-  <div class="signature">
-    <div class="box">
-      <strong>${professionalName}</strong>
-      Firma y sello del médico
-    </div>
-  </div>
-
-  <footer>Documento generado desde la historia clínica electrónica · ${clinicName}</footer>
+    <footer class="footer">
+      <div class="contact">
+        <div class="next-visit"><span class="next-label">Próxima cita:</span><span class="next-value">${nextVisit}</span></div>
+        <p>Dirección: Semáforos de Plaza el Sol 1c. al Sur y 1 c. abajo, Los Robles.</p>
+        <p>Managua - Nicaragua. Tels.: 22524048 • 85464804</p>
+        <p>www.orthospinecenternicaragua.com</p>
+        <p>clinica@orthospinecenternicaragua.com</p>
+      </div>
+      <div class="signature">
+        <div class="signature-space"></div>
+        <div class="signature-line"><p class="signature-name">${OFFICIAL_DOCTOR}</p></div>
+      </div>
+    </footer>
+  </article>
 </body>
 </html>`);
-  doc.close();
 
-  window.setTimeout(() => {
+  doc.close();
+  let printed = false;
+  const printWhenReady = () => {
+    if (printed) return;
+    printed = true;
     target.focus();
     target.print();
-  }, 150);
+  };
+  const logo = doc.querySelector<HTMLImageElement>('.logo');
+  if (logo && !logo.complete) {
+    logo.addEventListener('load', printWhenReady, { once: true });
+    logo.addEventListener('error', printWhenReady, { once: true });
+    window.setTimeout(printWhenReady, 1200);
+  } else {
+    window.setTimeout(printWhenReady, 200);
+  }
+}
+
+export function renderPrescriptionPrint(target: Window, input: PrescriptionPrintInput) {
+  const itemsText = input.items.filter(hasContent).map((item) => [
+    item.medication,
+    item.presentation && `Presentación: ${item.presentation}`,
+    item.dose && `Dosis: ${item.dose}`,
+    item.frequency && `Frecuencia: ${item.frequency}`,
+    item.route && `Vía: ${item.route}`,
+    item.duration && `Duración: ${item.duration}`,
+    item.quantity && `Cantidad: ${item.quantity}`,
+    item.instructions && `Indicaciones: ${item.instructions}`
+  ].filter(Boolean).join('\n')).join('\n\n');
+
+  renderClinicalTextPrint(target, {
+    patientName: input.patientName,
+    consultedAt: input.consultedAt,
+    nextVisitAt: input.nextVisitAt,
+    timezone: input.timezone,
+    sectionTitle: 'Receta médica',
+    content: input.legacyText?.trim() || itemsText,
+    logoUrl: input.logoUrl
+  });
 }
