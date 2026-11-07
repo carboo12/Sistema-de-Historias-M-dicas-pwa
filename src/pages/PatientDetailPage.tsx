@@ -142,7 +142,10 @@ export function PatientDetailPage() {
     );
   }
 
-  const { patient, history, consultations, appointments } = detail.data;
+  const patient = detail.data.patient;
+  const history = detail.data.history ?? [];
+  const consultations = detail.data.consultations ?? [];
+  const appointments = detail.data.appointments ?? [];
   // Use the canonical UUID returned by Data Connect, not a potentially stale route value.
   const patientId = patient.id;
   const age = patient.ageOverride ?? ageFromBirthDate(patient.birthDate);
@@ -353,7 +356,7 @@ export function PatientDetailPage() {
             {consultations.length === 0 ? (
               <EmptyState
                 icon={<HeartPulse className="h-7 w-7" />}
-                title="La historia comienza aquí"
+                title="Este paciente aún no tiene consultas registradas"
                 description="Abre una consulta para registrar la evolución, las órdenes de estudios y la receta."
                 action={
                   <Button icon={<ClipboardPlus className="h-4 w-4" />} onClick={openConsultation}>

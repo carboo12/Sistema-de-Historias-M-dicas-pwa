@@ -242,12 +242,12 @@ function dayBounds(date: string) {
 
 async function fetchPatientDetail(id: string): Promise<PatientDetail> {
   const { data } = await getPatient(dc(), { id });
-  const record = data.patients[0];
+  const record = data.patients?.[0];
   if (!record) throw new ApiError('No encontramos al paciente', 404, 'not_found');
 
   return {
     patient: mapPatient(record),
-    history: record.patientHistories_on_patient.map((item) => ({
+    history: (record.patientHistories_on_patient ?? []).map((item) => ({
       id: item.id,
       category: item.category,
       description: item.description,
@@ -256,8 +256,8 @@ async function fetchPatientDetail(id: string): Promise<PatientDetail> {
       is_active: item.isActive,
       recorded_at: item.recordedAt
     })),
-    consultations: record.consultations_on_patient.map(mapConsultationSummary),
-    appointments: record.appointments_on_patient.map((appointment) => ({
+    consultations: (record.consultations_on_patient ?? []).map(mapConsultationSummary),
+    appointments: (record.appointments_on_patient ?? []).map((appointment) => ({
       id: appointment.id,
       starts_at: appointment.startsAt,
       ends_at: appointment.endsAt,
@@ -516,7 +516,7 @@ export const firebaseApi = {
         return { consultations: detail.consultations };
       }
       const { data } = await listConsultations(dc());
-      return { consultations: data.consultations.map(mapConsultationSummary) };
+      return { consultations: (data.consultations ?? []).map(mapConsultationSummary) };
     },
     async get(id: string) {
       const record = await fetchConsultation(id);
