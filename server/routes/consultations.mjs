@@ -277,7 +277,7 @@ export async function consultationRoutes(app) {
         ['notes', 'notes', 3000]
       ];
       for (const [key, column, max] of textFields) {
-        if (body[key] !== undefined) add(column, text(body[key], max));
+        if (body[key] !== undefined) add(column, body[key] === '' ? '' : text(body[key], max));
       }
       if (body.vitals !== undefined) add('vitals', jsonObject(body.vitals));
       if (body.nextVisitAt !== undefined) {
@@ -378,6 +378,7 @@ export async function consultationRoutes(app) {
     { preHandler: [app.authenticate, requireClinician] },
     async (request) => {
       const id = uuid(request.params.id, 'consulta');
+      const input = request.body && typeof request.body === 'object' ? request.body : {};
 
       const result = await transaction(async (client) => {
         const locked = await client.query(
@@ -395,16 +396,40 @@ export async function consultationRoutes(app) {
         if (consultation.status !== 'borrador') {
           throw new HttpError(409, 'already_signed', 'La consulta ya fue firmada');
         }
-        if (!consultation.reason || !consultation.reason.trim()) {
+        const reason = input.reason ?? consultation.reason;
+        if (!reason || !String(reason).trim()) {
           throw new HttpError(422, 'missing_reason', 'Agrega el motivo de consulta antes de firmar');
         }
 
         const updated = await client.query(
           `update public.consultations
-           set status = 'firmada', signed_at = now(), signed_by = $3, updated_at = now()
+           set status = 'firmada', signed_at = now(), signed_by = $3,
+               next_visit_at = $4, reason = $5, current_illness = $6, physical_exam = $7,
+               functional_exam = $8, studies = $9, evolution_text = $10, studies_text = $11,
+               prescription_text = $12, diagnosis_notes = $13, treatment_plan = $14,
+               evolution = $15, plan = $16, notes = $17, vitals = $18, updated_at = now()
            where id = $1 and clinic_id = $2
            returning *`,
-          [id, request.user.clinicId, request.user.sub]
+          [
+            id,
+            request.user.clinicId,
+            request.user.sub,
+            input.nextVisitAt ?? consultation.next_visit_at,
+            reason,
+            input.currentIllness ?? consultation.current_illness,
+            input.physicalExam ?? consultation.physical_exam,
+            input.functionalExam ?? consultation.functional_exam,
+            input.studies ?? consultation.studies,
+            input.evolutionText ?? consultation.evolution_text,
+            input.studiesText ?? consultation.studies_text,
+            input.prescriptionText ?? consultation.prescription_text,
+            input.diagnosisNotes ?? consultation.diagnosis_notes,
+            input.treatmentPlan ?? consultation.treatment_plan,
+            input.evolution ?? consultation.evolution,
+            input.plan ?? consultation.plan,
+            input.notes ?? consultation.notes,
+            input.vitals ?? consultation.vitals
+          ]
         );
 
         if (consultation.appointment_id) {

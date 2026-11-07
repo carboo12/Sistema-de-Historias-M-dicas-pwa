@@ -60,7 +60,10 @@ export function PatientFormDialog({
       onCreated?.(response.patient);
       onClose();
     },
-      onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo guardar el paciente')
+      onError: (cause) => {
+        console.error('Error al guardar el paciente:', cause);
+        setError(cause instanceof ApiError ? cause.message : cause instanceof Error ? cause.message : 'No se pudo guardar el paciente');
+      }
   });
 
   function onSubmit(event: FormEvent) {

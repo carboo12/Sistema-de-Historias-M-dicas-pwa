@@ -24,13 +24,18 @@ This README will guide you through the process of using the generated JavaScript
   - [*LinkCurrentUser*](#linkcurrentuser)
   - [*CreatePatient*](#createpatient)
   - [*UpdatePatient*](#updatepatient)
+  - [*UpdatePatientWithClinicContext*](#updatepatientwithcliniccontext)
   - [*DeletePatient*](#deletepatient)
   - [*CreateAppointment*](#createappointment)
   - [*UpdateAppointmentStatus*](#updateappointmentstatus)
   - [*UpdateAppointment*](#updateappointment)
   - [*CreateConsultation*](#createconsultation)
   - [*UpdateConsultation*](#updateconsultation)
+  - [*UpdateConsultationWithClinicContext*](#updateconsultationwithcliniccontext)
+  - [*SaveConsultationWithClinicContext*](#saveconsultationwithcliniccontext)
+  - [*SignConsultationWithClinicContext*](#signconsultationwithcliniccontext)
   - [*DeleteConsultation*](#deleteconsultation)
+  - [*DeleteConsultationWithClinicContext*](#deleteconsultationwithcliniccontext)
   - [*SignConsultation*](#signconsultation)
   - [*CreatePatientStudy*](#createpatientstudy)
 
@@ -285,9 +290,9 @@ import { connectorConfig, listPatients, ListPatientsVariables } from '@historias
 
 // The `ListPatients` query requires an argument of type `ListPatientsVariables`:
 const listPatientsVars: ListPatientsVariables = {
-  q: ..., 
-  limit: ..., 
-  offset: ..., 
+  q: ...,
+  limit: ...,
+  offset: ...,
 };
 
 // Call the `listPatients()` function to execute the query.
@@ -317,9 +322,9 @@ import { connectorConfig, listPatientsRef, ListPatientsVariables } from '@histor
 
 // The `ListPatients` query requires an argument of type `ListPatientsVariables`:
 const listPatientsVars: ListPatientsVariables = {
-  q: ..., 
-  limit: ..., 
-  offset: ..., 
+  q: ...,
+  limit: ...,
+  offset: ...,
 };
 
 // Call the `listPatientsRef()` function to get a reference to the query.
@@ -400,7 +405,7 @@ import { connectorConfig, countPatients, CountPatientsVariables } from '@histori
 
 // The `CountPatients` query requires an argument of type `CountPatientsVariables`:
 const countPatientsVars: CountPatientsVariables = {
-  q: ..., 
+  q: ...,
 };
 
 // Call the `countPatients()` function to execute the query.
@@ -430,7 +435,7 @@ import { connectorConfig, countPatientsRef, CountPatientsVariables } from '@hist
 
 // The `CountPatients` query requires an argument of type `CountPatientsVariables`:
 const countPatientsVars: CountPatientsVariables = {
-  q: ..., 
+  q: ...,
 };
 
 // Call the `countPatientsRef()` function to get a reference to the query.
@@ -560,8 +565,8 @@ const listPatientsByTermsVars: ListPatientsByTermsVariables = {
   q4: ..., // optional
   q5: ..., // optional
   q6: ..., // optional
-  limit: ..., 
-  offset: ..., 
+  limit: ...,
+  offset: ...,
 };
 
 // Call the `listPatientsByTerms()` function to execute the query.
@@ -597,8 +602,8 @@ const listPatientsByTermsVars: ListPatientsByTermsVariables = {
   q4: ..., // optional
   q5: ..., // optional
   q6: ..., // optional
-  limit: ..., 
-  offset: ..., 
+  limit: ...,
+  offset: ...,
 };
 
 // Call the `listPatientsByTermsRef()` function to get a reference to the query.
@@ -878,7 +883,7 @@ import { connectorConfig, getPatient, GetPatientVariables } from '@historias/dat
 
 // The `GetPatient` query requires an argument of type `GetPatientVariables`:
 const getPatientVars: GetPatientVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `getPatient()` function to execute the query.
@@ -908,7 +913,7 @@ import { connectorConfig, getPatientRef, GetPatientVariables } from '@historias/
 
 // The `GetPatient` query requires an argument of type `GetPatientVariables`:
 const getPatientVars: GetPatientVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `getPatientRef()` function to get a reference to the query.
@@ -1016,8 +1021,8 @@ import { connectorConfig, listAgenda, ListAgendaVariables } from '@historias/dat
 
 // The `ListAgenda` query requires an argument of type `ListAgendaVariables`:
 const listAgendaVars: ListAgendaVariables = {
-  start: ..., 
-  end: ..., 
+  start: ...,
+  end: ...,
 };
 
 // Call the `listAgenda()` function to execute the query.
@@ -1047,8 +1052,8 @@ import { connectorConfig, listAgendaRef, ListAgendaVariables } from '@historias/
 
 // The `ListAgenda` query requires an argument of type `ListAgendaVariables`:
 const listAgendaVars: ListAgendaVariables = {
-  start: ..., 
-  end: ..., 
+  start: ...,
+  end: ...,
 };
 
 // Call the `listAgendaRef()` function to get a reference to the query.
@@ -1286,7 +1291,7 @@ import { connectorConfig, getConsultation, GetConsultationVariables } from '@his
 
 // The `GetConsultation` query requires an argument of type `GetConsultationVariables`:
 const getConsultationVars: GetConsultationVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `getConsultation()` function to execute the query.
@@ -1316,7 +1321,7 @@ import { connectorConfig, getConsultationRef, GetConsultationVariables } from '@
 
 // The `GetConsultation` query requires an argument of type `GetConsultationVariables`:
 const getConsultationVars: GetConsultationVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `getConsultationRef()` function to get a reference to the query.
@@ -1411,9 +1416,9 @@ import { connectorConfig, listPatientStudies, ListPatientStudiesVariables } from
 
 // The `ListPatientStudies` query requires an argument of type `ListPatientStudiesVariables`:
 const listPatientStudiesVars: ListPatientStudiesVariables = {
-  patientId: ..., 
-  limit: ..., 
-  offset: ..., 
+  patientId: ...,
+  limit: ...,
+  offset: ...,
 };
 
 // Call the `listPatientStudies()` function to execute the query.
@@ -1443,9 +1448,9 @@ import { connectorConfig, listPatientStudiesRef, ListPatientStudiesVariables } f
 
 // The `ListPatientStudies` query requires an argument of type `ListPatientStudiesVariables`:
 const listPatientStudiesVars: ListPatientStudiesVariables = {
-  patientId: ..., 
-  limit: ..., 
-  offset: ..., 
+  patientId: ...,
+  limit: ...,
+  offset: ...,
 };
 
 // Call the `listPatientStudiesRef()` function to get a reference to the query.
@@ -1662,10 +1667,10 @@ import { connectorConfig, clinicReports, ClinicReportsVariables } from '@histori
 
 // The `ClinicReports` query requires an argument of type `ClinicReportsVariables`:
 const clinicReportsVars: ClinicReportsVariables = {
-  from: ..., 
-  to: ..., 
-  limit: ..., 
-  offset: ..., 
+  from: ...,
+  to: ...,
+  limit: ...,
+  offset: ...,
 };
 
 // Call the `clinicReports()` function to execute the query.
@@ -1697,10 +1702,10 @@ import { connectorConfig, clinicReportsRef, ClinicReportsVariables } from '@hist
 
 // The `ClinicReports` query requires an argument of type `ClinicReportsVariables`:
 const clinicReportsVars: ClinicReportsVariables = {
-  from: ..., 
-  to: ..., 
-  limit: ..., 
-  offset: ..., 
+  from: ...,
+  to: ...,
+  limit: ...,
+  offset: ...,
 };
 
 // Call the `clinicReportsRef()` function to get a reference to the query.
@@ -1918,20 +1923,20 @@ import { connectorConfig, createPatient, CreatePatientVariables } from '@histori
 
 // The `CreatePatient` mutation requires an argument of type `CreatePatientVariables`:
 const createPatientVars: CreatePatientVariables = {
-  clinicId: ..., 
-  createdById: ..., 
-  recordNumber: ..., 
+  clinicId: ...,
+  createdById: ...,
+  recordNumber: ...,
   documentType: ..., // optional
   documentNumber: ..., // optional
-  documentVerified: ..., 
-  fullName: ..., 
+  documentVerified: ...,
+  fullName: ...,
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
   ageOverride: ..., // optional
-  birthDateEstimated: ..., 
-  sex: ..., 
-  maritalStatus: ..., 
+  birthDateEstimated: ...,
+  sex: ...,
+  maritalStatus: ...,
   bloodType: ..., // optional
   nationality: ..., // optional
   birthPlace: ..., // optional
@@ -1943,11 +1948,11 @@ const createPatientVars: CreatePatientVariables = {
   mobile: ..., // optional
   email: ..., // optional
   occupation: ..., // optional
-  isPrivate: ..., 
+  isPrivate: ...,
   allergiesNotes: ..., // optional
   currentDiagnosisSummary: ..., // optional
   notes: ..., // optional
-  isSuspended: ..., 
+  isSuspended: ...,
   suspensionReason: ..., // optional
 };
 
@@ -1980,20 +1985,20 @@ import { connectorConfig, createPatientRef, CreatePatientVariables } from '@hist
 
 // The `CreatePatient` mutation requires an argument of type `CreatePatientVariables`:
 const createPatientVars: CreatePatientVariables = {
-  clinicId: ..., 
-  createdById: ..., 
-  recordNumber: ..., 
+  clinicId: ...,
+  createdById: ...,
+  recordNumber: ...,
   documentType: ..., // optional
   documentNumber: ..., // optional
-  documentVerified: ..., 
-  fullName: ..., 
+  documentVerified: ...,
+  fullName: ...,
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
   ageOverride: ..., // optional
-  birthDateEstimated: ..., 
-  sex: ..., 
-  maritalStatus: ..., 
+  birthDateEstimated: ...,
+  sex: ...,
+  maritalStatus: ...,
   bloodType: ..., // optional
   nationality: ..., // optional
   birthPlace: ..., // optional
@@ -2005,11 +2010,11 @@ const createPatientVars: CreatePatientVariables = {
   mobile: ..., // optional
   email: ..., // optional
   occupation: ..., // optional
-  isPrivate: ..., 
+  isPrivate: ...,
   allergiesNotes: ..., // optional
   currentDiagnosisSummary: ..., // optional
   notes: ..., // optional
-  isSuspended: ..., 
+  isSuspended: ...,
   suspensionReason: ..., // optional
 };
 
@@ -2119,18 +2124,18 @@ import { connectorConfig, updatePatient, UpdatePatientVariables } from '@histori
 
 // The `UpdatePatient` mutation requires an argument of type `UpdatePatientVariables`:
 const updatePatientVars: UpdatePatientVariables = {
-  id: ..., 
+  id: ...,
   documentType: ..., // optional
   documentNumber: ..., // optional
-  documentVerified: ..., 
-  fullName: ..., 
+  documentVerified: ...,
+  fullName: ...,
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
   ageOverride: ..., // optional
-  birthDateEstimated: ..., 
-  sex: ..., 
-  maritalStatus: ..., 
+  birthDateEstimated: ...,
+  sex: ...,
+  maritalStatus: ...,
   bloodType: ..., // optional
   nationality: ..., // optional
   birthPlace: ..., // optional
@@ -2142,11 +2147,11 @@ const updatePatientVars: UpdatePatientVariables = {
   mobile: ..., // optional
   email: ..., // optional
   occupation: ..., // optional
-  isPrivate: ..., 
+  isPrivate: ...,
   allergiesNotes: ..., // optional
   currentDiagnosisSummary: ..., // optional
   notes: ..., // optional
-  isSuspended: ..., 
+  isSuspended: ...,
   suspensionReason: ..., // optional
 };
 
@@ -2177,18 +2182,18 @@ import { connectorConfig, updatePatientRef, UpdatePatientVariables } from '@hist
 
 // The `UpdatePatient` mutation requires an argument of type `UpdatePatientVariables`:
 const updatePatientVars: UpdatePatientVariables = {
-  id: ..., 
+  id: ...,
   documentType: ..., // optional
   documentNumber: ..., // optional
-  documentVerified: ..., 
-  fullName: ..., 
+  documentVerified: ...,
+  fullName: ...,
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
   ageOverride: ..., // optional
-  birthDateEstimated: ..., 
-  sex: ..., 
-  maritalStatus: ..., 
+  birthDateEstimated: ...,
+  sex: ...,
+  maritalStatus: ...,
   bloodType: ..., // optional
   nationality: ..., // optional
   birthPlace: ..., // optional
@@ -2200,11 +2205,11 @@ const updatePatientVars: UpdatePatientVariables = {
   mobile: ..., // optional
   email: ..., // optional
   occupation: ..., // optional
-  isPrivate: ..., 
+  isPrivate: ...,
   allergiesNotes: ..., // optional
   currentDiagnosisSummary: ..., // optional
   notes: ..., // optional
-  isSuspended: ..., 
+  isSuspended: ...,
   suspensionReason: ..., // optional
 };
 
@@ -2226,6 +2231,207 @@ console.log(data.patient_update);
 // Or, you can use the `Promise` API.
 executeMutation(ref).then((response) => {
   const data = response.data;
+  console.log(data.patient_update);
+});
+```
+
+## UpdatePatientWithClinicContext
+You can execute the `UpdatePatientWithClinicContext` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+updatePatientWithClinicContext(vars: UpdatePatientWithClinicContextVariables): MutationPromise<UpdatePatientWithClinicContextData, UpdatePatientWithClinicContextVariables>;
+
+interface UpdatePatientWithClinicContextRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdatePatientWithClinicContextVariables): MutationRef<UpdatePatientWithClinicContextData, UpdatePatientWithClinicContextVariables>;
+}
+export const updatePatientWithClinicContextRef: UpdatePatientWithClinicContextRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updatePatientWithClinicContext(dc: DataConnect, vars: UpdatePatientWithClinicContextVariables): MutationPromise<UpdatePatientWithClinicContextData, UpdatePatientWithClinicContextVariables>;
+
+interface UpdatePatientWithClinicContextRef {
+  ...
+  (dc: DataConnect, vars: UpdatePatientWithClinicContextVariables): MutationRef<UpdatePatientWithClinicContextData, UpdatePatientWithClinicContextVariables>;
+}
+export const updatePatientWithClinicContextRef: UpdatePatientWithClinicContextRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updatePatientWithClinicContextRef:
+```typescript
+const name = updatePatientWithClinicContextRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdatePatientWithClinicContext` mutation requires an argument of type `UpdatePatientWithClinicContextVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdatePatientWithClinicContextVariables {
+  id: UUIDString;
+  clinicId: UUIDString;
+  documentType?: string | null;
+  documentNumber?: string | null;
+  documentVerified: boolean;
+  fullName: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  birthDate?: DateString | null;
+  ageOverride?: number | null;
+  birthDateEstimated: boolean;
+  sex: string;
+  maritalStatus: string;
+  bloodType?: string | null;
+  nationality?: string | null;
+  birthPlace?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  phone?: string | null;
+  mobile?: string | null;
+  email?: string | null;
+  occupation?: string | null;
+  isPrivate: boolean;
+  allergiesNotes?: string | null;
+  currentDiagnosisSummary?: string | null;
+  notes?: string | null;
+  isSuspended: boolean;
+  suspensionReason?: string | null;
+}
+```
+### Return Type
+Recall that executing the `UpdatePatientWithClinicContext` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdatePatientWithClinicContextData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdatePatientWithClinicContextData {
+  user_update?: User_Key | null;
+  patient_update?: Patient_Key | null;
+}
+```
+### Using `UpdatePatientWithClinicContext`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updatePatientWithClinicContext, UpdatePatientWithClinicContextVariables } from '@historias/dataconnect';
+
+// The `UpdatePatientWithClinicContext` mutation requires an argument of type `UpdatePatientWithClinicContextVariables`:
+const updatePatientWithClinicContextVars: UpdatePatientWithClinicContextVariables = {
+  id: ...,
+  clinicId: ...,
+  documentType: ..., // optional
+  documentNumber: ..., // optional
+  documentVerified: ...,
+  fullName: ...,
+  firstName: ..., // optional
+  lastName: ..., // optional
+  birthDate: ..., // optional
+  ageOverride: ..., // optional
+  birthDateEstimated: ...,
+  sex: ...,
+  maritalStatus: ...,
+  bloodType: ..., // optional
+  nationality: ..., // optional
+  birthPlace: ..., // optional
+  address: ..., // optional
+  city: ..., // optional
+  state: ..., // optional
+  country: ..., // optional
+  phone: ..., // optional
+  mobile: ..., // optional
+  email: ..., // optional
+  occupation: ..., // optional
+  isPrivate: ...,
+  allergiesNotes: ..., // optional
+  currentDiagnosisSummary: ..., // optional
+  notes: ..., // optional
+  isSuspended: ...,
+  suspensionReason: ..., // optional
+};
+
+// Call the `updatePatientWithClinicContext()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updatePatientWithClinicContext(updatePatientWithClinicContextVars);
+// Variables can be defined inline as well.
+const { data } = await updatePatientWithClinicContext({ id: ..., clinicId: ..., documentType: ..., documentNumber: ..., documentVerified: ..., fullName: ..., firstName: ..., lastName: ..., birthDate: ..., ageOverride: ..., birthDateEstimated: ..., sex: ..., maritalStatus: ..., bloodType: ..., nationality: ..., birthPlace: ..., address: ..., city: ..., state: ..., country: ..., phone: ..., mobile: ..., email: ..., occupation: ..., isPrivate: ..., allergiesNotes: ..., currentDiagnosisSummary: ..., notes: ..., isSuspended: ..., suspensionReason: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updatePatientWithClinicContext(dataConnect, updatePatientWithClinicContextVars);
+
+console.log(data.user_update);
+console.log(data.patient_update);
+
+// Or, you can use the `Promise` API.
+updatePatientWithClinicContext(updatePatientWithClinicContextVars).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+  console.log(data.patient_update);
+});
+```
+
+### Using `UpdatePatientWithClinicContext`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updatePatientWithClinicContextRef, UpdatePatientWithClinicContextVariables } from '@historias/dataconnect';
+
+// The `UpdatePatientWithClinicContext` mutation requires an argument of type `UpdatePatientWithClinicContextVariables`:
+const updatePatientWithClinicContextVars: UpdatePatientWithClinicContextVariables = {
+  id: ...,
+  clinicId: ...,
+  documentType: ..., // optional
+  documentNumber: ..., // optional
+  documentVerified: ...,
+  fullName: ...,
+  firstName: ..., // optional
+  lastName: ..., // optional
+  birthDate: ..., // optional
+  ageOverride: ..., // optional
+  birthDateEstimated: ...,
+  sex: ...,
+  maritalStatus: ...,
+  bloodType: ..., // optional
+  nationality: ..., // optional
+  birthPlace: ..., // optional
+  address: ..., // optional
+  city: ..., // optional
+  state: ..., // optional
+  country: ..., // optional
+  phone: ..., // optional
+  mobile: ..., // optional
+  email: ..., // optional
+  occupation: ..., // optional
+  isPrivate: ...,
+  allergiesNotes: ..., // optional
+  currentDiagnosisSummary: ..., // optional
+  notes: ..., // optional
+  isSuspended: ...,
+  suspensionReason: ..., // optional
+};
+
+// Call the `updatePatientWithClinicContextRef()` function to get a reference to the mutation.
+const ref = updatePatientWithClinicContextRef(updatePatientWithClinicContextVars);
+// Variables can be defined inline as well.
+const ref = updatePatientWithClinicContextRef({ id: ..., clinicId: ..., documentType: ..., documentNumber: ..., documentVerified: ..., fullName: ..., firstName: ..., lastName: ..., birthDate: ..., ageOverride: ..., birthDateEstimated: ..., sex: ..., maritalStatus: ..., bloodType: ..., nationality: ..., birthPlace: ..., address: ..., city: ..., state: ..., country: ..., phone: ..., mobile: ..., email: ..., occupation: ..., isPrivate: ..., allergiesNotes: ..., currentDiagnosisSummary: ..., notes: ..., isSuspended: ..., suspensionReason: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updatePatientWithClinicContextRef(dataConnect, updatePatientWithClinicContextVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.user_update);
+console.log(data.patient_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
   console.log(data.patient_update);
 });
 ```
@@ -2284,7 +2490,7 @@ import { connectorConfig, deletePatient, DeletePatientVariables } from '@histori
 
 // The `DeletePatient` mutation requires an argument of type `DeletePatientVariables`:
 const deletePatientVars: DeletePatientVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `deletePatient()` function to execute the mutation.
@@ -2314,7 +2520,7 @@ import { connectorConfig, deletePatientRef, DeletePatientVariables } from '@hist
 
 // The `DeletePatient` mutation requires an argument of type `DeletePatientVariables`:
 const deletePatientVars: DeletePatientVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `deletePatientRef()` function to get a reference to the mutation.
@@ -2406,19 +2612,19 @@ import { connectorConfig, createAppointment, CreateAppointmentVariables } from '
 
 // The `CreateAppointment` mutation requires an argument of type `CreateAppointmentVariables`:
 const createAppointmentVars: CreateAppointmentVariables = {
-  clinicId: ..., 
-  createdById: ..., 
-  patientId: ..., 
-  professionalId: ..., 
+  clinicId: ...,
+  createdById: ...,
+  patientId: ...,
+  professionalId: ...,
   specialtyId: ..., // optional
   officeId: ..., // optional
-  startsAt: ..., 
-  endsAt: ..., 
-  durationMinutes: ..., 
+  startsAt: ...,
+  endsAt: ...,
+  durationMinutes: ...,
   reason: ..., // optional
   notes: ..., // optional
-  status: ..., 
-  source: ..., 
+  status: ...,
+  source: ...,
 };
 
 // Call the `createAppointment()` function to execute the mutation.
@@ -2450,19 +2656,19 @@ import { connectorConfig, createAppointmentRef, CreateAppointmentVariables } fro
 
 // The `CreateAppointment` mutation requires an argument of type `CreateAppointmentVariables`:
 const createAppointmentVars: CreateAppointmentVariables = {
-  clinicId: ..., 
-  createdById: ..., 
-  patientId: ..., 
-  professionalId: ..., 
+  clinicId: ...,
+  createdById: ...,
+  patientId: ...,
+  professionalId: ...,
   specialtyId: ..., // optional
   officeId: ..., // optional
-  startsAt: ..., 
-  endsAt: ..., 
-  durationMinutes: ..., 
+  startsAt: ...,
+  endsAt: ...,
+  durationMinutes: ...,
   reason: ..., // optional
   notes: ..., // optional
-  status: ..., 
-  source: ..., 
+  status: ...,
+  source: ...,
 };
 
 // Call the `createAppointmentRef()` function to get a reference to the mutation.
@@ -2544,8 +2750,8 @@ import { connectorConfig, updateAppointmentStatus, UpdateAppointmentStatusVariab
 
 // The `UpdateAppointmentStatus` mutation requires an argument of type `UpdateAppointmentStatusVariables`:
 const updateAppointmentStatusVars: UpdateAppointmentStatusVariables = {
-  id: ..., 
-  status: ..., 
+  id: ...,
+  status: ...,
 };
 
 // Call the `updateAppointmentStatus()` function to execute the mutation.
@@ -2575,8 +2781,8 @@ import { connectorConfig, updateAppointmentStatusRef, UpdateAppointmentStatusVar
 
 // The `UpdateAppointmentStatus` mutation requires an argument of type `UpdateAppointmentStatusVariables`:
 const updateAppointmentStatusVars: UpdateAppointmentStatusVariables = {
-  id: ..., 
-  status: ..., 
+  id: ...,
+  status: ...,
 };
 
 // Call the `updateAppointmentStatusRef()` function to get a reference to the mutation.
@@ -2661,13 +2867,13 @@ import { connectorConfig, updateAppointment, UpdateAppointmentVariables } from '
 
 // The `UpdateAppointment` mutation requires an argument of type `UpdateAppointmentVariables`:
 const updateAppointmentVars: UpdateAppointmentVariables = {
-  id: ..., 
-  startsAt: ..., 
-  endsAt: ..., 
-  durationMinutes: ..., 
+  id: ...,
+  startsAt: ...,
+  endsAt: ...,
+  durationMinutes: ...,
   reason: ..., // optional
   notes: ..., // optional
-  status: ..., 
+  status: ...,
 };
 
 // Call the `updateAppointment()` function to execute the mutation.
@@ -2697,13 +2903,13 @@ import { connectorConfig, updateAppointmentRef, UpdateAppointmentVariables } fro
 
 // The `UpdateAppointment` mutation requires an argument of type `UpdateAppointmentVariables`:
 const updateAppointmentVars: UpdateAppointmentVariables = {
-  id: ..., 
-  startsAt: ..., 
-  endsAt: ..., 
-  durationMinutes: ..., 
+  id: ...,
+  startsAt: ...,
+  endsAt: ...,
+  durationMinutes: ...,
   reason: ..., // optional
   notes: ..., // optional
-  status: ..., 
+  status: ...,
 };
 
 // Call the `updateAppointmentRef()` function to get a reference to the mutation.
@@ -2794,18 +3000,18 @@ import { connectorConfig, createConsultation, CreateConsultationVariables } from
 
 // The `CreateConsultation` mutation requires an argument of type `CreateConsultationVariables`:
 const createConsultationVars: CreateConsultationVariables = {
-  clinicId: ..., 
-  createdById: ..., 
-  patientId: ..., 
-  professionalId: ..., 
+  clinicId: ...,
+  createdById: ...,
+  patientId: ...,
+  professionalId: ...,
   appointmentId: ..., // optional
   specialtyId: ..., // optional
-  consultationType: ..., 
-  consultedAt: ..., 
+  consultationType: ...,
+  consultedAt: ...,
   reason: ..., // optional
   notes: ..., // optional
-  status: ..., 
-  source: ..., 
+  status: ...,
+  source: ...,
 };
 
 // Call the `createConsultation()` function to execute the mutation.
@@ -2837,18 +3043,18 @@ import { connectorConfig, createConsultationRef, CreateConsultationVariables } f
 
 // The `CreateConsultation` mutation requires an argument of type `CreateConsultationVariables`:
 const createConsultationVars: CreateConsultationVariables = {
-  clinicId: ..., 
-  createdById: ..., 
-  patientId: ..., 
-  professionalId: ..., 
+  clinicId: ...,
+  createdById: ...,
+  patientId: ...,
+  professionalId: ...,
   appointmentId: ..., // optional
   specialtyId: ..., // optional
-  consultationType: ..., 
-  consultedAt: ..., 
+  consultationType: ...,
+  consultedAt: ...,
   reason: ..., // optional
   notes: ..., // optional
-  status: ..., 
-  source: ..., 
+  status: ...,
+  source: ...,
 };
 
 // Call the `createConsultationRef()` function to get a reference to the mutation.
@@ -2944,7 +3150,7 @@ import { connectorConfig, updateConsultation, UpdateConsultationVariables } from
 
 // The `UpdateConsultation` mutation requires an argument of type `UpdateConsultationVariables`:
 const updateConsultationVars: UpdateConsultationVariables = {
-  id: ..., 
+  id: ...,
   nextVisitAt: ..., // optional
   reason: ..., // optional
   currentIllness: ..., // optional
@@ -2959,7 +3165,7 @@ const updateConsultationVars: UpdateConsultationVariables = {
   evolution: ..., // optional
   plan: ..., // optional
   notes: ..., // optional
-  vitals: ..., 
+  vitals: ...,
 };
 
 // Call the `updateConsultation()` function to execute the mutation.
@@ -2989,7 +3195,7 @@ import { connectorConfig, updateConsultationRef, UpdateConsultationVariables } f
 
 // The `UpdateConsultation` mutation requires an argument of type `UpdateConsultationVariables`:
 const updateConsultationVars: UpdateConsultationVariables = {
-  id: ..., 
+  id: ...,
   nextVisitAt: ..., // optional
   reason: ..., // optional
   currentIllness: ..., // optional
@@ -3004,7 +3210,7 @@ const updateConsultationVars: UpdateConsultationVariables = {
   evolution: ..., // optional
   plan: ..., // optional
   notes: ..., // optional
-  vitals: ..., 
+  vitals: ...,
 };
 
 // Call the `updateConsultationRef()` function to get a reference to the mutation.
@@ -3026,6 +3232,509 @@ console.log(data.consultation_update);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.consultation_update);
+});
+```
+
+## UpdateConsultationWithClinicContext
+You can execute the `UpdateConsultationWithClinicContext` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+updateConsultationWithClinicContext(vars: UpdateConsultationWithClinicContextVariables): MutationPromise<UpdateConsultationWithClinicContextData, UpdateConsultationWithClinicContextVariables>;
+
+interface UpdateConsultationWithClinicContextRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateConsultationWithClinicContextVariables): MutationRef<UpdateConsultationWithClinicContextData, UpdateConsultationWithClinicContextVariables>;
+}
+export const updateConsultationWithClinicContextRef: UpdateConsultationWithClinicContextRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateConsultationWithClinicContext(dc: DataConnect, vars: UpdateConsultationWithClinicContextVariables): MutationPromise<UpdateConsultationWithClinicContextData, UpdateConsultationWithClinicContextVariables>;
+
+interface UpdateConsultationWithClinicContextRef {
+  ...
+  (dc: DataConnect, vars: UpdateConsultationWithClinicContextVariables): MutationRef<UpdateConsultationWithClinicContextData, UpdateConsultationWithClinicContextVariables>;
+}
+export const updateConsultationWithClinicContextRef: UpdateConsultationWithClinicContextRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateConsultationWithClinicContextRef:
+```typescript
+const name = updateConsultationWithClinicContextRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateConsultationWithClinicContext` mutation requires an argument of type `UpdateConsultationWithClinicContextVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateConsultationWithClinicContextVariables {
+  id: UUIDString;
+  clinicId: UUIDString;
+  nextVisitAt?: TimestampString | null;
+  reason?: string | null;
+  currentIllness?: string | null;
+  physicalExam?: string | null;
+  functionalExam?: string | null;
+  studies?: string | null;
+  evolutionText?: string | null;
+  studiesText?: string | null;
+  prescriptionText?: string | null;
+  diagnosisNotes?: string | null;
+  treatmentPlan?: string | null;
+  evolution?: string | null;
+  plan?: string | null;
+  notes?: string | null;
+  vitals: unknown;
+}
+```
+### Return Type
+Recall that executing the `UpdateConsultationWithClinicContext` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateConsultationWithClinicContextData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateConsultationWithClinicContextData {
+  user_update?: User_Key | null;
+  consultation_update?: Consultation_Key | null;
+}
+```
+### Using `UpdateConsultationWithClinicContext`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateConsultationWithClinicContext, UpdateConsultationWithClinicContextVariables } from '@historias/dataconnect';
+
+// The `UpdateConsultationWithClinicContext` mutation requires an argument of type `UpdateConsultationWithClinicContextVariables`:
+const updateConsultationWithClinicContextVars: UpdateConsultationWithClinicContextVariables = {
+  id: ...,
+  clinicId: ...,
+  nextVisitAt: ..., // optional
+  reason: ..., // optional
+  currentIllness: ..., // optional
+  physicalExam: ..., // optional
+  functionalExam: ..., // optional
+  studies: ..., // optional
+  evolutionText: ..., // optional
+  studiesText: ..., // optional
+  prescriptionText: ..., // optional
+  diagnosisNotes: ..., // optional
+  treatmentPlan: ..., // optional
+  evolution: ..., // optional
+  plan: ..., // optional
+  notes: ..., // optional
+  vitals: ...,
+};
+
+// Call the `updateConsultationWithClinicContext()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateConsultationWithClinicContext(updateConsultationWithClinicContextVars);
+// Variables can be defined inline as well.
+const { data } = await updateConsultationWithClinicContext({ id: ..., clinicId: ..., nextVisitAt: ..., reason: ..., currentIllness: ..., physicalExam: ..., functionalExam: ..., studies: ..., evolutionText: ..., studiesText: ..., prescriptionText: ..., diagnosisNotes: ..., treatmentPlan: ..., evolution: ..., plan: ..., notes: ..., vitals: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateConsultationWithClinicContext(dataConnect, updateConsultationWithClinicContextVars);
+
+console.log(data.user_update);
+console.log(data.consultation_update);
+
+// Or, you can use the `Promise` API.
+updateConsultationWithClinicContext(updateConsultationWithClinicContextVars).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+  console.log(data.consultation_update);
+});
+```
+
+### Using `UpdateConsultationWithClinicContext`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateConsultationWithClinicContextRef, UpdateConsultationWithClinicContextVariables } from '@historias/dataconnect';
+
+// The `UpdateConsultationWithClinicContext` mutation requires an argument of type `UpdateConsultationWithClinicContextVariables`:
+const updateConsultationWithClinicContextVars: UpdateConsultationWithClinicContextVariables = {
+  id: ...,
+  clinicId: ...,
+  nextVisitAt: ..., // optional
+  reason: ..., // optional
+  currentIllness: ..., // optional
+  physicalExam: ..., // optional
+  functionalExam: ..., // optional
+  studies: ..., // optional
+  evolutionText: ..., // optional
+  studiesText: ..., // optional
+  prescriptionText: ..., // optional
+  diagnosisNotes: ..., // optional
+  treatmentPlan: ..., // optional
+  evolution: ..., // optional
+  plan: ..., // optional
+  notes: ..., // optional
+  vitals: ...,
+};
+
+// Call the `updateConsultationWithClinicContextRef()` function to get a reference to the mutation.
+const ref = updateConsultationWithClinicContextRef(updateConsultationWithClinicContextVars);
+// Variables can be defined inline as well.
+const ref = updateConsultationWithClinicContextRef({ id: ..., clinicId: ..., nextVisitAt: ..., reason: ..., currentIllness: ..., physicalExam: ..., functionalExam: ..., studies: ..., evolutionText: ..., studiesText: ..., prescriptionText: ..., diagnosisNotes: ..., treatmentPlan: ..., evolution: ..., plan: ..., notes: ..., vitals: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateConsultationWithClinicContextRef(dataConnect, updateConsultationWithClinicContextVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.user_update);
+console.log(data.consultation_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+  console.log(data.consultation_update);
+});
+```
+
+## SaveConsultationWithClinicContext
+You can execute the `SaveConsultationWithClinicContext` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+saveConsultationWithClinicContext(vars: SaveConsultationWithClinicContextVariables): MutationPromise<SaveConsultationWithClinicContextData, SaveConsultationWithClinicContextVariables>;
+
+interface SaveConsultationWithClinicContextRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: SaveConsultationWithClinicContextVariables): MutationRef<SaveConsultationWithClinicContextData, SaveConsultationWithClinicContextVariables>;
+}
+export const saveConsultationWithClinicContextRef: SaveConsultationWithClinicContextRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+saveConsultationWithClinicContext(dc: DataConnect, vars: SaveConsultationWithClinicContextVariables): MutationPromise<SaveConsultationWithClinicContextData, SaveConsultationWithClinicContextVariables>;
+
+interface SaveConsultationWithClinicContextRef {
+  ...
+  (dc: DataConnect, vars: SaveConsultationWithClinicContextVariables): MutationRef<SaveConsultationWithClinicContextData, SaveConsultationWithClinicContextVariables>;
+}
+export const saveConsultationWithClinicContextRef: SaveConsultationWithClinicContextRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the saveConsultationWithClinicContextRef:
+```typescript
+const name = saveConsultationWithClinicContextRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `SaveConsultationWithClinicContext` mutation requires an argument of type `SaveConsultationWithClinicContextVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface SaveConsultationWithClinicContextVariables {
+  id: UUIDString;
+  clinicId: UUIDString;
+  status: string;
+  nextVisitAt?: TimestampString | null;
+  reason?: string | null;
+  currentIllness?: string | null;
+  physicalExam?: string | null;
+  functionalExam?: string | null;
+  studies?: string | null;
+  evolutionText?: string | null;
+  studiesText?: string | null;
+  prescriptionText?: string | null;
+  diagnosisNotes?: string | null;
+  treatmentPlan?: string | null;
+  evolution?: string | null;
+  plan?: string | null;
+  notes?: string | null;
+  vitals: unknown;
+}
+```
+### Return Type
+Recall that executing the `SaveConsultationWithClinicContext` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `SaveConsultationWithClinicContextData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface SaveConsultationWithClinicContextData {
+  user_update?: User_Key | null;
+  consultation_update?: Consultation_Key | null;
+}
+```
+### Using `SaveConsultationWithClinicContext`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, saveConsultationWithClinicContext, SaveConsultationWithClinicContextVariables } from '@historias/dataconnect';
+
+// The `SaveConsultationWithClinicContext` mutation requires an argument of type `SaveConsultationWithClinicContextVariables`:
+const saveConsultationWithClinicContextVars: SaveConsultationWithClinicContextVariables = {
+  id: ...,
+  clinicId: ...,
+  status: ...,
+  nextVisitAt: ..., // optional
+  reason: ..., // optional
+  currentIllness: ..., // optional
+  physicalExam: ..., // optional
+  functionalExam: ..., // optional
+  studies: ..., // optional
+  evolutionText: ..., // optional
+  studiesText: ..., // optional
+  prescriptionText: ..., // optional
+  diagnosisNotes: ..., // optional
+  treatmentPlan: ..., // optional
+  evolution: ..., // optional
+  plan: ..., // optional
+  notes: ..., // optional
+  vitals: ...,
+};
+
+// Call the `saveConsultationWithClinicContext()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await saveConsultationWithClinicContext(saveConsultationWithClinicContextVars);
+// Variables can be defined inline as well.
+const { data } = await saveConsultationWithClinicContext({ id: ..., clinicId: ..., status: ..., nextVisitAt: ..., reason: ..., currentIllness: ..., physicalExam: ..., functionalExam: ..., studies: ..., evolutionText: ..., studiesText: ..., prescriptionText: ..., diagnosisNotes: ..., treatmentPlan: ..., evolution: ..., plan: ..., notes: ..., vitals: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await saveConsultationWithClinicContext(dataConnect, saveConsultationWithClinicContextVars);
+
+console.log(data.user_update);
+console.log(data.consultation_update);
+
+// Or, you can use the `Promise` API.
+saveConsultationWithClinicContext(saveConsultationWithClinicContextVars).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+  console.log(data.consultation_update);
+});
+```
+
+### Using `SaveConsultationWithClinicContext`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, saveConsultationWithClinicContextRef, SaveConsultationWithClinicContextVariables } from '@historias/dataconnect';
+
+// The `SaveConsultationWithClinicContext` mutation requires an argument of type `SaveConsultationWithClinicContextVariables`:
+const saveConsultationWithClinicContextVars: SaveConsultationWithClinicContextVariables = {
+  id: ...,
+  clinicId: ...,
+  status: ...,
+  nextVisitAt: ..., // optional
+  reason: ..., // optional
+  currentIllness: ..., // optional
+  physicalExam: ..., // optional
+  functionalExam: ..., // optional
+  studies: ..., // optional
+  evolutionText: ..., // optional
+  studiesText: ..., // optional
+  prescriptionText: ..., // optional
+  diagnosisNotes: ..., // optional
+  treatmentPlan: ..., // optional
+  evolution: ..., // optional
+  plan: ..., // optional
+  notes: ..., // optional
+  vitals: ...,
+};
+
+// Call the `saveConsultationWithClinicContextRef()` function to get a reference to the mutation.
+const ref = saveConsultationWithClinicContextRef(saveConsultationWithClinicContextVars);
+// Variables can be defined inline as well.
+const ref = saveConsultationWithClinicContextRef({ id: ..., clinicId: ..., status: ..., nextVisitAt: ..., reason: ..., currentIllness: ..., physicalExam: ..., functionalExam: ..., studies: ..., evolutionText: ..., studiesText: ..., prescriptionText: ..., diagnosisNotes: ..., treatmentPlan: ..., evolution: ..., plan: ..., notes: ..., vitals: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = saveConsultationWithClinicContextRef(dataConnect, saveConsultationWithClinicContextVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.user_update);
+console.log(data.consultation_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+  console.log(data.consultation_update);
+});
+```
+
+## SignConsultationWithClinicContext
+You can execute the `SignConsultationWithClinicContext` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+signConsultationWithClinicContext(vars: SignConsultationWithClinicContextVariables): MutationPromise<SignConsultationWithClinicContextData, SignConsultationWithClinicContextVariables>;
+
+interface SignConsultationWithClinicContextRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: SignConsultationWithClinicContextVariables): MutationRef<SignConsultationWithClinicContextData, SignConsultationWithClinicContextVariables>;
+}
+export const signConsultationWithClinicContextRef: SignConsultationWithClinicContextRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+signConsultationWithClinicContext(dc: DataConnect, vars: SignConsultationWithClinicContextVariables): MutationPromise<SignConsultationWithClinicContextData, SignConsultationWithClinicContextVariables>;
+
+interface SignConsultationWithClinicContextRef {
+  ...
+  (dc: DataConnect, vars: SignConsultationWithClinicContextVariables): MutationRef<SignConsultationWithClinicContextData, SignConsultationWithClinicContextVariables>;
+}
+export const signConsultationWithClinicContextRef: SignConsultationWithClinicContextRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the signConsultationWithClinicContextRef:
+```typescript
+const name = signConsultationWithClinicContextRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `SignConsultationWithClinicContext` mutation requires an argument of type `SignConsultationWithClinicContextVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface SignConsultationWithClinicContextVariables {
+  id: UUIDString;
+  clinicId: UUIDString;
+  signedById: UUIDString;
+  appointmentId?: UUIDString | null;
+  skipAppointmentUpdate: boolean;
+  nextVisitAt?: TimestampString | null;
+  reason?: string | null;
+  currentIllness?: string | null;
+  physicalExam?: string | null;
+  functionalExam?: string | null;
+  studies?: string | null;
+  evolutionText?: string | null;
+  studiesText?: string | null;
+  prescriptionText?: string | null;
+  diagnosisNotes?: string | null;
+  treatmentPlan?: string | null;
+  evolution?: string | null;
+  plan?: string | null;
+  notes?: string | null;
+  vitals: unknown;
+}
+```
+### Return Type
+Recall that executing the `SignConsultationWithClinicContext` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `SignConsultationWithClinicContextData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface SignConsultationWithClinicContextData {
+  user_update?: User_Key | null;
+  consultation_update?: Consultation_Key | null;
+  appointment_update?: Appointment_Key | null;
+}
+```
+### Using `SignConsultationWithClinicContext`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, signConsultationWithClinicContext, SignConsultationWithClinicContextVariables } from '@historias/dataconnect';
+
+// The `SignConsultationWithClinicContext` mutation requires an argument of type `SignConsultationWithClinicContextVariables`:
+const signConsultationWithClinicContextVars: SignConsultationWithClinicContextVariables = {
+  id: ...,
+  clinicId: ...,
+  signedById: ...,
+  appointmentId: ..., // optional
+  skipAppointmentUpdate: ...,
+  nextVisitAt: ..., // optional
+  reason: ..., // optional
+  currentIllness: ..., // optional
+  physicalExam: ..., // optional
+  functionalExam: ..., // optional
+  studies: ..., // optional
+  evolutionText: ..., // optional
+  studiesText: ..., // optional
+  prescriptionText: ..., // optional
+  diagnosisNotes: ..., // optional
+  treatmentPlan: ..., // optional
+  evolution: ..., // optional
+  plan: ..., // optional
+  notes: ..., // optional
+  vitals: ...,
+};
+
+// Call the `signConsultationWithClinicContext()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await signConsultationWithClinicContext(signConsultationWithClinicContextVars);
+// Variables can be defined inline as well.
+const { data } = await signConsultationWithClinicContext({ id: ..., clinicId: ..., signedById: ..., appointmentId: ..., skipAppointmentUpdate: ..., nextVisitAt: ..., reason: ..., currentIllness: ..., physicalExam: ..., functionalExam: ..., studies: ..., evolutionText: ..., studiesText: ..., prescriptionText: ..., diagnosisNotes: ..., treatmentPlan: ..., evolution: ..., plan: ..., notes: ..., vitals: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await signConsultationWithClinicContext(dataConnect, signConsultationWithClinicContextVars);
+
+console.log(data.user_update);
+console.log(data.consultation_update);
+console.log(data.appointment_update);
+
+// Or, you can use the `Promise` API.
+signConsultationWithClinicContext(signConsultationWithClinicContextVars).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+  console.log(data.consultation_update);
+  console.log(data.appointment_update);
+});
+```
+
+### Using `SignConsultationWithClinicContext`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, signConsultationWithClinicContextRef, SignConsultationWithClinicContextVariables } from '@historias/dataconnect';
+
+// The `SignConsultationWithClinicContext` mutation requires an argument of type `SignConsultationWithClinicContextVariables`:
+const signConsultationWithClinicContextVars: SignConsultationWithClinicContextVariables = {
+  id: ...,
+  clinicId: ...,
+  signedById: ...,
+  appointmentId: ..., // optional
+  skipAppointmentUpdate: ...,
+  nextVisitAt: ..., // optional
+  reason: ..., // optional
+  currentIllness: ..., // optional
+  physicalExam: ..., // optional
+  functionalExam: ..., // optional
+  studies: ..., // optional
+  evolutionText: ..., // optional
+  studiesText: ..., // optional
+  prescriptionText: ..., // optional
+  diagnosisNotes: ..., // optional
+  treatmentPlan: ..., // optional
+  evolution: ..., // optional
+  plan: ..., // optional
+  notes: ..., // optional
+  vitals: ...,
+};
+
+// Call the `signConsultationWithClinicContextRef()` function to get a reference to the mutation.
+const ref = signConsultationWithClinicContextRef(signConsultationWithClinicContextVars);
+// Variables can be defined inline as well.
+const ref = signConsultationWithClinicContextRef({ id: ..., clinicId: ..., signedById: ..., appointmentId: ..., skipAppointmentUpdate: ..., nextVisitAt: ..., reason: ..., currentIllness: ..., physicalExam: ..., functionalExam: ..., studies: ..., evolutionText: ..., studiesText: ..., prescriptionText: ..., diagnosisNotes: ..., treatmentPlan: ..., evolution: ..., plan: ..., notes: ..., vitals: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = signConsultationWithClinicContextRef(dataConnect, signConsultationWithClinicContextVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.user_update);
+console.log(data.consultation_update);
+console.log(data.appointment_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+  console.log(data.consultation_update);
+  console.log(data.appointment_update);
 });
 ```
 
@@ -3083,7 +3792,7 @@ import { connectorConfig, deleteConsultation, DeleteConsultationVariables } from
 
 // The `DeleteConsultation` mutation requires an argument of type `DeleteConsultationVariables`:
 const deleteConsultationVars: DeleteConsultationVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `deleteConsultation()` function to execute the mutation.
@@ -3113,7 +3822,7 @@ import { connectorConfig, deleteConsultationRef, DeleteConsultationVariables } f
 
 // The `DeleteConsultation` mutation requires an argument of type `DeleteConsultationVariables`:
 const deleteConsultationVars: DeleteConsultationVariables = {
-  id: ..., 
+  id: ...,
 };
 
 // Call the `deleteConsultationRef()` function to get a reference to the mutation.
@@ -3134,6 +3843,123 @@ console.log(data.consultation_update);
 // Or, you can use the `Promise` API.
 executeMutation(ref).then((response) => {
   const data = response.data;
+  console.log(data.consultation_update);
+});
+```
+
+## DeleteConsultationWithClinicContext
+You can execute the `DeleteConsultationWithClinicContext` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+deleteConsultationWithClinicContext(vars: DeleteConsultationWithClinicContextVariables): MutationPromise<DeleteConsultationWithClinicContextData, DeleteConsultationWithClinicContextVariables>;
+
+interface DeleteConsultationWithClinicContextRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteConsultationWithClinicContextVariables): MutationRef<DeleteConsultationWithClinicContextData, DeleteConsultationWithClinicContextVariables>;
+}
+export const deleteConsultationWithClinicContextRef: DeleteConsultationWithClinicContextRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+deleteConsultationWithClinicContext(dc: DataConnect, vars: DeleteConsultationWithClinicContextVariables): MutationPromise<DeleteConsultationWithClinicContextData, DeleteConsultationWithClinicContextVariables>;
+
+interface DeleteConsultationWithClinicContextRef {
+  ...
+  (dc: DataConnect, vars: DeleteConsultationWithClinicContextVariables): MutationRef<DeleteConsultationWithClinicContextData, DeleteConsultationWithClinicContextVariables>;
+}
+export const deleteConsultationWithClinicContextRef: DeleteConsultationWithClinicContextRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the deleteConsultationWithClinicContextRef:
+```typescript
+const name = deleteConsultationWithClinicContextRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DeleteConsultationWithClinicContext` mutation requires an argument of type `DeleteConsultationWithClinicContextVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DeleteConsultationWithClinicContextVariables {
+  id: UUIDString;
+  clinicId: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DeleteConsultationWithClinicContext` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DeleteConsultationWithClinicContextData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DeleteConsultationWithClinicContextData {
+  user_update?: User_Key | null;
+  consultation_update?: Consultation_Key | null;
+}
+```
+### Using `DeleteConsultationWithClinicContext`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, deleteConsultationWithClinicContext, DeleteConsultationWithClinicContextVariables } from '@historias/dataconnect';
+
+// The `DeleteConsultationWithClinicContext` mutation requires an argument of type `DeleteConsultationWithClinicContextVariables`:
+const deleteConsultationWithClinicContextVars: DeleteConsultationWithClinicContextVariables = {
+  id: ...,
+  clinicId: ...,
+};
+
+// Call the `deleteConsultationWithClinicContext()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await deleteConsultationWithClinicContext(deleteConsultationWithClinicContextVars);
+// Variables can be defined inline as well.
+const { data } = await deleteConsultationWithClinicContext({ id: ..., clinicId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await deleteConsultationWithClinicContext(dataConnect, deleteConsultationWithClinicContextVars);
+
+console.log(data.user_update);
+console.log(data.consultation_update);
+
+// Or, you can use the `Promise` API.
+deleteConsultationWithClinicContext(deleteConsultationWithClinicContextVars).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+  console.log(data.consultation_update);
+});
+```
+
+### Using `DeleteConsultationWithClinicContext`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, deleteConsultationWithClinicContextRef, DeleteConsultationWithClinicContextVariables } from '@historias/dataconnect';
+
+// The `DeleteConsultationWithClinicContext` mutation requires an argument of type `DeleteConsultationWithClinicContextVariables`:
+const deleteConsultationWithClinicContextVars: DeleteConsultationWithClinicContextVariables = {
+  id: ...,
+  clinicId: ...,
+};
+
+// Call the `deleteConsultationWithClinicContextRef()` function to get a reference to the mutation.
+const ref = deleteConsultationWithClinicContextRef(deleteConsultationWithClinicContextVars);
+// Variables can be defined inline as well.
+const ref = deleteConsultationWithClinicContextRef({ id: ..., clinicId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = deleteConsultationWithClinicContextRef(dataConnect, deleteConsultationWithClinicContextVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.user_update);
+console.log(data.consultation_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
   console.log(data.consultation_update);
 });
 ```
@@ -3194,8 +4020,8 @@ import { connectorConfig, signConsultation, SignConsultationVariables } from '@h
 
 // The `SignConsultation` mutation requires an argument of type `SignConsultationVariables`:
 const signConsultationVars: SignConsultationVariables = {
-  id: ..., 
-  signedById: ..., 
+  id: ...,
+  signedById: ...,
 };
 
 // Call the `signConsultation()` function to execute the mutation.
@@ -3227,8 +4053,8 @@ import { connectorConfig, signConsultationRef, SignConsultationVariables } from 
 
 // The `SignConsultation` mutation requires an argument of type `SignConsultationVariables`:
 const signConsultationVars: SignConsultationVariables = {
-  id: ..., 
-  signedById: ..., 
+  id: ...,
+  signedById: ...,
 };
 
 // Call the `signConsultationRef()` function to get a reference to the mutation.
@@ -3318,15 +4144,15 @@ import { connectorConfig, createPatientStudy, CreatePatientStudyVariables } from
 
 // The `CreatePatientStudy` mutation requires an argument of type `CreatePatientStudyVariables`:
 const createPatientStudyVars: CreatePatientStudyVariables = {
-  clinicId: ..., 
-  patientId: ..., 
+  clinicId: ...,
+  patientId: ...,
   professionalId: ..., // optional
-  studyType: ..., 
-  studyName: ..., 
-  performedAt: ..., 
+  studyType: ...,
+  studyName: ...,
+  performedAt: ...,
   resultSummary: ..., // optional
   resultText: ..., // optional
-  metadata: ..., 
+  metadata: ...,
 };
 
 // Call the `createPatientStudy()` function to execute the mutation.
@@ -3358,15 +4184,15 @@ import { connectorConfig, createPatientStudyRef, CreatePatientStudyVariables } f
 
 // The `CreatePatientStudy` mutation requires an argument of type `CreatePatientStudyVariables`:
 const createPatientStudyVars: CreatePatientStudyVariables = {
-  clinicId: ..., 
-  patientId: ..., 
+  clinicId: ...,
+  patientId: ...,
   professionalId: ..., // optional
-  studyType: ..., 
-  studyName: ..., 
-  performedAt: ..., 
+  studyType: ...,
+  studyName: ...,
+  performedAt: ...,
   resultSummary: ..., // optional
   resultText: ..., // optional
-  metadata: ..., 
+  metadata: ...,
 };
 
 // Call the `createPatientStudyRef()` function to get a reference to the mutation.

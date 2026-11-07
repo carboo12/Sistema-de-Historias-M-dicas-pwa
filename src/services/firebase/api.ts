@@ -16,12 +16,12 @@ import {
   listPatientsByTerms,
   listPatients,
   listPatientStudies,
-  signConsultation,
+  signConsultationWithClinicContext,
   updateAppointmentStatus,
   updateAppointment,
-  updateConsultation,
-  updatePatient,
-  deleteConsultation,
+  deleteConsultationWithClinicContext,
+  updatePatientWithClinicContext,
+  saveConsultationWithClinicContext,
 } from '@historias/dataconnect';
 import { ApiError } from '../../lib/api';
 import type {
@@ -70,6 +70,19 @@ async function sessionContext() {
     clinicId: user.clinic.id,
     professionalId: user.professional_on_user?.id ?? null
   };
+}
+
+async function authenticatedClinicId() {
+  const { auth } = requireFirebase();
+  await auth.authStateReady();
+  const firebaseUser = auth.currentUser;
+  if (!firebaseUser) throw new ApiError('La sesión de Firebase expiró. Inicia sesión de nuevo.', 401, 'anonymous');
+  // Resolve/refresh the Auth token before the Data Connect SDK builds its request.
+  await firebaseUser.getIdToken();
+  const context = await sessionContext();
+  const clinicId = normalizeUuid(context.clinicId);
+  if (!clinicId) throw new ApiError('La clínica de la sesión tiene un identificador inválido', 400, 'invalid_clinic_id');
+  return clinicId;
 }
 
 function makeRecordNumber() {
@@ -354,13 +367,15 @@ export const firebaseApi = {
     async update(id: string, payload: Record<string, unknown>) {
       const detail = await fetchPatientDetail(id);
       const current = detail.patient;
+      const clinicId = await authenticatedClinicId();
       const fullName = String(payload.fullName ?? current.fullName).trim();
       const parts = splitName(fullName);
       const nextDocumentNumber = payload.documentNumber === undefined
         ? current.documentNumber
         : (payload.documentNumber == null || !String(payload.documentNumber).trim() ? null : String(payload.documentNumber).trim());
-      await updatePatient(dc(), {
+      const variables = {
         id,
+        clinicId,
         documentType: payload.documentType === undefined ? current.documentType : (payload.documentType == null || !String(payload.documentType).trim() ? null : String(payload.documentType)),
         documentNumber: nextDocumentNumber,
         documentVerified: Boolean(payload.documentVerified ?? current.documentVerified) && Boolean(nextDocumentNumber),
@@ -390,7 +405,21 @@ export const firebaseApi = {
         notes: (payload.notes as string | null) ?? current.notes,
         isSuspended: Boolean(payload.isSuspended ?? current.isSuspended),
         suspensionReason: (payload.suspensionReason as string | null) ?? current.suspensionReason
-      });
+      };
+      try {
+        await updatePatientWithClinicContext(dc(), variables);
+      } catch (cause) {
+        const error = cause as { code?: string; message?: string } | null;
+        console.error('Data Connect UpdatePatient falló', {
+          patientId: id,
+          clinicId,
+          sentFields: Object.keys(variables),
+          code: error?.code,
+          message: error?.message ?? String(cause),
+          cause
+        });
+        throw cause;
+      }
       const updated = await fetchPatientDetail(id);
       return { patient: updated.patient };
     },
@@ -587,20 +616,25 @@ export const firebaseApi = {
       };
     },
     async update(id: string, payload: Record<string, unknown>) {
+      const consultationId = normalizeUuid(id);
+      if (!consultationId) throw new ApiError('El identificador de la consulta no es válido; no se creará una consulta nueva.', 400, 'invalid_consultation_id');
+      const clinicId = await authenticatedClinicId();
       const notes = payload.prescriptionItems
         ? `__HM_RX_V1__${JSON.stringify({ notes: payload.notes ?? null, prescriptionItems: payload.prescriptionItems })}`
         : (payload.notes as string | null) ?? null;
       const variables = {
-        id,
+        id: consultationId,
+        clinicId,
+        status: String(payload.status ?? 'borrador'),
         nextVisitAt: (payload.nextVisitAt as string | null) ?? null,
         reason: (payload.reason as string | null) ?? null,
         currentIllness: (payload.currentIllness as string | null) ?? null,
         physicalExam: (payload.physicalExam as string | null) ?? null,
         functionalExam: (payload.functionalExam as string | null) ?? null,
         studies: (payload.studies as string | null) ?? null,
-        evolutionText: (payload.evolutionText as string | null) ?? null,
-        studiesText: (payload.studiesText as string | null) ?? null,
-        prescriptionText: (payload.prescriptionText as string | null) ?? null,
+        evolutionText: String(payload.evolutionText ?? ''),
+        studiesText: String(payload.studiesText ?? ''),
+        prescriptionText: String(payload.prescriptionText ?? ''),
         diagnosisNotes: (payload.diagnosisNotes as string | null) ?? null,
         treatmentPlan: (payload.treatmentPlan as string | null) ?? null,
         evolution: (payload.evolution as string | null) ?? null,
@@ -609,13 +643,13 @@ export const firebaseApi = {
         vitals: payload.vitals ?? {}
       };
       try {
-        await updateConsultation(dc(), variables);
-        const record = await fetchConsultation(id);
+        await saveConsultationWithClinicContext(dc(), variables);
+        const record = await fetchConsultation(consultationId);
         return { consultation: mapConsultation(record) };
       } catch (cause) {
         const error = cause as { code?: string; message?: string } | null;
         console.error('Data Connect UpdateConsultation falló', {
-          consultationId: id,
+          consultationId,
           sentFields: Object.keys(variables),
           code: error?.code,
           message: error?.message ?? String(cause),
@@ -625,17 +659,71 @@ export const firebaseApi = {
       }
     },
     async delete(id: string) {
-      await deleteConsultation(dc(), { id });
-      return { id };
+      const consultationId = normalizeUuid(id);
+      if (!consultationId) throw new ApiError('El identificador de la consulta no es válido.', 400, 'invalid_consultation_id');
+      const clinicId = await authenticatedClinicId();
+      try {
+        await deleteConsultationWithClinicContext(dc(), { id: consultationId, clinicId });
+        return { id: consultationId };
+      } catch (cause) {
+        const error = cause as { code?: string; message?: string } | null;
+        console.error('Data Connect DeleteConsultation falló', {
+          consultationId,
+          clinicId,
+          code: error?.code,
+          message: error?.message ?? String(cause),
+          cause
+        });
+        throw cause;
+      }
     },
-    async sign(id: string) {
+    async sign(id: string, payload: Record<string, unknown>, appointmentId: string | null) {
+      const consultationId = normalizeUuid(id);
+      if (!consultationId) throw new ApiError('El identificador de la consulta no es válido.', 400, 'invalid_consultation_id');
+      const clinicId = await authenticatedClinicId();
       const { userId } = await sessionContext();
-      await signConsultation(dc(), { id, signedById: userId });
-      const record = await fetchConsultation(id);
-      return {
-        consultation: mapConsultation(record),
-        signedAt: record.signedAt ?? new Date().toISOString()
+      const notes = payload.prescriptionItems
+        ? `__HM_RX_V1__${JSON.stringify({ notes: payload.notes ?? null, prescriptionItems: payload.prescriptionItems })}`
+        : (payload.notes as string | null) ?? null;
+      const variables = {
+        id: consultationId,
+        clinicId,
+        signedById: userId,
+        appointmentId,
+        skipAppointmentUpdate: !appointmentId,
+        nextVisitAt: (payload.nextVisitAt as string | null) ?? null,
+        reason: (payload.reason as string | null) ?? null,
+        currentIllness: (payload.currentIllness as string | null) ?? null,
+        physicalExam: (payload.physicalExam as string | null) ?? null,
+        functionalExam: (payload.functionalExam as string | null) ?? null,
+        studies: (payload.studies as string | null) ?? null,
+        evolutionText: String(payload.evolutionText ?? ''),
+        studiesText: String(payload.studiesText ?? ''),
+        prescriptionText: String(payload.prescriptionText ?? ''),
+        diagnosisNotes: (payload.diagnosisNotes as string | null) ?? null,
+        treatmentPlan: (payload.treatmentPlan as string | null) ?? null,
+        evolution: (payload.evolution as string | null) ?? null,
+        plan: (payload.plan as string | null) ?? null,
+        notes,
+        vitals: payload.vitals ?? {}
       };
+      try {
+        await signConsultationWithClinicContext(dc(), variables);
+        const record = await fetchConsultation(consultationId);
+        return { consultation: mapConsultation(record), signedAt: record.signedAt ?? new Date().toISOString() };
+      } catch (cause) {
+        const error = cause as { code?: string; message?: string } | null;
+        console.error('Data Connect SignConsultation falló', {
+          consultationId,
+          clinicId,
+          appointmentId,
+          sentFields: Object.keys(variables),
+          code: error?.code,
+          message: error?.message ?? String(cause),
+          cause
+        });
+        throw cause;
+      }
     },
   },
   studies: {

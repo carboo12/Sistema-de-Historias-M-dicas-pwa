@@ -193,12 +193,21 @@ export interface CreatePatientVariables {
 }
 
 export interface DeleteConsultationData {
-  consultations: ({ id: UUIDString })[];
-  consultation_delete?: Consultation_Key | null;
+  consultation_update?: Consultation_Key | null;
 }
 
 export interface DeleteConsultationVariables {
   id: UUIDString;
+}
+
+export interface DeleteConsultationWithClinicContextData {
+  user_update?: User_Key | null;
+  consultation_update?: Consultation_Key | null;
+}
+
+export interface DeleteConsultationWithClinicContextVariables {
+  id: UUIDString;
+  clinicId: UUIDString;
 }
 
 export interface DeletePatientData {
@@ -628,6 +637,32 @@ export interface Professional_Key {
   __typename?: 'Professional_Key';
 }
 
+export interface SaveConsultationWithClinicContextData {
+  user_update?: User_Key | null;
+  consultation_update?: Consultation_Key | null;
+}
+
+export interface SaveConsultationWithClinicContextVariables {
+  id: UUIDString;
+  clinicId: UUIDString;
+  status: string;
+  nextVisitAt?: TimestampString | null;
+  reason?: string | null;
+  currentIllness?: string | null;
+  physicalExam?: string | null;
+  functionalExam?: string | null;
+  studies?: string | null;
+  evolutionText?: string | null;
+  studiesText?: string | null;
+  prescriptionText?: string | null;
+  diagnosisNotes?: string | null;
+  treatmentPlan?: string | null;
+  evolution?: string | null;
+  plan?: string | null;
+  notes?: string | null;
+  vitals: unknown;
+}
+
 export interface SignConsultationData {
   user_update?: User_Key | null;
   consultation_update?: Consultation_Key | null;
@@ -636,6 +671,35 @@ export interface SignConsultationData {
 export interface SignConsultationVariables {
   id: UUIDString;
   signedById: UUIDString;
+}
+
+export interface SignConsultationWithClinicContextData {
+  user_update?: User_Key | null;
+  consultation_update?: Consultation_Key | null;
+  appointment_update?: Appointment_Key | null;
+}
+
+export interface SignConsultationWithClinicContextVariables {
+  id: UUIDString;
+  clinicId: UUIDString;
+  signedById: UUIDString;
+  appointmentId?: UUIDString | null;
+  skipAppointmentUpdate: boolean;
+  nextVisitAt?: TimestampString | null;
+  reason?: string | null;
+  currentIllness?: string | null;
+  physicalExam?: string | null;
+  functionalExam?: string | null;
+  studies?: string | null;
+  evolutionText?: string | null;
+  studiesText?: string | null;
+  prescriptionText?: string | null;
+  diagnosisNotes?: string | null;
+  treatmentPlan?: string | null;
+  evolution?: string | null;
+  plan?: string | null;
+  notes?: string | null;
+  vitals: unknown;
 }
 
 export interface Specialty_Key {
@@ -689,12 +753,75 @@ export interface UpdateConsultationVariables {
   vitals: unknown;
 }
 
+export interface UpdateConsultationWithClinicContextData {
+  user_update?: User_Key | null;
+  consultation_update?: Consultation_Key | null;
+}
+
+export interface UpdateConsultationWithClinicContextVariables {
+  id: UUIDString;
+  clinicId: UUIDString;
+  nextVisitAt?: TimestampString | null;
+  reason?: string | null;
+  currentIllness?: string | null;
+  physicalExam?: string | null;
+  functionalExam?: string | null;
+  studies?: string | null;
+  evolutionText?: string | null;
+  studiesText?: string | null;
+  prescriptionText?: string | null;
+  diagnosisNotes?: string | null;
+  treatmentPlan?: string | null;
+  evolution?: string | null;
+  plan?: string | null;
+  notes?: string | null;
+  vitals: unknown;
+}
+
 export interface UpdatePatientData {
   patient_update?: Patient_Key | null;
 }
 
 export interface UpdatePatientVariables {
   id: UUIDString;
+  documentType?: string | null;
+  documentNumber?: string | null;
+  documentVerified: boolean;
+  fullName: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  birthDate?: DateString | null;
+  ageOverride?: number | null;
+  birthDateEstimated: boolean;
+  sex: string;
+  maritalStatus: string;
+  bloodType?: string | null;
+  nationality?: string | null;
+  birthPlace?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  phone?: string | null;
+  mobile?: string | null;
+  email?: string | null;
+  occupation?: string | null;
+  isPrivate: boolean;
+  allergiesNotes?: string | null;
+  currentDiagnosisSummary?: string | null;
+  notes?: string | null;
+  isSuspended: boolean;
+  suspensionReason?: string | null;
+}
+
+export interface UpdatePatientWithClinicContextData {
+  user_update?: User_Key | null;
+  patient_update?: Patient_Key | null;
+}
+
+export interface UpdatePatientWithClinicContextVariables {
+  id: UUIDString;
+  clinicId: UUIDString;
   documentType?: string | null;
   documentNumber?: string | null;
   documentVerified: boolean;
@@ -765,6 +892,18 @@ export const updatePatientRef: UpdatePatientRef;
 
 export function updatePatient(vars: UpdatePatientVariables): MutationPromise<UpdatePatientData, UpdatePatientVariables>;
 export function updatePatient(dc: DataConnect, vars: UpdatePatientVariables): MutationPromise<UpdatePatientData, UpdatePatientVariables>;
+
+interface UpdatePatientWithClinicContextRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdatePatientWithClinicContextVariables): MutationRef<UpdatePatientWithClinicContextData, UpdatePatientWithClinicContextVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdatePatientWithClinicContextVariables): MutationRef<UpdatePatientWithClinicContextData, UpdatePatientWithClinicContextVariables>;
+  operationName: string;
+}
+export const updatePatientWithClinicContextRef: UpdatePatientWithClinicContextRef;
+
+export function updatePatientWithClinicContext(vars: UpdatePatientWithClinicContextVariables): MutationPromise<UpdatePatientWithClinicContextData, UpdatePatientWithClinicContextVariables>;
+export function updatePatientWithClinicContext(dc: DataConnect, vars: UpdatePatientWithClinicContextVariables): MutationPromise<UpdatePatientWithClinicContextData, UpdatePatientWithClinicContextVariables>;
 
 interface DeletePatientRef {
   /* Allow users to create refs without passing in DataConnect */
@@ -838,6 +977,42 @@ export const updateConsultationRef: UpdateConsultationRef;
 export function updateConsultation(vars: UpdateConsultationVariables): MutationPromise<UpdateConsultationData, UpdateConsultationVariables>;
 export function updateConsultation(dc: DataConnect, vars: UpdateConsultationVariables): MutationPromise<UpdateConsultationData, UpdateConsultationVariables>;
 
+interface UpdateConsultationWithClinicContextRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateConsultationWithClinicContextVariables): MutationRef<UpdateConsultationWithClinicContextData, UpdateConsultationWithClinicContextVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateConsultationWithClinicContextVariables): MutationRef<UpdateConsultationWithClinicContextData, UpdateConsultationWithClinicContextVariables>;
+  operationName: string;
+}
+export const updateConsultationWithClinicContextRef: UpdateConsultationWithClinicContextRef;
+
+export function updateConsultationWithClinicContext(vars: UpdateConsultationWithClinicContextVariables): MutationPromise<UpdateConsultationWithClinicContextData, UpdateConsultationWithClinicContextVariables>;
+export function updateConsultationWithClinicContext(dc: DataConnect, vars: UpdateConsultationWithClinicContextVariables): MutationPromise<UpdateConsultationWithClinicContextData, UpdateConsultationWithClinicContextVariables>;
+
+interface SaveConsultationWithClinicContextRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: SaveConsultationWithClinicContextVariables): MutationRef<SaveConsultationWithClinicContextData, SaveConsultationWithClinicContextVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: SaveConsultationWithClinicContextVariables): MutationRef<SaveConsultationWithClinicContextData, SaveConsultationWithClinicContextVariables>;
+  operationName: string;
+}
+export const saveConsultationWithClinicContextRef: SaveConsultationWithClinicContextRef;
+
+export function saveConsultationWithClinicContext(vars: SaveConsultationWithClinicContextVariables): MutationPromise<SaveConsultationWithClinicContextData, SaveConsultationWithClinicContextVariables>;
+export function saveConsultationWithClinicContext(dc: DataConnect, vars: SaveConsultationWithClinicContextVariables): MutationPromise<SaveConsultationWithClinicContextData, SaveConsultationWithClinicContextVariables>;
+
+interface SignConsultationWithClinicContextRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: SignConsultationWithClinicContextVariables): MutationRef<SignConsultationWithClinicContextData, SignConsultationWithClinicContextVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: SignConsultationWithClinicContextVariables): MutationRef<SignConsultationWithClinicContextData, SignConsultationWithClinicContextVariables>;
+  operationName: string;
+}
+export const signConsultationWithClinicContextRef: SignConsultationWithClinicContextRef;
+
+export function signConsultationWithClinicContext(vars: SignConsultationWithClinicContextVariables): MutationPromise<SignConsultationWithClinicContextData, SignConsultationWithClinicContextVariables>;
+export function signConsultationWithClinicContext(dc: DataConnect, vars: SignConsultationWithClinicContextVariables): MutationPromise<SignConsultationWithClinicContextData, SignConsultationWithClinicContextVariables>;
+
 interface DeleteConsultationRef {
   /* Allow users to create refs without passing in DataConnect */
   (vars: DeleteConsultationVariables): MutationRef<DeleteConsultationData, DeleteConsultationVariables>;
@@ -849,6 +1024,18 @@ export const deleteConsultationRef: DeleteConsultationRef;
 
 export function deleteConsultation(vars: DeleteConsultationVariables): MutationPromise<DeleteConsultationData, DeleteConsultationVariables>;
 export function deleteConsultation(dc: DataConnect, vars: DeleteConsultationVariables): MutationPromise<DeleteConsultationData, DeleteConsultationVariables>;
+
+interface DeleteConsultationWithClinicContextRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DeleteConsultationWithClinicContextVariables): MutationRef<DeleteConsultationWithClinicContextData, DeleteConsultationWithClinicContextVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DeleteConsultationWithClinicContextVariables): MutationRef<DeleteConsultationWithClinicContextData, DeleteConsultationWithClinicContextVariables>;
+  operationName: string;
+}
+export const deleteConsultationWithClinicContextRef: DeleteConsultationWithClinicContextRef;
+
+export function deleteConsultationWithClinicContext(vars: DeleteConsultationWithClinicContextVariables): MutationPromise<DeleteConsultationWithClinicContextData, DeleteConsultationWithClinicContextVariables>;
+export function deleteConsultationWithClinicContext(dc: DataConnect, vars: DeleteConsultationWithClinicContextVariables): MutationPromise<DeleteConsultationWithClinicContextData, DeleteConsultationWithClinicContextVariables>;
 
 interface SignConsultationRef {
   /* Allow users to create refs without passing in DataConnect */

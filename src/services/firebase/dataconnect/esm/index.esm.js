@@ -41,6 +41,18 @@ export function updatePatient(dcOrVars, vars) {
   return executeMutation(updatePatientRef(dcInstance, inputVars));
 }
 
+export const updatePatientWithClinicContextRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdatePatientWithClinicContext', inputVars);
+}
+updatePatientWithClinicContextRef.operationName = 'UpdatePatientWithClinicContext';
+
+export function updatePatientWithClinicContext(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(updatePatientWithClinicContextRef(dcInstance, inputVars));
+}
+
 export const deletePatientRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();
@@ -113,6 +125,42 @@ export function updateConsultation(dcOrVars, vars) {
   return executeMutation(updateConsultationRef(dcInstance, inputVars));
 }
 
+export const updateConsultationWithClinicContextRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateConsultationWithClinicContext', inputVars);
+}
+updateConsultationWithClinicContextRef.operationName = 'UpdateConsultationWithClinicContext';
+
+export function updateConsultationWithClinicContext(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(updateConsultationWithClinicContextRef(dcInstance, inputVars));
+}
+
+export const saveConsultationWithClinicContextRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'SaveConsultationWithClinicContext', inputVars);
+}
+saveConsultationWithClinicContextRef.operationName = 'SaveConsultationWithClinicContext';
+
+export function saveConsultationWithClinicContext(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(saveConsultationWithClinicContextRef(dcInstance, inputVars));
+}
+
+export const signConsultationWithClinicContextRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'SignConsultationWithClinicContext', inputVars);
+}
+signConsultationWithClinicContextRef.operationName = 'SignConsultationWithClinicContext';
+
+export function signConsultationWithClinicContext(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(signConsultationWithClinicContextRef(dcInstance, inputVars));
+}
+
 export const deleteConsultationRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();
@@ -123,6 +171,18 @@ deleteConsultationRef.operationName = 'DeleteConsultation';
 export function deleteConsultation(dcOrVars, vars) {
   const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
   return executeMutation(deleteConsultationRef(dcInstance, inputVars));
+}
+
+export const deleteConsultationWithClinicContextRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'DeleteConsultationWithClinicContext', inputVars);
+}
+deleteConsultationWithClinicContextRef.operationName = 'DeleteConsultationWithClinicContext';
+
+export function deleteConsultationWithClinicContext(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(deleteConsultationWithClinicContextRef(dcInstance, inputVars));
 }
 
 export const signConsultationRef = (dcOrVars, vars) => {

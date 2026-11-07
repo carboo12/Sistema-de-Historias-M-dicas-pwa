@@ -165,6 +165,89 @@ mutation UpdatePatient(
   ) @check(message: "No se encontró el paciente en esta clínica")
 }
 
+mutation UpdatePatientWithClinicContext(
+  $id: UUID!
+  $clinicId: UUID!
+  $documentType: String
+  $documentNumber: String
+  $documentVerified: Boolean!
+  $fullName: String!
+  $firstName: String
+  $lastName: String
+  $birthDate: Date
+  $ageOverride: Int
+  $birthDateEstimated: Boolean!
+  $sex: String!
+  $maritalStatus: String!
+  $bloodType: String
+  $nationality: String
+  $birthPlace: String
+  $address: String
+  $city: String
+  $state: String
+  $country: String
+  $phone: String
+  $mobile: String
+  $email: String
+  $occupation: String
+  $isPrivate: Boolean!
+  $allergiesNotes: String
+  $currentDiagnosisSummary: String
+  $notes: String
+  $isSuspended: Boolean!
+  $suspensionReason: String
+) @auth(level: USER) @transaction {
+  user_update(
+    first: {
+      where: {
+        firebaseUid: { eq_expr: "auth.uid" }
+        clinic: { id: { eq: $clinicId } }
+        isActive: { eq: true }
+      }
+    }
+    data: { lastLoginAt_expr: "request.time" }
+  ) @check(message: "La sesión no pertenece a la clínica del paciente")
+  patient_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinicId: { eq: $clinicId }
+        deletedAt: { isNull: true }
+      }
+    }
+    data: {
+      documentType: $documentType
+      documentNumber: $documentNumber
+      documentVerified: $documentVerified
+      fullName: $fullName
+      firstName: $firstName
+      lastName: $lastName
+      birthDate: $birthDate
+      ageOverride: $ageOverride
+      birthDateEstimated: $birthDateEstimated
+      sex: $sex
+      maritalStatus: $maritalStatus
+      bloodType: $bloodType
+      nationality: $nationality
+      birthPlace: $birthPlace
+      address: $address
+      city: $city
+      state: $state
+      country: $country
+      phone: $phone
+      mobile: $mobile
+      email: $email
+      occupation: $occupation
+      isPrivate: $isPrivate
+      allergiesNotes: $allergiesNotes
+      currentDiagnosisSummary: $currentDiagnosisSummary
+      notes: $notes
+      isSuspended: $isSuspended
+      suspensionReason: $suspensionReason
+    }
+  ) @check(message: "No se encontró el paciente en esta clínica")
+}
+
 mutation DeletePatient($id: UUID!) @auth(level: USER) @transaction {
   patient_update(
     first: {
@@ -352,18 +435,230 @@ mutation UpdateConsultation(
   ) @check(message: "No se encontró la consulta en esta clínica")
 }
 
-mutation DeleteConsultation($id: UUID!) @auth(level: USER) @transaction {
-  consultations(
-    where: {
-      id: { eq: $id }
-      clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
-      deletedAt: { isNull: true }
+mutation UpdateConsultationWithClinicContext(
+  $id: UUID!
+  $clinicId: UUID!
+  $nextVisitAt: Timestamp
+  $reason: String
+  $currentIllness: String
+  $physicalExam: String
+  $functionalExam: String
+  $studies: String
+  $evolutionText: String
+  $studiesText: String
+  $prescriptionText: String
+  $diagnosisNotes: String
+  $treatmentPlan: String
+  $evolution: String
+  $plan: String
+  $notes: String
+  $vitals: Any!
+) @auth(level: USER) @transaction {
+  user_update(
+    first: {
+      where: {
+        firebaseUid: { eq_expr: "auth.uid" }
+        clinic: { id: { eq: $clinicId } }
+        isActive: { eq: true }
+      }
     }
-    limit: 1
-  ) @check(message: "No se encontró la consulta en esta clínica") {
-    id
-  }
-  consultation_delete(id: $id)
+    data: { lastLoginAt_expr: "request.time" }
+  ) @check(message: "La sesión no pertenece a la clínica de la consulta")
+  consultation_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinicId: { eq: $clinicId }
+        deletedAt: { isNull: true }
+      }
+    }
+    data: {
+      nextVisitAt: $nextVisitAt
+      reason: $reason
+      currentIllness: $currentIllness
+      physicalExam: $physicalExam
+      functionalExam: $functionalExam
+      studies: $studies
+      evolutionText: $evolutionText
+      studiesText: $studiesText
+      prescriptionText: $prescriptionText
+      diagnosisNotes: $diagnosisNotes
+      treatmentPlan: $treatmentPlan
+      evolution: $evolution
+      plan: $plan
+      notes: $notes
+      vitals: $vitals
+    }
+  ) @check(message: "No se encontró la consulta en esta clínica")
+}
+
+mutation SaveConsultationWithClinicContext(
+  $id: UUID!
+  $clinicId: UUID!
+  $status: String!
+  $nextVisitAt: Timestamp
+  $reason: String
+  $currentIllness: String
+  $physicalExam: String
+  $functionalExam: String
+  $studies: String
+  $evolutionText: String
+  $studiesText: String
+  $prescriptionText: String
+  $diagnosisNotes: String
+  $treatmentPlan: String
+  $evolution: String
+  $plan: String
+  $notes: String
+  $vitals: Any!
+) @auth(level: USER) @transaction {
+  user_update(
+    first: {
+      where: {
+        firebaseUid: { eq_expr: "auth.uid" }
+        clinic: { id: { eq: $clinicId } }
+        isActive: { eq: true }
+      }
+    }
+    data: { lastLoginAt_expr: "request.time" }
+  ) @check(message: "La sesión no pertenece a la clínica de la consulta")
+  consultation_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinicId: { eq: $clinicId }
+        deletedAt: { isNull: true }
+      }
+    }
+    data: {
+      status: $status
+      nextVisitAt: $nextVisitAt
+      reason: $reason
+      currentIllness: $currentIllness
+      physicalExam: $physicalExam
+      functionalExam: $functionalExam
+      studies: $studies
+      evolutionText: $evolutionText
+      studiesText: $studiesText
+      prescriptionText: $prescriptionText
+      diagnosisNotes: $diagnosisNotes
+      treatmentPlan: $treatmentPlan
+      evolution: $evolution
+      plan: $plan
+      notes: $notes
+      vitals: $vitals
+    }
+  ) @check(message: "No se encontró la consulta en esta clínica")
+}
+
+mutation SignConsultationWithClinicContext(
+  $id: UUID!
+  $clinicId: UUID!
+  $signedById: UUID!
+  $appointmentId: UUID
+  $skipAppointmentUpdate: Boolean!
+  $nextVisitAt: Timestamp
+  $reason: String
+  $currentIllness: String
+  $physicalExam: String
+  $functionalExam: String
+  $studies: String
+  $evolutionText: String
+  $studiesText: String
+  $prescriptionText: String
+  $diagnosisNotes: String
+  $treatmentPlan: String
+  $evolution: String
+  $plan: String
+  $notes: String
+  $vitals: Any!
+) @auth(level: USER) @transaction {
+  user_update(
+    first: {
+      where: {
+        id: { eq: $signedById }
+        firebaseUid: { eq_expr: "auth.uid" }
+        clinic: { id: { eq: $clinicId } }
+        isActive: { eq: true }
+      }
+    }
+    data: { lastLoginAt_expr: "request.time" }
+  ) @check(message: "El usuario autenticado no está activo en esta clínica")
+  consultation_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinicId: { eq: $clinicId }
+        status: { eq: "borrador" }
+        deletedAt: { isNull: true }
+      }
+    }
+    data: {
+      status: "firmada"
+      signedAt_expr: "request.time"
+      signedById: $signedById
+      nextVisitAt: $nextVisitAt
+      reason: $reason
+      currentIllness: $currentIllness
+      physicalExam: $physicalExam
+      functionalExam: $functionalExam
+      studies: $studies
+      evolutionText: $evolutionText
+      studiesText: $studiesText
+      prescriptionText: $prescriptionText
+      diagnosisNotes: $diagnosisNotes
+      treatmentPlan: $treatmentPlan
+      evolution: $evolution
+      plan: $plan
+      notes: $notes
+      vitals: $vitals
+    }
+  ) @check(message: "No se encontró una consulta en borrador para firmar")
+  appointment_update(
+    first: {
+      where: {
+        id: { eq: $appointmentId }
+        clinicId: { eq: $clinicId }
+      }
+    }
+    data: { status: "atendida" }
+  ) @skip(if: $skipAppointmentUpdate) @check(message: "No se encontró la cita asociada en esta clínica")
+}
+
+mutation DeleteConsultation($id: UUID!) @auth(level: USER) @transaction {
+  consultation_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+        deletedAt: { isNull: true }
+      }
+    }
+    data: { deletedAt_expr: "request.time" }
+  ) @check(message: "No se encontró la consulta en esta clínica")
+}
+
+mutation DeleteConsultationWithClinicContext($id: UUID!, $clinicId: UUID!) @auth(level: USER) @transaction {
+  user_update(
+    first: {
+      where: {
+        firebaseUid: { eq_expr: "auth.uid" }
+        clinic: { id: { eq: $clinicId } }
+        isActive: { eq: true }
+      }
+    }
+    data: { lastLoginAt_expr: "request.time" }
+  ) @check(message: "La sesión no pertenece a la clínica de la consulta")
+  consultation_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinicId: { eq: $clinicId }
+        deletedAt: { isNull: true }
+      }
+    }
+    data: { deletedAt_expr: "request.time" }
+  ) @check(message: "No se encontró la consulta en esta clínica")
 }
 
 mutation SignConsultation($id: UUID!, $signedById: UUID!) @auth(level: USER) @transaction {

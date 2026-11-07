@@ -46,7 +46,7 @@ import {
 } from '../lib/clinical-email';
 import { openPrescriptionPrintWindow, renderPrescriptionPrint } from '../lib/prescription-print';
 import { cacheOfflinePatientDetail, createOfflineConsultation, getOfflinePatientDetail, isNetworkUnavailable, registerOfflineConsultationSync, saveOfflineConsultation } from '../lib/offline-consultations';
-import type { ConsultationSummary } from '../types';
+import type { ConsultationSummary, PatientDetail } from '../types';
 import {
   ageFromBirthDate,
   consultationStatusLabel,
@@ -569,7 +569,17 @@ export function PatientDetailPage() {
         defaultPatient={patient}
         onCreated={() => void queryClient.invalidateQueries({ queryKey: ['patient', routePatientId] })}
       />
-      <PatientFormDialog open={editOpen} onClose={() => setEditOpen(false)} patient={patient} onCreated={() => void queryClient.invalidateQueries({ queryKey: ['patient', routePatientId] })} />
+      <PatientFormDialog
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        patient={patient}
+        onCreated={(updatedPatient) => {
+          queryClient.setQueryData<PatientDetail>(['patient', routePatientId], (current) => current
+            ? { ...current, patient: updatedPatient }
+            : current);
+          void queryClient.invalidateQueries({ queryKey: ['patient', routePatientId] });
+        }}
+      />
       <Modal
         open={Boolean(consultationToDelete)}
         onClose={() => { if (!deleteConsultation.isPending) setConsultationToDelete(null); }}

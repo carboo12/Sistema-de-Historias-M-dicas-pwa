@@ -128,9 +128,10 @@ export const api = {
         body: JSON.stringify(payload)
       }),
     delete: (id: string) => request<void>(`/api/consultations/${id}`, { method: 'DELETE' }),
-    sign: (id: string) =>
+    sign: (id: string, payload?: Record<string, unknown>, appointmentId?: string | null) =>
       request<{ consultation: Consultation; signedAt: string }>(`/api/consultations/${id}/sign`, {
-        method: 'POST'
+        method: 'POST',
+        body: JSON.stringify({ ...(payload ?? {}), appointmentId: appointmentId ?? null })
       }),
   },
   catalogs: () => request<Catalogs>('/api/catalogs'),

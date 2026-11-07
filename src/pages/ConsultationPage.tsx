@@ -198,6 +198,7 @@ export function ConsultationPage() {
 
   const buildPayload = () => ({
     ...(form ?? {}),
+    status: detail.data?.consultation.status ?? 'borrador',
     nextVisitAt: nextVisitAt ? `${nextVisitAt}T12:00:00.000Z` : null,
   });
 
@@ -230,6 +231,9 @@ export function ConsultationPage() {
       setEditingHistorical(false);
       setSaveMessage(response.offlineSaved ? 'Guardado en este dispositivo · pendiente de sincronización' : 'Guardado');
       setError(null);
+      queryClient.setQueryData(['consultation', id], (previous: typeof detail.data) => previous
+        ? { ...previous, consultation: response.consultation, offlineCopy: response.offlineSaved }
+        : previous);
       if (response.offlineSaved) {
         queryClient.setQueryData(['consultation', id], { consultation: response.consultation, offlineCopy: true });
       } else {
@@ -254,20 +258,41 @@ export function ConsultationPage() {
 
   const signMutation = useMutation({
     mutationFn: async () => {
-      if (isDirty) await api.consultations.update(id as string, buildPayload());
-      return api.consultations.sign(id as string);
+      if (!detail.data?.consultation) throw new Error('La consulta aún no está disponible para firmar.');
+      return api.consultations.sign(id as string, buildPayload(), detail.data.consultation.appointmentId);
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      const freshForm = toForm(response.consultation);
+      const freshDate = toDateInput(response.consultation.nextVisitAt);
+      setForm(freshForm);
+      setNextVisitAt(freshDate);
+      setSavedSnapshot(JSON.stringify(freshForm));
+      setSavedNextVisit(freshDate);
       setJustSigned(true);
       setSignOpen(false);
       setSignError(null);
       setSaveMessage('Consulta completada');
+      setError(null);
+      queryClient.setQueryData(['consultation', id], (previous: typeof detail.data) => previous
+        ? { ...previous, consultation: response.consultation, offlineCopy: false }
+        : previous);
       void queryClient.invalidateQueries({ queryKey: ['consultation', id] });
       void queryClient.invalidateQueries({ queryKey: ['consultations'] });
       void queryClient.invalidateQueries({ queryKey: ['patient'] });
       void queryClient.invalidateQueries({ queryKey: ['agenda'] });
     },
-    onError: (cause) => setSignError(cause instanceof ApiError ? cause.message : 'No se pudo firmar la consulta')
+    onError: (cause) => {
+      const failure = cause as { code?: string; message?: string; details?: unknown } | null;
+      console.error('Error al guardar y firmar la consulta:', {
+        consultationId: id,
+        appointmentId: detail.data?.consultation.appointmentId,
+        code: failure?.code,
+        message: failure?.message ?? String(cause),
+        details: failure?.details,
+        cause
+      });
+      setSignError(cause instanceof ApiError ? cause.message : failure?.message || 'No se pudo firmar la consulta');
+    }
   });
 
   const deleteConsultation = useMutation({
@@ -279,7 +304,18 @@ export function ConsultationPage() {
       ]);
       navigate(`/pacientes/${consultation.patientId}`);
     },
-    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo eliminar la consulta')
+    onError: (cause) => {
+      const failure = cause as { code?: string; message?: string; details?: unknown } | null;
+      console.error('Error al eliminar la consulta:', {
+        consultationId: id,
+        clinicId: user?.clinicId,
+        code: failure?.code,
+        message: failure?.message ?? String(cause),
+        details: failure?.details,
+        cause
+      });
+      setError(cause instanceof ApiError ? cause.message : failure?.message || 'No se pudo eliminar la consulta');
+    }
   });
 
   if (detail.isLoading || (!detail.isError && !initialized)) {

@@ -10,7 +10,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.js',
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'logo-orthospine.png'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'logo-orthospine.png', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
         name: 'ORTHO SPINE CENTER · Historias Médicas',
         short_name: 'ORTHO SPINE',
@@ -24,26 +24,20 @@ export default defineConfig({
         categories: ['medical', 'health', 'productivity'],
         icons: [
           {
-            src: '/logo-orthospine.png',
+            src: '/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/logo-orthospine.png',
+            src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: '/logo-orthospine.png',
+            src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
-          },
-          {
-            src: '/logo-orthospine.png',
-            sizes: '180x180',
-            type: 'image/png',
-            purpose: 'any'
           }
         ]
       },
