@@ -131,9 +131,10 @@ export function AgendaPage() {
   });
 
   const monthAppointments = (agenda.data?.appointments ?? []).filter((appointment) => isValidAppointmentDate(appointment?.startsAt));
+  const dayAppointments = monthAppointments.filter((appointment) => dateKeyInTimezone(appointment.startsAt, timezone) === date);
   const appointments = viewMode === 'month'
     ? monthAppointments
-    : monthAppointments.filter((appointment) => dateKeyInTimezone(appointment.startsAt, timezone) === date);
+    : dayAppointments;
   const stats = {
     total: appointments.length,
     scheduled: appointments.filter((item) => ['programada', 'confirmada', 'reprogramada'].includes(item.status)).length,
@@ -185,12 +186,18 @@ export function AgendaPage() {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
         <StatCard
-          label="Citas del día"
-          value={stats?.total ?? 0}
+          label="Citas del mes"
+          value={monthAppointments.length}
           icon={<CalendarDays className="h-5 w-5" />}
           tone="teal"
+        />
+        <StatCard
+          label="Citas del día"
+          value={dayAppointments.length}
+          icon={<CalendarDays className="h-5 w-5" />}
+          tone="blue"
         />
         <StatCard
           label="En espera"
