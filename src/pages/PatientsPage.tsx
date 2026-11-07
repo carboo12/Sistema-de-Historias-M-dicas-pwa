@@ -69,14 +69,18 @@ export function PatientsPage() {
           total: Math.max(value.total - (value.patients.some((patient) => patient.id === patientId) ? 1 : 0), 0)
         });
       }
-      return { previous, wasLastRowOnPage: rows.length === 1 && page > 0 };
+      return { previous };
     },
     onError: (_cause, _patientId, context) => {
       for (const [queryKey, value] of context?.previous ?? []) queryClient.setQueryData(queryKey, value);
     },
-    onSuccess: async (_result, _patientId, context) => {
+    onSuccess: async () => {
       setDeleteTarget(null);
-      if (context?.wasLastRowOnPage) setPage((current) => Math.max(current - 1, 0));
+      // After a successful removal, leave the search result and show the full
+      // directory. Also purge this patient from every cached search/page so a
+      // previous query can never make the deleted row reappear on navigation.
+      setQ('');
+      setPage(0);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['patients'] }),
         queryClient.invalidateQueries({ queryKey: ['reports'] }),
