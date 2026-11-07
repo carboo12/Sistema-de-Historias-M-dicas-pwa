@@ -242,7 +242,7 @@ query ListAgenda($start: Timestamp!, $end: Timestamp!) @auth(level: USER) {
       startsAt: { ge: $start, lt: $end }
     }
     orderBy: [{ startsAt: ASC }]
-    limit: 200
+    limit: 1000
   ) {
     id
     patientId
@@ -271,6 +271,37 @@ query ListAgenda($start: Timestamp!, $end: Timestamp!) @auth(level: USER) {
     consultation_on_appointment {
       id
     }
+  }
+}
+
+query ListAgendaForClinic($clinicId: UUID!, $start: Timestamp!, $end: Timestamp!) @auth(level: USER) {
+  appointments(
+    where: {
+      clinic: {
+        _and: [
+          { id: { eq: $clinicId } }
+          { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+        ]
+      }
+      startsAt: { ge: $start, lt: $end }
+    }
+    orderBy: [{ startsAt: ASC }]
+    limit: 1000
+  ) {
+    id
+    patientId
+    professionalId
+    startsAt
+    endsAt
+    durationMinutes
+    reason
+    status
+    notes
+    patient { fullName email recordNumber phone }
+    professional { fullName }
+    specialty { name }
+    office { name }
+    consultation_on_appointment { id }
   }
 }
 

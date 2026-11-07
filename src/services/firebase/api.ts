@@ -11,7 +11,7 @@ import {
   getConsultation,
   getPatient,
   getSession,
-  listAgenda,
+  listAgendaForClinic,
   listConsultations,
   listPatientsByTerms,
   listPatients,
@@ -68,6 +68,7 @@ async function sessionContext() {
   return {
     userId: user.id,
     clinicId: user.clinic.id,
+    timezone: user.clinic.timezone ?? 'America/Managua',
     professionalId: user.professional_on_user?.id ?? null
   };
 }
@@ -246,11 +247,33 @@ function mapAppointment(record: Record<string, any>): Appointment {
   };
 }
 
-function dayBounds(date: string) {
-  const start = new Date(`${date}T00:00:00`);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
-  return { start: start.toISOString(), end: end.toISOString() };
+function zonedMidnight(date: string, timezone: string) {
+  const [year, month, day] = date.split('-').map(Number);
+  const target = Date.UTC(year, month - 1, day);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+  });
+  let guess = target;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const parts = Object.fromEntries(formatter.formatToParts(new Date(guess)).map((part) => [part.type, Number(part.value)]));
+    const displayedAsUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+    guess = target - (displayedAsUtc - guess);
+  }
+  return new Date(guess).toISOString();
+}
+
+function agendaBounds(dateOrMonth: string, timezone: string) {
+  if (/^\d{4}-\d{2}$/.test(dateOrMonth)) {
+    const [year, month] = dateOrMonth.split('-').map(Number);
+    const startDate = `${dateOrMonth}-01`;
+    const endDate = new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
+    return { start: zonedMidnight(startDate, timezone), end: zonedMidnight(endDate, timezone) };
+  }
+  const [year, month, day] = dateOrMonth.split('-').map(Number);
+  const endDate = new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
+  return { start: zonedMidnight(dateOrMonth, timezone), end: zonedMidnight(endDate, timezone) };
 }
 
 async function fetchPatientDetail(id: string): Promise<PatientDetail> {
@@ -430,11 +453,14 @@ export const firebaseApi = {
   },
   agenda: {
     async get(date: string): Promise<AgendaResponse> {
-      const { data } = await listAgenda(dc(), dayBounds(date));
-      const appointments = data.appointments.map(mapAppointment);
+      const context = await sessionContext();
+      const clinicId = normalizeUuid(context.clinicId);
+      if (!clinicId) throw new ApiError('La clínica de la sesión tiene un identificador inválido', 400, 'invalid_clinic_id');
+      const { data } = await listAgendaForClinic(dc(), { clinicId, ...agendaBounds(date, context.timezone) });
+      const appointments = (data.appointments ?? []).map(mapAppointment);
       return {
         date,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        timezone: context.timezone,
         appointments,
         stats: {
           total: appointments.length,

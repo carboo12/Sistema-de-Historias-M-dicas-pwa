@@ -91,7 +91,7 @@ export const api = {
     delete: (id: string) => request<void>(`/api/patients/${id}`, { method: 'DELETE' })
   },
   agenda: {
-    get: (date: string) => request<AgendaResponse>(`/api/agenda${queryString({ date })}`),
+    get: (date: string) => request<AgendaResponse>(`/api/agenda${queryString(date.length === 7 ? { month: date } : { date })}`),
     appointments: (patientId?: string) =>
       request<{ appointments: Appointment[] }>(`/api/appointments${queryString({ patientId })}`),
     create: (payload: Record<string, unknown>) =>

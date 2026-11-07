@@ -447,6 +447,44 @@ export interface ListAgendaData {
   } & Appointment_Key)[];
 }
 
+export interface ListAgendaForClinicData {
+  appointments: ({
+    id: UUIDString;
+    patientId: UUIDString;
+    professionalId: UUIDString;
+    startsAt: TimestampString;
+    endsAt: TimestampString;
+    durationMinutes: number;
+    reason?: string | null;
+    status: string;
+    notes?: string | null;
+    patient: {
+      fullName: string;
+      email?: string | null;
+      recordNumber: string;
+      phone?: string | null;
+    };
+    professional: {
+      fullName: string;
+    };
+    specialty?: {
+      name: string;
+    };
+    office?: {
+      name: string;
+    };
+    consultation_on_appointment?: {
+      id: UUIDString;
+    } & Consultation_Key;
+  } & Appointment_Key)[];
+}
+
+export interface ListAgendaForClinicVariables {
+  clinicId: UUIDString;
+  start: TimestampString;
+  end: TimestampString;
+}
+
 export interface ListAgendaVariables {
   start: TimestampString;
   end: TimestampString;
@@ -1144,6 +1182,18 @@ export const listAgendaRef: ListAgendaRef;
 
 export function listAgenda(vars: ListAgendaVariables, options?: ExecuteQueryOptions): QueryPromise<ListAgendaData, ListAgendaVariables>;
 export function listAgenda(dc: DataConnect, vars: ListAgendaVariables, options?: ExecuteQueryOptions): QueryPromise<ListAgendaData, ListAgendaVariables>;
+
+interface ListAgendaForClinicRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ListAgendaForClinicVariables): QueryRef<ListAgendaForClinicData, ListAgendaForClinicVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: ListAgendaForClinicVariables): QueryRef<ListAgendaForClinicData, ListAgendaForClinicVariables>;
+  operationName: string;
+}
+export const listAgendaForClinicRef: ListAgendaForClinicRef;
+
+export function listAgendaForClinic(vars: ListAgendaForClinicVariables, options?: ExecuteQueryOptions): QueryPromise<ListAgendaForClinicData, ListAgendaForClinicVariables>;
+export function listAgendaForClinic(dc: DataConnect, vars: ListAgendaForClinicVariables, options?: ExecuteQueryOptions): QueryPromise<ListAgendaForClinicData, ListAgendaForClinicVariables>;
 
 interface ListConsultationsRef {
   /* Allow users to create refs without passing in DataConnect */

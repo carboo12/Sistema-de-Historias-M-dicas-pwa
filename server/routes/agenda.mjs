@@ -52,7 +52,15 @@ function mapAppointment(row) {
 export async function agendaRoutes(app) {
   app.get('/api/agenda', { preHandler: [app.authenticate] }, async (request) => {
     const timezone = request.user.timezone || 'America/Managua';
-    const date = validDate(request.query?.date, localDate(timezone));
+    const requestedMonth = /^\d{4}-\d{2}$/.test(String(request.query?.month ?? ''))
+      ? String(request.query.month)
+      : null;
+    const date = requestedMonth
+      ? validDate(`${requestedMonth}-01`, localDate(timezone))
+      : validDate(request.query?.date, localDate(timezone));
+    const endDate = requestedMonth
+      ? new Date(Date.UTC(Number(requestedMonth.slice(0, 4)), Number(requestedMonth.slice(5, 7)), 1)).toISOString().slice(0, 10)
+      : new Date(Date.parse(`${date}T00:00:00Z`) + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
     const rows = await many(
       `select
@@ -70,9 +78,9 @@ export async function agendaRoutes(app) {
        left join public.consultations c on c.appointment_id = a.id and c.deleted_at is null
        where a.clinic_id = $1
          and a.starts_at >= ($2::date::timestamp at time zone $3)
-         and a.starts_at < (($2::date + 1)::timestamp at time zone $3)
+         and a.starts_at < ($4::date::timestamp at time zone $3)
        order by a.starts_at`,
-      [request.user.clinicId, date, timezone]
+      [request.user.clinicId, date, timezone, endDate]
     );
 
     const appointments = rows.map(mapAppointment);
@@ -84,7 +92,7 @@ export async function agendaRoutes(app) {
       cancelled: appointments.filter((item) => ['cancelada', 'no_asistio'].includes(item.status)).length
     };
 
-    return { date, timezone, appointments, stats };
+    return { date, month: requestedMonth, timezone, appointments, stats };
   });
 
   app.get('/api/appointments', { preHandler: [app.authenticate] }, async (request) => {

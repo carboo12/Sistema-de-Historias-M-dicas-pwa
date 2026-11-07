@@ -35,11 +35,49 @@ import {
   cn,
   formatLongDate,
   formatTime,
-  shiftDate,
   statusBadgeClass,
   todayInTimeZone
 } from '../lib/format';
 import type { Appointment } from '../types';
+
+function formatMonthLabel(month: string, timezone: string) {
+  const date = new Date(`${month}-15T12:00:00`);
+  if (Number.isNaN(date.getTime())) return 'Mes seleccionado';
+  try {
+    return new Intl.DateTimeFormat('es-NI', { month: 'long', year: 'numeric', timeZone: timezone }).format(date);
+  } catch {
+    return 'Mes seleccionado';
+  }
+}
+
+function isValidAppointmentDate(value: unknown): value is string {
+  return typeof value === 'string' && value.trim() !== '' && !Number.isNaN(new Date(value).getTime());
+}
+
+function dateKeyInTimezone(value: string, timezone: string): string | null {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(date);
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return `${values.year}-${values.month}-${values.day}`;
+  } catch {
+    return null;
+  }
+}
+
+function shiftMonth(date: string, amount: number) {
+  const [year, month, day] = date.split('-').map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1 + amount, 1));
+  const lastDay = new Date(Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth() + 1, 0)).getUTCDate();
+  const nextDay = String(Math.min(day, lastDay)).padStart(2, '0');
+  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, '0')}-${nextDay}`;
+}
 
 export function AgendaPage() {
   const { user } = useAuth();
@@ -51,10 +89,12 @@ export function AgendaPage() {
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'month' | 'day'>('month');
+  const month = date.slice(0, 7);
 
   const agenda = useQuery({
-    queryKey: ['agenda', date],
-    queryFn: () => api.agenda.get(date)
+    queryKey: ['agenda', 'month', month],
+    queryFn: () => api.agenda.get(month)
   });
 
   const startConsultation = useMutation({
@@ -90,33 +130,27 @@ export function AgendaPage() {
     onError: (cause) => setActionError(cause instanceof ApiError ? cause.message : 'No se pudo cancelar la cita')
   });
 
-  const stats = agenda.data?.stats;
-  const appointments = agenda.data?.appointments ?? [];
+  const monthAppointments = (agenda.data?.appointments ?? []).filter((appointment) => isValidAppointmentDate(appointment?.startsAt));
+  const appointments = viewMode === 'month'
+    ? monthAppointments
+    : monthAppointments.filter((appointment) => dateKeyInTimezone(appointment.startsAt, timezone) === date);
+  const stats = {
+    total: appointments.length,
+    scheduled: appointments.filter((item) => ['programada', 'confirmada', 'reprogramada'].includes(item.status)).length,
+    waiting: appointments.filter((item) => item.status === 'en_espera').length,
+    attended: appointments.filter((item) => item.status === 'atendida').length,
+    cancelled: appointments.filter((item) => ['cancelada', 'no_asistio'].includes(item.status)).length
+  };
   const attendedPercent = stats?.total ? Math.round((stats.attended / stats.total) * 100) : 0;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Hoy en la clínica"
+        eyebrow="Agenda clínica"
         title="Agenda"
-        description="Organiza el día, recibe a tus pacientes y abre la consulta en un clic."
+        description="Consulta la planificación mensual o enfócate en un día específico."
         actions={
           <>
-            <div className="flex items-center gap-1 rounded-xl border border-line bg-white p-1 shadow-sm">
-              <IconButton label="Día anterior" onClick={() => setDate(shiftDate(date, -1))}>
-                <ChevronLeft className="h-4 w-4" />
-              </IconButton>
-              <button
-                type="button"
-                onClick={() => setDate(todayInTimeZone(timezone))}
-                className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-teal-800 transition hover:bg-teal-50"
-              >
-                Hoy
-              </button>
-              <IconButton label="Día siguiente" onClick={() => setDate(shiftDate(date, 1))}>
-                <ChevronRight className="h-4 w-4" />
-              </IconButton>
-            </div>
             <Button icon={<CalendarPlus className="h-4 w-4" />} onClick={() => setDialogOpen(true)}>
               Nueva cita
             </Button>
@@ -127,15 +161,22 @@ export function AgendaPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-sm text-ink/55">
           <CalendarDays className="h-4 w-4 text-teal-700" />
-          <span className="font-semibold capitalize text-ink">{formatLongDate(date, timezone)}</span>
+          <span className="font-semibold capitalize text-ink">
+            {viewMode === 'month' ? formatMonthLabel(month, timezone) : formatLongDate(date, timezone)}
+          </span>
         </div>
-        <input
-          type="date"
-          value={date}
-          onChange={(event) => setDate(event.target.value)}
-          className="w-full rounded-xl border border-line bg-white px-3 py-2 text-xs font-semibold text-ink/65 sm:w-auto"
-          aria-label="Seleccionar fecha"
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 rounded-xl border border-line bg-white p-1 shadow-sm">
+            <IconButton label="Mes anterior" onClick={() => setDate(shiftMonth(date, -1))}><ChevronLeft className="h-4 w-4" /></IconButton>
+            <button type="button" onClick={() => setDate(todayInTimeZone(timezone))} className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-teal-800 transition hover:bg-teal-50">Este mes</button>
+            <IconButton label="Mes siguiente" onClick={() => setDate(shiftMonth(date, 1))}><ChevronRight className="h-4 w-4" /></IconButton>
+          </div>
+          <div className="flex rounded-xl border border-line bg-white p-1">
+            <button type="button" onClick={() => setViewMode('month')} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${viewMode === 'month' ? 'bg-teal-700 text-white' : 'text-ink/55'}`}>Mes</button>
+            <button type="button" onClick={() => setViewMode('day')} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${viewMode === 'day' ? 'bg-teal-700 text-white' : 'text-ink/55'}`}>Día</button>
+          </div>
+          {viewMode === 'day' ? <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="rounded-xl border border-line bg-white px-3 py-2 text-xs font-semibold text-ink/65" aria-label="Seleccionar fecha" /> : null}
+        </div>
       </div>
 
       {actionError ? (
@@ -175,9 +216,9 @@ export function AgendaPage() {
         <section className="card overflow-hidden">
           <div className="flex items-center justify-between border-b border-line/70 px-5 py-4 sm:px-6">
             <div>
-              <h2 className="text-sm font-extrabold uppercase tracking-[0.14em] text-ink/45">Horario del día</h2>
+              <h2 className="text-sm font-extrabold uppercase tracking-[0.14em] text-ink/45">{viewMode === 'month' ? `Citas de ${formatMonthLabel(month, timezone)}` : 'Horario del día'}</h2>
               <p className="mt-1 text-sm text-ink/55">
-                {appointments.length ? `${appointments.length} citas programadas` : 'Sin citas para esta fecha'}
+                {appointments.length ? `${appointments.length} citas en ${viewMode === 'month' ? 'el mes' : 'este día'}` : `Sin citas para ${viewMode === 'month' ? 'este mes' : 'esta fecha'}`}
               </p>
             </div>
             <Badge className="badge-teal" dot>
@@ -199,8 +240,8 @@ export function AgendaPage() {
           ) : appointments.length === 0 ? (
             <EmptyState
               icon={<CalendarDays className="h-7 w-7" />}
-              title="La agenda está libre"
-              description="Agenda una cita para comenzar el día o elige otra fecha en el calendario."
+              title={viewMode === 'month' ? 'No hay citas este mes' : 'La agenda está libre'}
+              description="Agenda una cita o navega a otra fecha para revisar la planificación."
               action={
                 <Button icon={<CalendarPlus className="h-4 w-4" />} onClick={() => setDialogOpen(true)}>
                   Agendar cita
@@ -218,7 +259,7 @@ export function AgendaPage() {
                     <p className="text-lg font-extrabold tabular-nums text-ink">
                       {formatTime(appointment.startsAt, timezone)}
                     </p>
-                    <p className="text-[11px] font-semibold text-ink/40">{appointment.durationMinutes} min</p>
+                    <p className="text-[11px] font-semibold capitalize text-ink/45">{viewMode === 'month' ? formatLongDate(appointment.startsAt, timezone) : `${appointment.durationMinutes} min`}</p>
                   </div>
 
                   <div className="min-w-0 flex-1">
@@ -231,6 +272,7 @@ export function AgendaPage() {
                     <p className="mt-1 truncate text-sm text-ink/55">
                       {appointment.reason || 'Consulta médica'}
                     </p>
+                    {appointment.notes ? <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-ink/55"><span className="font-bold text-ink/65">Observaciones:</span> {appointment.notes}</p> : null}
                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-semibold text-ink/40">
                       <span className="inline-flex items-center gap-1.5">
                         <Stethoscope className="h-3.5 w-3.5" />
@@ -287,13 +329,13 @@ export function AgendaPage() {
         <aside className="space-y-4">
           <div className="card p-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-extrabold uppercase tracking-[0.14em] text-ink/45">Estado del día</h2>
+              <h2 className="text-sm font-extrabold uppercase tracking-[0.14em] text-ink/45">{viewMode === 'month' ? 'Estado del mes' : 'Estado del día'}</h2>
               <Sparkles className="h-4 w-4 text-amber-500" />
             </div>
             <div className="mt-5 flex items-end justify-between">
               <div>
                 <p className="font-display text-4xl font-medium text-ink">{attendedPercent}%</p>
-                <p className="mt-1 text-xs font-semibold text-ink/45">de la agenda completada</p>
+                <p className="mt-1 text-xs font-semibold text-ink/45">de las citas atendidas</p>
               </div>
               <div className="flex h-16 w-16 items-center justify-center rounded-full border-[6px] border-teal-100 text-xs font-extrabold text-teal-800">
                 {stats?.attended ?? 0}/{stats?.total ?? 0}

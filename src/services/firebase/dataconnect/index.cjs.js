@@ -350,6 +350,21 @@ exports.listAgenda = function listAgenda(dcOrVars, varsOrOptions, options) {
 }
 ;
 
+const listAgendaForClinicRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'ListAgendaForClinic', inputVars);
+}
+listAgendaForClinicRef.operationName = 'ListAgendaForClinic';
+exports.listAgendaForClinicRef = listAgendaForClinicRef;
+
+exports.listAgendaForClinic = function listAgendaForClinic(dcOrVars, varsOrOptions, options) {
+  
+  const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
+  return executeQuery(listAgendaForClinicRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
+}
+;
+
 const listConsultationsRef = (dc) => {
   const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
   dcInstance._useGeneratedSdk();

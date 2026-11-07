@@ -79,15 +79,23 @@ export function formatDateTime(value: string | null | undefined, timeZone: strin
   return `${formatDate(value, timeZone)} · ${formatTime(value, timeZone)}`;
 }
 
-export function formatLongDate(value: string, timeZone: string) {
-  const date = new Date(`${value}T12:00:00`);
-  return new Intl.DateTimeFormat('es-NI', {
-    timeZone,
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  }).format(date);
+export function formatLongDate(value: string | null | undefined, timeZone: string) {
+  if (!value?.trim()) return 'Fecha no especificada';
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(`${value}T12:00:00`)
+    : new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Fecha no especificada';
+  try {
+    return new Intl.DateTimeFormat('es-NI', {
+      timeZone,
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }).format(date);
+  } catch {
+    return 'Fecha no especificada';
+  }
 }
 
 export function sexLabel(value: string) {

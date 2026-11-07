@@ -15,6 +15,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*CountPatientsByTerms*](#countpatientsbyterms)
   - [*GetPatient*](#getpatient)
   - [*ListAgenda*](#listagenda)
+  - [*ListAgendaForClinic*](#listagendaforclinic)
   - [*ListConsultations*](#listconsultations)
   - [*GetConsultation*](#getconsultation)
   - [*ListPatientStudies*](#listpatientstudies)
@@ -290,9 +291,9 @@ import { connectorConfig, listPatients, ListPatientsVariables } from '@historias
 
 // The `ListPatients` query requires an argument of type `ListPatientsVariables`:
 const listPatientsVars: ListPatientsVariables = {
-  q: ...,
-  limit: ...,
-  offset: ...,
+  q: ..., 
+  limit: ..., 
+  offset: ..., 
 };
 
 // Call the `listPatients()` function to execute the query.
@@ -322,9 +323,9 @@ import { connectorConfig, listPatientsRef, ListPatientsVariables } from '@histor
 
 // The `ListPatients` query requires an argument of type `ListPatientsVariables`:
 const listPatientsVars: ListPatientsVariables = {
-  q: ...,
-  limit: ...,
-  offset: ...,
+  q: ..., 
+  limit: ..., 
+  offset: ..., 
 };
 
 // Call the `listPatientsRef()` function to get a reference to the query.
@@ -405,7 +406,7 @@ import { connectorConfig, countPatients, CountPatientsVariables } from '@histori
 
 // The `CountPatients` query requires an argument of type `CountPatientsVariables`:
 const countPatientsVars: CountPatientsVariables = {
-  q: ...,
+  q: ..., 
 };
 
 // Call the `countPatients()` function to execute the query.
@@ -435,7 +436,7 @@ import { connectorConfig, countPatientsRef, CountPatientsVariables } from '@hist
 
 // The `CountPatients` query requires an argument of type `CountPatientsVariables`:
 const countPatientsVars: CountPatientsVariables = {
-  q: ...,
+  q: ..., 
 };
 
 // Call the `countPatientsRef()` function to get a reference to the query.
@@ -565,8 +566,8 @@ const listPatientsByTermsVars: ListPatientsByTermsVariables = {
   q4: ..., // optional
   q5: ..., // optional
   q6: ..., // optional
-  limit: ...,
-  offset: ...,
+  limit: ..., 
+  offset: ..., 
 };
 
 // Call the `listPatientsByTerms()` function to execute the query.
@@ -602,8 +603,8 @@ const listPatientsByTermsVars: ListPatientsByTermsVariables = {
   q4: ..., // optional
   q5: ..., // optional
   q6: ..., // optional
-  limit: ...,
-  offset: ...,
+  limit: ..., 
+  offset: ..., 
 };
 
 // Call the `listPatientsByTermsRef()` function to get a reference to the query.
@@ -883,7 +884,7 @@ import { connectorConfig, getPatient, GetPatientVariables } from '@historias/dat
 
 // The `GetPatient` query requires an argument of type `GetPatientVariables`:
 const getPatientVars: GetPatientVariables = {
-  id: ...,
+  id: ..., 
 };
 
 // Call the `getPatient()` function to execute the query.
@@ -913,7 +914,7 @@ import { connectorConfig, getPatientRef, GetPatientVariables } from '@historias/
 
 // The `GetPatient` query requires an argument of type `GetPatientVariables`:
 const getPatientVars: GetPatientVariables = {
-  id: ...,
+  id: ..., 
 };
 
 // Call the `getPatientRef()` function to get a reference to the query.
@@ -1021,8 +1022,8 @@ import { connectorConfig, listAgenda, ListAgendaVariables } from '@historias/dat
 
 // The `ListAgenda` query requires an argument of type `ListAgendaVariables`:
 const listAgendaVars: ListAgendaVariables = {
-  start: ...,
-  end: ...,
+  start: ..., 
+  end: ..., 
 };
 
 // Call the `listAgenda()` function to execute the query.
@@ -1052,8 +1053,8 @@ import { connectorConfig, listAgendaRef, ListAgendaVariables } from '@historias/
 
 // The `ListAgenda` query requires an argument of type `ListAgendaVariables`:
 const listAgendaVars: ListAgendaVariables = {
-  start: ...,
-  end: ...,
+  start: ..., 
+  end: ..., 
 };
 
 // Call the `listAgendaRef()` function to get a reference to the query.
@@ -1064,6 +1065,149 @@ const ref = listAgendaRef({ start: ..., end: ..., });
 // You can also pass in a `DataConnect` instance to the `QueryRef` function.
 const dataConnect = getDataConnect(connectorConfig);
 const ref = listAgendaRef(dataConnect, listAgendaVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.appointments);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.appointments);
+});
+```
+
+## ListAgendaForClinic
+You can execute the `ListAgendaForClinic` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+listAgendaForClinic(vars: ListAgendaForClinicVariables, options?: ExecuteQueryOptions): QueryPromise<ListAgendaForClinicData, ListAgendaForClinicVariables>;
+
+interface ListAgendaForClinicRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ListAgendaForClinicVariables): QueryRef<ListAgendaForClinicData, ListAgendaForClinicVariables>;
+}
+export const listAgendaForClinicRef: ListAgendaForClinicRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+listAgendaForClinic(dc: DataConnect, vars: ListAgendaForClinicVariables, options?: ExecuteQueryOptions): QueryPromise<ListAgendaForClinicData, ListAgendaForClinicVariables>;
+
+interface ListAgendaForClinicRef {
+  ...
+  (dc: DataConnect, vars: ListAgendaForClinicVariables): QueryRef<ListAgendaForClinicData, ListAgendaForClinicVariables>;
+}
+export const listAgendaForClinicRef: ListAgendaForClinicRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the listAgendaForClinicRef:
+```typescript
+const name = listAgendaForClinicRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `ListAgendaForClinic` query requires an argument of type `ListAgendaForClinicVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface ListAgendaForClinicVariables {
+  clinicId: UUIDString;
+  start: TimestampString;
+  end: TimestampString;
+}
+```
+### Return Type
+Recall that executing the `ListAgendaForClinic` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `ListAgendaForClinicData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface ListAgendaForClinicData {
+  appointments: ({
+    id: UUIDString;
+    patientId: UUIDString;
+    professionalId: UUIDString;
+    startsAt: TimestampString;
+    endsAt: TimestampString;
+    durationMinutes: number;
+    reason?: string | null;
+    status: string;
+    notes?: string | null;
+    patient: {
+      fullName: string;
+      email?: string | null;
+      recordNumber: string;
+      phone?: string | null;
+    };
+    professional: {
+      fullName: string;
+    };
+    specialty?: {
+      name: string;
+    };
+    office?: {
+      name: string;
+    };
+    consultation_on_appointment?: {
+      id: UUIDString;
+    } & Consultation_Key;
+  } & Appointment_Key)[];
+}
+```
+### Using `ListAgendaForClinic`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, listAgendaForClinic, ListAgendaForClinicVariables } from '@historias/dataconnect';
+
+// The `ListAgendaForClinic` query requires an argument of type `ListAgendaForClinicVariables`:
+const listAgendaForClinicVars: ListAgendaForClinicVariables = {
+  clinicId: ..., 
+  start: ..., 
+  end: ..., 
+};
+
+// Call the `listAgendaForClinic()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await listAgendaForClinic(listAgendaForClinicVars);
+// Variables can be defined inline as well.
+const { data } = await listAgendaForClinic({ clinicId: ..., start: ..., end: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await listAgendaForClinic(dataConnect, listAgendaForClinicVars);
+
+console.log(data.appointments);
+
+// Or, you can use the `Promise` API.
+listAgendaForClinic(listAgendaForClinicVars).then((response) => {
+  const data = response.data;
+  console.log(data.appointments);
+});
+```
+
+### Using `ListAgendaForClinic`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, listAgendaForClinicRef, ListAgendaForClinicVariables } from '@historias/dataconnect';
+
+// The `ListAgendaForClinic` query requires an argument of type `ListAgendaForClinicVariables`:
+const listAgendaForClinicVars: ListAgendaForClinicVariables = {
+  clinicId: ..., 
+  start: ..., 
+  end: ..., 
+};
+
+// Call the `listAgendaForClinicRef()` function to get a reference to the query.
+const ref = listAgendaForClinicRef(listAgendaForClinicVars);
+// Variables can be defined inline as well.
+const ref = listAgendaForClinicRef({ clinicId: ..., start: ..., end: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = listAgendaForClinicRef(dataConnect, listAgendaForClinicVars);
 
 // Call `executeQuery()` on the reference to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.
@@ -1291,7 +1435,7 @@ import { connectorConfig, getConsultation, GetConsultationVariables } from '@his
 
 // The `GetConsultation` query requires an argument of type `GetConsultationVariables`:
 const getConsultationVars: GetConsultationVariables = {
-  id: ...,
+  id: ..., 
 };
 
 // Call the `getConsultation()` function to execute the query.
@@ -1321,7 +1465,7 @@ import { connectorConfig, getConsultationRef, GetConsultationVariables } from '@
 
 // The `GetConsultation` query requires an argument of type `GetConsultationVariables`:
 const getConsultationVars: GetConsultationVariables = {
-  id: ...,
+  id: ..., 
 };
 
 // Call the `getConsultationRef()` function to get a reference to the query.
@@ -1416,9 +1560,9 @@ import { connectorConfig, listPatientStudies, ListPatientStudiesVariables } from
 
 // The `ListPatientStudies` query requires an argument of type `ListPatientStudiesVariables`:
 const listPatientStudiesVars: ListPatientStudiesVariables = {
-  patientId: ...,
-  limit: ...,
-  offset: ...,
+  patientId: ..., 
+  limit: ..., 
+  offset: ..., 
 };
 
 // Call the `listPatientStudies()` function to execute the query.
@@ -1448,9 +1592,9 @@ import { connectorConfig, listPatientStudiesRef, ListPatientStudiesVariables } f
 
 // The `ListPatientStudies` query requires an argument of type `ListPatientStudiesVariables`:
 const listPatientStudiesVars: ListPatientStudiesVariables = {
-  patientId: ...,
-  limit: ...,
-  offset: ...,
+  patientId: ..., 
+  limit: ..., 
+  offset: ..., 
 };
 
 // Call the `listPatientStudiesRef()` function to get a reference to the query.
@@ -1667,10 +1811,10 @@ import { connectorConfig, clinicReports, ClinicReportsVariables } from '@histori
 
 // The `ClinicReports` query requires an argument of type `ClinicReportsVariables`:
 const clinicReportsVars: ClinicReportsVariables = {
-  from: ...,
-  to: ...,
-  limit: ...,
-  offset: ...,
+  from: ..., 
+  to: ..., 
+  limit: ..., 
+  offset: ..., 
 };
 
 // Call the `clinicReports()` function to execute the query.
@@ -1702,10 +1846,10 @@ import { connectorConfig, clinicReportsRef, ClinicReportsVariables } from '@hist
 
 // The `ClinicReports` query requires an argument of type `ClinicReportsVariables`:
 const clinicReportsVars: ClinicReportsVariables = {
-  from: ...,
-  to: ...,
-  limit: ...,
-  offset: ...,
+  from: ..., 
+  to: ..., 
+  limit: ..., 
+  offset: ..., 
 };
 
 // Call the `clinicReportsRef()` function to get a reference to the query.
@@ -1923,20 +2067,20 @@ import { connectorConfig, createPatient, CreatePatientVariables } from '@histori
 
 // The `CreatePatient` mutation requires an argument of type `CreatePatientVariables`:
 const createPatientVars: CreatePatientVariables = {
-  clinicId: ...,
-  createdById: ...,
-  recordNumber: ...,
+  clinicId: ..., 
+  createdById: ..., 
+  recordNumber: ..., 
   documentType: ..., // optional
   documentNumber: ..., // optional
-  documentVerified: ...,
-  fullName: ...,
+  documentVerified: ..., 
+  fullName: ..., 
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
   ageOverride: ..., // optional
-  birthDateEstimated: ...,
-  sex: ...,
-  maritalStatus: ...,
+  birthDateEstimated: ..., 
+  sex: ..., 
+  maritalStatus: ..., 
   bloodType: ..., // optional
   nationality: ..., // optional
   birthPlace: ..., // optional
@@ -1948,11 +2092,11 @@ const createPatientVars: CreatePatientVariables = {
   mobile: ..., // optional
   email: ..., // optional
   occupation: ..., // optional
-  isPrivate: ...,
+  isPrivate: ..., 
   allergiesNotes: ..., // optional
   currentDiagnosisSummary: ..., // optional
   notes: ..., // optional
-  isSuspended: ...,
+  isSuspended: ..., 
   suspensionReason: ..., // optional
 };
 
@@ -1985,20 +2129,20 @@ import { connectorConfig, createPatientRef, CreatePatientVariables } from '@hist
 
 // The `CreatePatient` mutation requires an argument of type `CreatePatientVariables`:
 const createPatientVars: CreatePatientVariables = {
-  clinicId: ...,
-  createdById: ...,
-  recordNumber: ...,
+  clinicId: ..., 
+  createdById: ..., 
+  recordNumber: ..., 
   documentType: ..., // optional
   documentNumber: ..., // optional
-  documentVerified: ...,
-  fullName: ...,
+  documentVerified: ..., 
+  fullName: ..., 
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
   ageOverride: ..., // optional
-  birthDateEstimated: ...,
-  sex: ...,
-  maritalStatus: ...,
+  birthDateEstimated: ..., 
+  sex: ..., 
+  maritalStatus: ..., 
   bloodType: ..., // optional
   nationality: ..., // optional
   birthPlace: ..., // optional
@@ -2010,11 +2154,11 @@ const createPatientVars: CreatePatientVariables = {
   mobile: ..., // optional
   email: ..., // optional
   occupation: ..., // optional
-  isPrivate: ...,
+  isPrivate: ..., 
   allergiesNotes: ..., // optional
   currentDiagnosisSummary: ..., // optional
   notes: ..., // optional
-  isSuspended: ...,
+  isSuspended: ..., 
   suspensionReason: ..., // optional
 };
 
@@ -2124,18 +2268,18 @@ import { connectorConfig, updatePatient, UpdatePatientVariables } from '@histori
 
 // The `UpdatePatient` mutation requires an argument of type `UpdatePatientVariables`:
 const updatePatientVars: UpdatePatientVariables = {
-  id: ...,
+  id: ..., 
   documentType: ..., // optional
   documentNumber: ..., // optional
-  documentVerified: ...,
-  fullName: ...,
+  documentVerified: ..., 
+  fullName: ..., 
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
   ageOverride: ..., // optional
-  birthDateEstimated: ...,
-  sex: ...,
-  maritalStatus: ...,
+  birthDateEstimated: ..., 
+  sex: ..., 
+  maritalStatus: ..., 
   bloodType: ..., // optional
   nationality: ..., // optional
   birthPlace: ..., // optional
@@ -2147,11 +2291,11 @@ const updatePatientVars: UpdatePatientVariables = {
   mobile: ..., // optional
   email: ..., // optional
   occupation: ..., // optional
-  isPrivate: ...,
+  isPrivate: ..., 
   allergiesNotes: ..., // optional
   currentDiagnosisSummary: ..., // optional
   notes: ..., // optional
-  isSuspended: ...,
+  isSuspended: ..., 
   suspensionReason: ..., // optional
 };
 
@@ -2182,18 +2326,18 @@ import { connectorConfig, updatePatientRef, UpdatePatientVariables } from '@hist
 
 // The `UpdatePatient` mutation requires an argument of type `UpdatePatientVariables`:
 const updatePatientVars: UpdatePatientVariables = {
-  id: ...,
+  id: ..., 
   documentType: ..., // optional
   documentNumber: ..., // optional
-  documentVerified: ...,
-  fullName: ...,
+  documentVerified: ..., 
+  fullName: ..., 
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
   ageOverride: ..., // optional
-  birthDateEstimated: ...,
-  sex: ...,
-  maritalStatus: ...,
+  birthDateEstimated: ..., 
+  sex: ..., 
+  maritalStatus: ..., 
   bloodType: ..., // optional
   nationality: ..., // optional
   birthPlace: ..., // optional
@@ -2205,11 +2349,11 @@ const updatePatientVars: UpdatePatientVariables = {
   mobile: ..., // optional
   email: ..., // optional
   occupation: ..., // optional
-  isPrivate: ...,
+  isPrivate: ..., 
   allergiesNotes: ..., // optional
   currentDiagnosisSummary: ..., // optional
   notes: ..., // optional
-  isSuspended: ...,
+  isSuspended: ..., 
   suspensionReason: ..., // optional
 };
 
@@ -2319,19 +2463,19 @@ import { connectorConfig, updatePatientWithClinicContext, UpdatePatientWithClini
 
 // The `UpdatePatientWithClinicContext` mutation requires an argument of type `UpdatePatientWithClinicContextVariables`:
 const updatePatientWithClinicContextVars: UpdatePatientWithClinicContextVariables = {
-  id: ...,
-  clinicId: ...,
+  id: ..., 
+  clinicId: ..., 
   documentType: ..., // optional
   documentNumber: ..., // optional
-  documentVerified: ...,
-  fullName: ...,
+  documentVerified: ..., 
+  fullName: ..., 
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
   ageOverride: ..., // optional
-  birthDateEstimated: ...,
-  sex: ...,
-  maritalStatus: ...,
+  birthDateEstimated: ..., 
+  sex: ..., 
+  maritalStatus: ..., 
   bloodType: ..., // optional
   nationality: ..., // optional
   birthPlace: ..., // optional
@@ -2343,11 +2487,11 @@ const updatePatientWithClinicContextVars: UpdatePatientWithClinicContextVariable
   mobile: ..., // optional
   email: ..., // optional
   occupation: ..., // optional
-  isPrivate: ...,
+  isPrivate: ..., 
   allergiesNotes: ..., // optional
   currentDiagnosisSummary: ..., // optional
   notes: ..., // optional
-  isSuspended: ...,
+  isSuspended: ..., 
   suspensionReason: ..., // optional
 };
 
@@ -2380,19 +2524,19 @@ import { connectorConfig, updatePatientWithClinicContextRef, UpdatePatientWithCl
 
 // The `UpdatePatientWithClinicContext` mutation requires an argument of type `UpdatePatientWithClinicContextVariables`:
 const updatePatientWithClinicContextVars: UpdatePatientWithClinicContextVariables = {
-  id: ...,
-  clinicId: ...,
+  id: ..., 
+  clinicId: ..., 
   documentType: ..., // optional
   documentNumber: ..., // optional
-  documentVerified: ...,
-  fullName: ...,
+  documentVerified: ..., 
+  fullName: ..., 
   firstName: ..., // optional
   lastName: ..., // optional
   birthDate: ..., // optional
   ageOverride: ..., // optional
-  birthDateEstimated: ...,
-  sex: ...,
-  maritalStatus: ...,
+  birthDateEstimated: ..., 
+  sex: ..., 
+  maritalStatus: ..., 
   bloodType: ..., // optional
   nationality: ..., // optional
   birthPlace: ..., // optional
@@ -2404,11 +2548,11 @@ const updatePatientWithClinicContextVars: UpdatePatientWithClinicContextVariable
   mobile: ..., // optional
   email: ..., // optional
   occupation: ..., // optional
-  isPrivate: ...,
+  isPrivate: ..., 
   allergiesNotes: ..., // optional
   currentDiagnosisSummary: ..., // optional
   notes: ..., // optional
-  isSuspended: ...,
+  isSuspended: ..., 
   suspensionReason: ..., // optional
 };
 
@@ -2490,7 +2634,7 @@ import { connectorConfig, deletePatient, DeletePatientVariables } from '@histori
 
 // The `DeletePatient` mutation requires an argument of type `DeletePatientVariables`:
 const deletePatientVars: DeletePatientVariables = {
-  id: ...,
+  id: ..., 
 };
 
 // Call the `deletePatient()` function to execute the mutation.
@@ -2520,7 +2664,7 @@ import { connectorConfig, deletePatientRef, DeletePatientVariables } from '@hist
 
 // The `DeletePatient` mutation requires an argument of type `DeletePatientVariables`:
 const deletePatientVars: DeletePatientVariables = {
-  id: ...,
+  id: ..., 
 };
 
 // Call the `deletePatientRef()` function to get a reference to the mutation.
@@ -2612,19 +2756,19 @@ import { connectorConfig, createAppointment, CreateAppointmentVariables } from '
 
 // The `CreateAppointment` mutation requires an argument of type `CreateAppointmentVariables`:
 const createAppointmentVars: CreateAppointmentVariables = {
-  clinicId: ...,
-  createdById: ...,
-  patientId: ...,
-  professionalId: ...,
+  clinicId: ..., 
+  createdById: ..., 
+  patientId: ..., 
+  professionalId: ..., 
   specialtyId: ..., // optional
   officeId: ..., // optional
-  startsAt: ...,
-  endsAt: ...,
-  durationMinutes: ...,
+  startsAt: ..., 
+  endsAt: ..., 
+  durationMinutes: ..., 
   reason: ..., // optional
   notes: ..., // optional
-  status: ...,
-  source: ...,
+  status: ..., 
+  source: ..., 
 };
 
 // Call the `createAppointment()` function to execute the mutation.
@@ -2656,19 +2800,19 @@ import { connectorConfig, createAppointmentRef, CreateAppointmentVariables } fro
 
 // The `CreateAppointment` mutation requires an argument of type `CreateAppointmentVariables`:
 const createAppointmentVars: CreateAppointmentVariables = {
-  clinicId: ...,
-  createdById: ...,
-  patientId: ...,
-  professionalId: ...,
+  clinicId: ..., 
+  createdById: ..., 
+  patientId: ..., 
+  professionalId: ..., 
   specialtyId: ..., // optional
   officeId: ..., // optional
-  startsAt: ...,
-  endsAt: ...,
-  durationMinutes: ...,
+  startsAt: ..., 
+  endsAt: ..., 
+  durationMinutes: ..., 
   reason: ..., // optional
   notes: ..., // optional
-  status: ...,
-  source: ...,
+  status: ..., 
+  source: ..., 
 };
 
 // Call the `createAppointmentRef()` function to get a reference to the mutation.
@@ -2750,8 +2894,8 @@ import { connectorConfig, updateAppointmentStatus, UpdateAppointmentStatusVariab
 
 // The `UpdateAppointmentStatus` mutation requires an argument of type `UpdateAppointmentStatusVariables`:
 const updateAppointmentStatusVars: UpdateAppointmentStatusVariables = {
-  id: ...,
-  status: ...,
+  id: ..., 
+  status: ..., 
 };
 
 // Call the `updateAppointmentStatus()` function to execute the mutation.
@@ -2781,8 +2925,8 @@ import { connectorConfig, updateAppointmentStatusRef, UpdateAppointmentStatusVar
 
 // The `UpdateAppointmentStatus` mutation requires an argument of type `UpdateAppointmentStatusVariables`:
 const updateAppointmentStatusVars: UpdateAppointmentStatusVariables = {
-  id: ...,
-  status: ...,
+  id: ..., 
+  status: ..., 
 };
 
 // Call the `updateAppointmentStatusRef()` function to get a reference to the mutation.
@@ -2867,13 +3011,13 @@ import { connectorConfig, updateAppointment, UpdateAppointmentVariables } from '
 
 // The `UpdateAppointment` mutation requires an argument of type `UpdateAppointmentVariables`:
 const updateAppointmentVars: UpdateAppointmentVariables = {
-  id: ...,
-  startsAt: ...,
-  endsAt: ...,
-  durationMinutes: ...,
+  id: ..., 
+  startsAt: ..., 
+  endsAt: ..., 
+  durationMinutes: ..., 
   reason: ..., // optional
   notes: ..., // optional
-  status: ...,
+  status: ..., 
 };
 
 // Call the `updateAppointment()` function to execute the mutation.
@@ -2903,13 +3047,13 @@ import { connectorConfig, updateAppointmentRef, UpdateAppointmentVariables } fro
 
 // The `UpdateAppointment` mutation requires an argument of type `UpdateAppointmentVariables`:
 const updateAppointmentVars: UpdateAppointmentVariables = {
-  id: ...,
-  startsAt: ...,
-  endsAt: ...,
-  durationMinutes: ...,
+  id: ..., 
+  startsAt: ..., 
+  endsAt: ..., 
+  durationMinutes: ..., 
   reason: ..., // optional
   notes: ..., // optional
-  status: ...,
+  status: ..., 
 };
 
 // Call the `updateAppointmentRef()` function to get a reference to the mutation.
@@ -3000,18 +3144,18 @@ import { connectorConfig, createConsultation, CreateConsultationVariables } from
 
 // The `CreateConsultation` mutation requires an argument of type `CreateConsultationVariables`:
 const createConsultationVars: CreateConsultationVariables = {
-  clinicId: ...,
-  createdById: ...,
-  patientId: ...,
-  professionalId: ...,
+  clinicId: ..., 
+  createdById: ..., 
+  patientId: ..., 
+  professionalId: ..., 
   appointmentId: ..., // optional
   specialtyId: ..., // optional
-  consultationType: ...,
-  consultedAt: ...,
+  consultationType: ..., 
+  consultedAt: ..., 
   reason: ..., // optional
   notes: ..., // optional
-  status: ...,
-  source: ...,
+  status: ..., 
+  source: ..., 
 };
 
 // Call the `createConsultation()` function to execute the mutation.
@@ -3043,18 +3187,18 @@ import { connectorConfig, createConsultationRef, CreateConsultationVariables } f
 
 // The `CreateConsultation` mutation requires an argument of type `CreateConsultationVariables`:
 const createConsultationVars: CreateConsultationVariables = {
-  clinicId: ...,
-  createdById: ...,
-  patientId: ...,
-  professionalId: ...,
+  clinicId: ..., 
+  createdById: ..., 
+  patientId: ..., 
+  professionalId: ..., 
   appointmentId: ..., // optional
   specialtyId: ..., // optional
-  consultationType: ...,
-  consultedAt: ...,
+  consultationType: ..., 
+  consultedAt: ..., 
   reason: ..., // optional
   notes: ..., // optional
-  status: ...,
-  source: ...,
+  status: ..., 
+  source: ..., 
 };
 
 // Call the `createConsultationRef()` function to get a reference to the mutation.
@@ -3150,7 +3294,7 @@ import { connectorConfig, updateConsultation, UpdateConsultationVariables } from
 
 // The `UpdateConsultation` mutation requires an argument of type `UpdateConsultationVariables`:
 const updateConsultationVars: UpdateConsultationVariables = {
-  id: ...,
+  id: ..., 
   nextVisitAt: ..., // optional
   reason: ..., // optional
   currentIllness: ..., // optional
@@ -3165,7 +3309,7 @@ const updateConsultationVars: UpdateConsultationVariables = {
   evolution: ..., // optional
   plan: ..., // optional
   notes: ..., // optional
-  vitals: ...,
+  vitals: ..., 
 };
 
 // Call the `updateConsultation()` function to execute the mutation.
@@ -3195,7 +3339,7 @@ import { connectorConfig, updateConsultationRef, UpdateConsultationVariables } f
 
 // The `UpdateConsultation` mutation requires an argument of type `UpdateConsultationVariables`:
 const updateConsultationVars: UpdateConsultationVariables = {
-  id: ...,
+  id: ..., 
   nextVisitAt: ..., // optional
   reason: ..., // optional
   currentIllness: ..., // optional
@@ -3210,7 +3354,7 @@ const updateConsultationVars: UpdateConsultationVariables = {
   evolution: ..., // optional
   plan: ..., // optional
   notes: ..., // optional
-  vitals: ...,
+  vitals: ..., 
 };
 
 // Call the `updateConsultationRef()` function to get a reference to the mutation.
@@ -3306,8 +3450,8 @@ import { connectorConfig, updateConsultationWithClinicContext, UpdateConsultatio
 
 // The `UpdateConsultationWithClinicContext` mutation requires an argument of type `UpdateConsultationWithClinicContextVariables`:
 const updateConsultationWithClinicContextVars: UpdateConsultationWithClinicContextVariables = {
-  id: ...,
-  clinicId: ...,
+  id: ..., 
+  clinicId: ..., 
   nextVisitAt: ..., // optional
   reason: ..., // optional
   currentIllness: ..., // optional
@@ -3322,7 +3466,7 @@ const updateConsultationWithClinicContextVars: UpdateConsultationWithClinicConte
   evolution: ..., // optional
   plan: ..., // optional
   notes: ..., // optional
-  vitals: ...,
+  vitals: ..., 
 };
 
 // Call the `updateConsultationWithClinicContext()` function to execute the mutation.
@@ -3354,8 +3498,8 @@ import { connectorConfig, updateConsultationWithClinicContextRef, UpdateConsulta
 
 // The `UpdateConsultationWithClinicContext` mutation requires an argument of type `UpdateConsultationWithClinicContextVariables`:
 const updateConsultationWithClinicContextVars: UpdateConsultationWithClinicContextVariables = {
-  id: ...,
-  clinicId: ...,
+  id: ..., 
+  clinicId: ..., 
   nextVisitAt: ..., // optional
   reason: ..., // optional
   currentIllness: ..., // optional
@@ -3370,7 +3514,7 @@ const updateConsultationWithClinicContextVars: UpdateConsultationWithClinicConte
   evolution: ..., // optional
   plan: ..., // optional
   notes: ..., // optional
-  vitals: ...,
+  vitals: ..., 
 };
 
 // Call the `updateConsultationWithClinicContextRef()` function to get a reference to the mutation.
@@ -3469,9 +3613,9 @@ import { connectorConfig, saveConsultationWithClinicContext, SaveConsultationWit
 
 // The `SaveConsultationWithClinicContext` mutation requires an argument of type `SaveConsultationWithClinicContextVariables`:
 const saveConsultationWithClinicContextVars: SaveConsultationWithClinicContextVariables = {
-  id: ...,
-  clinicId: ...,
-  status: ...,
+  id: ..., 
+  clinicId: ..., 
+  status: ..., 
   nextVisitAt: ..., // optional
   reason: ..., // optional
   currentIllness: ..., // optional
@@ -3486,7 +3630,7 @@ const saveConsultationWithClinicContextVars: SaveConsultationWithClinicContextVa
   evolution: ..., // optional
   plan: ..., // optional
   notes: ..., // optional
-  vitals: ...,
+  vitals: ..., 
 };
 
 // Call the `saveConsultationWithClinicContext()` function to execute the mutation.
@@ -3518,9 +3662,9 @@ import { connectorConfig, saveConsultationWithClinicContextRef, SaveConsultation
 
 // The `SaveConsultationWithClinicContext` mutation requires an argument of type `SaveConsultationWithClinicContextVariables`:
 const saveConsultationWithClinicContextVars: SaveConsultationWithClinicContextVariables = {
-  id: ...,
-  clinicId: ...,
-  status: ...,
+  id: ..., 
+  clinicId: ..., 
+  status: ..., 
   nextVisitAt: ..., // optional
   reason: ..., // optional
   currentIllness: ..., // optional
@@ -3535,7 +3679,7 @@ const saveConsultationWithClinicContextVars: SaveConsultationWithClinicContextVa
   evolution: ..., // optional
   plan: ..., // optional
   notes: ..., // optional
-  vitals: ...,
+  vitals: ..., 
 };
 
 // Call the `saveConsultationWithClinicContextRef()` function to get a reference to the mutation.
@@ -3637,11 +3781,11 @@ import { connectorConfig, signConsultationWithClinicContext, SignConsultationWit
 
 // The `SignConsultationWithClinicContext` mutation requires an argument of type `SignConsultationWithClinicContextVariables`:
 const signConsultationWithClinicContextVars: SignConsultationWithClinicContextVariables = {
-  id: ...,
-  clinicId: ...,
-  signedById: ...,
+  id: ..., 
+  clinicId: ..., 
+  signedById: ..., 
   appointmentId: ..., // optional
-  skipAppointmentUpdate: ...,
+  skipAppointmentUpdate: ..., 
   nextVisitAt: ..., // optional
   reason: ..., // optional
   currentIllness: ..., // optional
@@ -3656,7 +3800,7 @@ const signConsultationWithClinicContextVars: SignConsultationWithClinicContextVa
   evolution: ..., // optional
   plan: ..., // optional
   notes: ..., // optional
-  vitals: ...,
+  vitals: ..., 
 };
 
 // Call the `signConsultationWithClinicContext()` function to execute the mutation.
@@ -3690,11 +3834,11 @@ import { connectorConfig, signConsultationWithClinicContextRef, SignConsultation
 
 // The `SignConsultationWithClinicContext` mutation requires an argument of type `SignConsultationWithClinicContextVariables`:
 const signConsultationWithClinicContextVars: SignConsultationWithClinicContextVariables = {
-  id: ...,
-  clinicId: ...,
-  signedById: ...,
+  id: ..., 
+  clinicId: ..., 
+  signedById: ..., 
   appointmentId: ..., // optional
-  skipAppointmentUpdate: ...,
+  skipAppointmentUpdate: ..., 
   nextVisitAt: ..., // optional
   reason: ..., // optional
   currentIllness: ..., // optional
@@ -3709,7 +3853,7 @@ const signConsultationWithClinicContextVars: SignConsultationWithClinicContextVa
   evolution: ..., // optional
   plan: ..., // optional
   notes: ..., // optional
-  vitals: ...,
+  vitals: ..., 
 };
 
 // Call the `signConsultationWithClinicContextRef()` function to get a reference to the mutation.
@@ -3792,7 +3936,7 @@ import { connectorConfig, deleteConsultation, DeleteConsultationVariables } from
 
 // The `DeleteConsultation` mutation requires an argument of type `DeleteConsultationVariables`:
 const deleteConsultationVars: DeleteConsultationVariables = {
-  id: ...,
+  id: ..., 
 };
 
 // Call the `deleteConsultation()` function to execute the mutation.
@@ -3822,7 +3966,7 @@ import { connectorConfig, deleteConsultationRef, DeleteConsultationVariables } f
 
 // The `DeleteConsultation` mutation requires an argument of type `DeleteConsultationVariables`:
 const deleteConsultationVars: DeleteConsultationVariables = {
-  id: ...,
+  id: ..., 
 };
 
 // Call the `deleteConsultationRef()` function to get a reference to the mutation.
@@ -3903,8 +4047,8 @@ import { connectorConfig, deleteConsultationWithClinicContext, DeleteConsultatio
 
 // The `DeleteConsultationWithClinicContext` mutation requires an argument of type `DeleteConsultationWithClinicContextVariables`:
 const deleteConsultationWithClinicContextVars: DeleteConsultationWithClinicContextVariables = {
-  id: ...,
-  clinicId: ...,
+  id: ..., 
+  clinicId: ..., 
 };
 
 // Call the `deleteConsultationWithClinicContext()` function to execute the mutation.
@@ -3936,8 +4080,8 @@ import { connectorConfig, deleteConsultationWithClinicContextRef, DeleteConsulta
 
 // The `DeleteConsultationWithClinicContext` mutation requires an argument of type `DeleteConsultationWithClinicContextVariables`:
 const deleteConsultationWithClinicContextVars: DeleteConsultationWithClinicContextVariables = {
-  id: ...,
-  clinicId: ...,
+  id: ..., 
+  clinicId: ..., 
 };
 
 // Call the `deleteConsultationWithClinicContextRef()` function to get a reference to the mutation.
@@ -4020,8 +4164,8 @@ import { connectorConfig, signConsultation, SignConsultationVariables } from '@h
 
 // The `SignConsultation` mutation requires an argument of type `SignConsultationVariables`:
 const signConsultationVars: SignConsultationVariables = {
-  id: ...,
-  signedById: ...,
+  id: ..., 
+  signedById: ..., 
 };
 
 // Call the `signConsultation()` function to execute the mutation.
@@ -4053,8 +4197,8 @@ import { connectorConfig, signConsultationRef, SignConsultationVariables } from 
 
 // The `SignConsultation` mutation requires an argument of type `SignConsultationVariables`:
 const signConsultationVars: SignConsultationVariables = {
-  id: ...,
-  signedById: ...,
+  id: ..., 
+  signedById: ..., 
 };
 
 // Call the `signConsultationRef()` function to get a reference to the mutation.
@@ -4144,15 +4288,15 @@ import { connectorConfig, createPatientStudy, CreatePatientStudyVariables } from
 
 // The `CreatePatientStudy` mutation requires an argument of type `CreatePatientStudyVariables`:
 const createPatientStudyVars: CreatePatientStudyVariables = {
-  clinicId: ...,
-  patientId: ...,
+  clinicId: ..., 
+  patientId: ..., 
   professionalId: ..., // optional
-  studyType: ...,
-  studyName: ...,
-  performedAt: ...,
+  studyType: ..., 
+  studyName: ..., 
+  performedAt: ..., 
   resultSummary: ..., // optional
   resultText: ..., // optional
-  metadata: ...,
+  metadata: ..., 
 };
 
 // Call the `createPatientStudy()` function to execute the mutation.
@@ -4184,15 +4328,15 @@ import { connectorConfig, createPatientStudyRef, CreatePatientStudyVariables } f
 
 // The `CreatePatientStudy` mutation requires an argument of type `CreatePatientStudyVariables`:
 const createPatientStudyVars: CreatePatientStudyVariables = {
-  clinicId: ...,
-  patientId: ...,
+  clinicId: ..., 
+  patientId: ..., 
   professionalId: ..., // optional
-  studyType: ...,
-  studyName: ...,
-  performedAt: ...,
+  studyType: ..., 
+  studyName: ..., 
+  performedAt: ..., 
   resultSummary: ..., // optional
   resultText: ..., // optional
-  metadata: ...,
+  metadata: ..., 
 };
 
 // Call the `createPatientStudyRef()` function to get a reference to the mutation.
