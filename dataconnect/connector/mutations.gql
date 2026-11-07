@@ -248,7 +248,32 @@ mutation UpdatePatientWithClinicContext(
   ) @check(message: "No se encontró el paciente en esta clínica")
 }
 
-mutation DeletePatient($id: UUID!) @auth(level: USER) @transaction {
+mutation DeletePatientWithClinicContext($id: UUID!, $clinicId: UUID!) @auth(level: USER) @transaction {
+  user_update(
+    first: {
+      where: {
+        firebaseUid: { eq_expr: "auth.uid" }
+        clinic: { id: { eq: $clinicId } }
+        isActive: { eq: true }
+      }
+    }
+    data: { lastLoginAt_expr: "request.time" }
+  ) @check(message: "La sesión no pertenece a la clínica del paciente")
+  patient_update(
+    first: {
+      where: {
+        id: { eq: $id }
+        clinicId: { eq: $clinicId }
+        deletedAt: { isNull: true }
+      }
+    }
+    data: { deletedAt_expr: "request.time" }
+  ) @check(message: "No se encontró el paciente activo en esta clínica")
+}
+
+# Keep the previous operation available to already published clients while the
+# PWA upgrades to the clinic-context mutation above.
+mutation DeletePatient($id: UUID!) @auth(level: USER) @transaction @retired {
   patient_update(
     first: {
       where: {

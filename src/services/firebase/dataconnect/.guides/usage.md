@@ -14,7 +14,7 @@ If a user is not using a supported framework, they can use the generated SDK dir
 Here's an example of how to use it with the first 5 operations:
 
 ```js
-import { linkCurrentUser, createPatient, updatePatient, updatePatientWithClinicContext, deletePatient, createAppointment, updateAppointmentStatus, updateAppointment, createConsultation, updateConsultation } from '@historias/dataconnect';
+import { linkCurrentUser, createPatient, updatePatient, updatePatientWithClinicContext, deletePatientWithClinicContext, createAppointment, updateAppointmentStatus, updateAppointment, createConsultation, updateConsultation } from '@historias/dataconnect';
 
 
 // Operation LinkCurrentUser: 
@@ -29,8 +29,8 @@ const { data } = await UpdatePatient(dataConnect, updatePatientVars);
 // Operation UpdatePatientWithClinicContext:  For variables, look at type UpdatePatientWithClinicContextVars in ../index.d.ts
 const { data } = await UpdatePatientWithClinicContext(dataConnect, updatePatientWithClinicContextVars);
 
-// Operation DeletePatient:  For variables, look at type DeletePatientVars in ../index.d.ts
-const { data } = await DeletePatient(dataConnect, deletePatientVars);
+// Operation DeletePatientWithClinicContext:  For variables, look at type DeletePatientWithClinicContextVars in ../index.d.ts
+const { data } = await DeletePatientWithClinicContext(dataConnect, deletePatientWithClinicContextVars);
 
 // Operation CreateAppointment:  For variables, look at type CreateAppointmentVars in ../index.d.ts
 const { data } = await CreateAppointment(dataConnect, createAppointmentVars);

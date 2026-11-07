@@ -6,7 +6,7 @@ import {
   createAppointment,
   createConsultation,
   createPatient,
-  deletePatient,
+  deletePatientWithClinicContext,
   getCatalogs,
   getConsultation,
   getPatient,
@@ -447,8 +447,21 @@ export const firebaseApi = {
       return { patient: updated.patient };
     },
     async delete(id: string) {
-      await deletePatient(dc(), { id });
-      return { id };
+      const clinicId = await authenticatedClinicId();
+      try {
+        await deletePatientWithClinicContext(dc(), { id, clinicId });
+        return { id };
+      } catch (cause) {
+        const error = cause as { code?: string; message?: string } | null;
+        console.error('Data Connect DeletePatient falló', {
+          patientId: id,
+          clinicId,
+          code: error?.code,
+          message: error?.message ?? String(cause),
+          cause
+        });
+        throw cause;
+      }
     }
   },
   agenda: {

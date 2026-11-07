@@ -63,17 +63,17 @@ exports.updatePatientWithClinicContext = function updatePatientWithClinicContext
 }
 ;
 
-const deletePatientRef = (dcOrVars, vars) => {
+const deletePatientWithClinicContextRef = (dcOrVars, vars) => {
   const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
   dcInstance._useGeneratedSdk();
-  return mutationRef(dcInstance, 'DeletePatient', inputVars);
+  return mutationRef(dcInstance, 'DeletePatientWithClinicContext', inputVars);
 }
-deletePatientRef.operationName = 'DeletePatient';
-exports.deletePatientRef = deletePatientRef;
+deletePatientWithClinicContextRef.operationName = 'DeletePatientWithClinicContext';
+exports.deletePatientWithClinicContextRef = deletePatientWithClinicContextRef;
 
-exports.deletePatient = function deletePatient(dcOrVars, vars) {
+exports.deletePatientWithClinicContext = function deletePatientWithClinicContext(dcOrVars, vars) {
   const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
-  return executeMutation(deletePatientRef(dcInstance, inputVars));
+  return executeMutation(deletePatientWithClinicContextRef(dcInstance, inputVars));
 }
 ;
 

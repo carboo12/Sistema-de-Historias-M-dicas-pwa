@@ -210,12 +210,14 @@ export interface DeleteConsultationWithClinicContextVariables {
   clinicId: UUIDString;
 }
 
-export interface DeletePatientData {
+export interface DeletePatientWithClinicContextData {
+  user_update?: User_Key | null;
   patient_update?: Patient_Key | null;
 }
 
-export interface DeletePatientVariables {
+export interface DeletePatientWithClinicContextVariables {
   id: UUIDString;
+  clinicId: UUIDString;
 }
 
 export interface GetCatalogsData {
@@ -943,17 +945,17 @@ export const updatePatientWithClinicContextRef: UpdatePatientWithClinicContextRe
 export function updatePatientWithClinicContext(vars: UpdatePatientWithClinicContextVariables): MutationPromise<UpdatePatientWithClinicContextData, UpdatePatientWithClinicContextVariables>;
 export function updatePatientWithClinicContext(dc: DataConnect, vars: UpdatePatientWithClinicContextVariables): MutationPromise<UpdatePatientWithClinicContextData, UpdatePatientWithClinicContextVariables>;
 
-interface DeletePatientRef {
+interface DeletePatientWithClinicContextRef {
   /* Allow users to create refs without passing in DataConnect */
-  (vars: DeletePatientVariables): MutationRef<DeletePatientData, DeletePatientVariables>;
+  (vars: DeletePatientWithClinicContextVariables): MutationRef<DeletePatientWithClinicContextData, DeletePatientWithClinicContextVariables>;
   /* Allow users to pass in custom DataConnect instances */
-  (dc: DataConnect, vars: DeletePatientVariables): MutationRef<DeletePatientData, DeletePatientVariables>;
+  (dc: DataConnect, vars: DeletePatientWithClinicContextVariables): MutationRef<DeletePatientWithClinicContextData, DeletePatientWithClinicContextVariables>;
   operationName: string;
 }
-export const deletePatientRef: DeletePatientRef;
+export const deletePatientWithClinicContextRef: DeletePatientWithClinicContextRef;
 
-export function deletePatient(vars: DeletePatientVariables): MutationPromise<DeletePatientData, DeletePatientVariables>;
-export function deletePatient(dc: DataConnect, vars: DeletePatientVariables): MutationPromise<DeletePatientData, DeletePatientVariables>;
+export function deletePatientWithClinicContext(vars: DeletePatientWithClinicContextVariables): MutationPromise<DeletePatientWithClinicContextData, DeletePatientWithClinicContextVariables>;
+export function deletePatientWithClinicContext(dc: DataConnect, vars: DeletePatientWithClinicContextVariables): MutationPromise<DeletePatientWithClinicContextData, DeletePatientWithClinicContextVariables>;
 
 interface CreateAppointmentRef {
   /* Allow users to create refs without passing in DataConnect */
