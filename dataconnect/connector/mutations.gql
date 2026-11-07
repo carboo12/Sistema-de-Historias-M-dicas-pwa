@@ -329,7 +329,6 @@ mutation UpdateConsultation(
       where: {
         id: { eq: $id }
         clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
-        status: { eq: "borrador" }
         deletedAt: { isNull: true }
       }
     }
@@ -354,17 +353,17 @@ mutation UpdateConsultation(
 }
 
 mutation DeleteConsultation($id: UUID!) @auth(level: USER) @transaction {
-  consultation_update(
-    first: {
-      where: {
-        id: { eq: $id }
-        clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
-        status: { eq: "borrador" }
-        deletedAt: { isNull: true }
-      }
+  consultations(
+    where: {
+      id: { eq: $id }
+      clinic: { users_on_clinic: { exist: { firebaseUid: { eq_expr: "auth.uid" } } } }
+      deletedAt: { isNull: true }
     }
-    data: { deletedAt_expr: "request.time" }
-  ) @check(message: "Solo se pueden eliminar consultas en borrador")
+    limit: 1
+  ) @check(message: "No se encontró la consulta en esta clínica") {
+    id
+  }
+  consultation_delete(id: $id)
 }
 
 mutation SignConsultation($id: UUID!, $signedById: UUID!) @auth(level: USER) @transaction {

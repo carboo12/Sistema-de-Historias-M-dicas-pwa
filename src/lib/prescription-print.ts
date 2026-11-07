@@ -74,11 +74,11 @@ export function renderClinicalTextPrint(target: Window, input: ClinicalTextPrint
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(input.sectionTitle)} · ${patientName}</title>
 <style>
-  @page { size: A4; margin: 10mm 12mm; }
+  @page { size: letter; margin: 10mm 12mm; }
   * { box-sizing: border-box; }
   html, body { margin: 0; min-height: 100%; }
   body { color: #252525; font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.4; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .sheet { min-height: 277mm; display: flex; flex-direction: column; }
+  .sheet { min-height: 259mm; display: flex; flex-direction: column; }
   .header { display: grid; grid-template-columns: 42mm 1fr; align-items: center; gap: 7mm; min-height: 39mm; }
   .logo { display: block; width: 42mm; height: auto; object-fit: contain; }
   .doctor { text-align: center; }
@@ -90,13 +90,13 @@ export function renderClinicalTextPrint(target: Window, input: ClinicalTextPrint
   .patient-field, .date-field { display: flex; align-items: baseline; gap: 2mm; min-width: 0; }
   .field-label { flex: none; font-size: 9pt; }
   .field-value { font-size: 10pt; font-weight: 600; overflow-wrap: anywhere; }
-  .main { flex: 1; min-height: 145mm; padding: 8mm 2mm; }
+  .main { flex: 1; min-height: 125mm; padding: 7mm 2mm; background-image: url("${escapeHtml(`${window.location.origin}/drx9000-watermark.png`)}"); background-position: center; background-repeat: no-repeat; background-size: 148mm auto; }
   .section-title { color: #555; font-size: 8.5pt; font-weight: 700; letter-spacing: .08em; margin: 0 0 4mm; text-transform: uppercase; }
-  .content { font-size: 12pt; line-height: 1.65; min-height: 75mm; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .clinical-section { margin: 0 0 8mm; break-inside: avoid; }
-  .clinical-section h2 { border-bottom: .25mm solid #bbb; color: #555; font-size: 9pt; letter-spacing: .06em; margin: 0 0 3mm; padding-bottom: 1.5mm; text-transform: uppercase; }
+  .content { font-size: 11pt; line-height: 1.45; min-height: 70mm; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .clinical-section { margin: 0 0 8mm; }
+  .clinical-section h2 { border-bottom: .25mm solid #bbb; color: #555; font-size: 9pt; letter-spacing: .06em; margin: 0 0 3mm; padding-bottom: 1.5mm; text-transform: uppercase; break-after: avoid; page-break-after: avoid; }
   .clinical-section .content { min-height: 0; }
-  .footer { align-items: flex-end; display: grid; grid-template-columns: 1fr 72mm; gap: 8mm; margin-top: auto; min-height: 32mm; }
+  .print-footer { align-items: flex-end; display: grid; grid-template-columns: 1fr 72mm; gap: 8mm; margin-top: auto; min-height: 32mm; break-inside: avoid; page-break-inside: avoid; }
   .contact { font-size: 8.2pt; line-height: 1.32; }
   .next-visit { align-items: baseline; display: flex; gap: 2mm; margin-bottom: 2mm; }
   .next-label { font-weight: 600; }
@@ -106,7 +106,10 @@ export function renderClinicalTextPrint(target: Window, input: ClinicalTextPrint
   .signature-space { height: 22mm; }
   .signature-line { border-top: .35mm solid #444; padding-top: 2mm; }
   .signature-name { font-family: "Segoe Script", "Brush Script MT", "URW Chancery L", cursive; font-size: 12pt; font-style: italic; margin: 0; }
-  @media print { .sheet { min-height: 277mm; } }
+  @media print {
+    .sheet { min-height: 259mm; }
+    .print-footer { break-inside: avoid; page-break-inside: avoid; }
+  }
 </style>
 </head>
 <body>
@@ -130,7 +133,7 @@ export function renderClinicalTextPrint(target: Window, input: ClinicalTextPrint
       ${input.sections?.length ? content : `<h2 class="section-title">${escapeHtml(input.sectionTitle)}</h2>${content}`}
     </main>
 
-    <footer class="footer">
+    <footer class="print-footer">
       <div class="contact">
         <div class="next-visit"><span class="next-label">Próxima cita:</span><span class="next-value">${nextVisit}</span></div>
         <p>Dirección: Semáforos de Plaza el Sol 1c. al Sur y 1 c. abajo, Los Robles.</p>

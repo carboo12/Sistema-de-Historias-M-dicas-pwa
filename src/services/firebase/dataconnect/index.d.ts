@@ -193,7 +193,8 @@ export interface CreatePatientVariables {
 }
 
 export interface DeleteConsultationData {
-  consultation_update?: Consultation_Key | null;
+  consultations: ({ id: UUIDString })[];
+  consultation_delete?: Consultation_Key | null;
 }
 
 export interface DeleteConsultationVariables {

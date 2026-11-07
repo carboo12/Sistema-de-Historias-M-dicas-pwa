@@ -6,7 +6,8 @@ import {
   signInWithFirebase,
   signOutFromFirebase
 } from '../services/firebase/auth';
-import { useFirebaseBackend } from '../services/firebase/client';
+import { firebaseAuth, useFirebaseBackend } from '../services/firebase/client';
+import { cacheOfflineUser, getOfflineUser, isNetworkUnavailable } from '../lib/offline-consultations';
 import type { User } from '../types';
 
 type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
@@ -27,12 +28,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
+      if (useFirebaseBackend && firebaseAuth) await firebaseAuth.authStateReady();
       const session = useFirebaseBackend
         ? await getFirebaseSession()
         : (await api.auth.me()).user;
+      if (useFirebaseBackend && firebaseAuth?.currentUser?.uid) {
+        void cacheOfflineUser(firebaseAuth.currentUser.uid, session).catch(() => undefined);
+      }
       setUser(session);
       setStatus('authenticated');
-    } catch {
+    } catch (cause) {
+      const firebaseUid = useFirebaseBackend ? firebaseAuth?.currentUser?.uid : undefined;
+      if (firebaseUid && isNetworkUnavailable(cause)) {
+        try {
+          const cached = await getOfflineUser(firebaseUid);
+          if (cached) {
+            setUser(cached);
+            setStatus('authenticated');
+            return;
+          }
+        } catch {
+          // If the local session copy is unavailable, require a normal sign-in.
+        }
+      }
       setUser(null);
       setStatus('anonymous');
     }
@@ -46,6 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const session = useFirebaseBackend
       ? await signInWithFirebase(identifier, password)
       : (await api.auth.login(identifier, password)).user;
+    if (useFirebaseBackend && firebaseAuth?.currentUser?.uid) {
+      void cacheOfflineUser(firebaseAuth.currentUser.uid, session).catch(() => undefined);
+    }
     setUser(session);
     setStatus('authenticated');
     return session;

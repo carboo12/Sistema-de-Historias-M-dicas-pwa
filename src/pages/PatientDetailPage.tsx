@@ -45,6 +45,7 @@ import {
   buildPrescriptionEmailBody
 } from '../lib/clinical-email';
 import { openPrescriptionPrintWindow, renderPrescriptionPrint } from '../lib/prescription-print';
+import { cacheOfflinePatientDetail, createOfflineConsultation, getOfflinePatientDetail, isNetworkUnavailable, registerOfflineConsultationSync, saveOfflineConsultation } from '../lib/offline-consultations';
 import type { ConsultationSummary } from '../types';
 import {
   ageFromBirthDate,
@@ -79,6 +80,7 @@ export function PatientDetailPage() {
   const [appointmentOpen, setAppointmentOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [consultationToDelete, setConsultationToDelete] = useState<ConsultationSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [printingId, setPrintingId] = useState<string | null>(null);
   const [emailTarget, setEmailTarget] = useState<ConsultationSummary | null>(null);
@@ -89,17 +91,39 @@ export function PatientDetailPage() {
 
   const detail = useQuery({
     queryKey: ['patient', routePatientId],
-    queryFn: () => api.patients.get(routePatientId as string),
+    queryFn: async () => {
+      try {
+        const response = await api.patients.get(routePatientId as string);
+        if (user?.id) void cacheOfflinePatientDetail(user.id, response).catch(() => undefined);
+        return response;
+      } catch (cause) {
+        if (user?.id && isNetworkUnavailable(cause)) {
+          const cached = await getOfflinePatientDetail(user.id, routePatientId as string);
+          if (cached) return cached;
+        }
+        throw cause;
+      }
+    },
     enabled: Boolean(routePatientId)
   });
 
   const startConsultation = useMutation({
-    mutationFn: (patientId: string) =>
-      api.consultations.create({
-        patientId,
-        reason: 'Consulta de seguimiento'
-      }),
+    mutationFn: async (patientId: string) => {
+      try {
+        return await api.consultations.create({ patientId, reason: 'Consulta de seguimiento' });
+      } catch (cause) {
+        if (!isNetworkUnavailable(cause) || !user) throw cause;
+        const local = createOfflineConsultation(patient, user, { reason: 'Consulta de seguimiento' });
+        await saveOfflineConsultation(user.id, local, { pending: true });
+        await registerOfflineConsultationSync();
+        return { consultation: local, offlineCreated: true as const };
+      }
+    },
     onSuccess: async (response) => {
+      if ('offlineCreated' in response && response.offlineCreated) {
+        navigate(`/consultas/${response.consultation.id}`);
+        return;
+      }
       await queryClient.invalidateQueries({ queryKey: ['patient', routePatientId] });
       navigate(`/consultas/${response.consultation.id}`);
     },
@@ -121,6 +145,19 @@ export function PatientDetailPage() {
       navigate('/pacientes');
     },
     onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo eliminar el paciente')
+  });
+
+  const deleteConsultation = useMutation({
+    mutationFn: (consultationId: string) => api.consultations.delete(consultationId),
+    onSuccess: () => {
+      setConsultationToDelete(null);
+      setError(null);
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['patient', routePatientId] }),
+        queryClient.invalidateQueries({ queryKey: ['consultations'] })
+      ]);
+    },
+    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo eliminar la consulta')
   });
 
   if (detail.isLoading) {
@@ -399,6 +436,18 @@ export function PatientDetailPage() {
                     </button>
                     <div className="flex shrink-0 flex-col gap-1 pt-1">
                       <IconButton
+                        label="Editar consulta"
+                        onClick={() => navigate(`/consultas/${consultation.id}`, { state: { startInEdit: true } })}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </IconButton>
+                      <IconButton
+                        label="Eliminar consulta"
+                        onClick={() => { setError(null); setConsultationToDelete(consultation); }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </IconButton>
+                      <IconButton
                           label={printingId === consultation.id ? 'Generando receta…' : 'Imprimir sólo receta'}
                         disabled={printingId === consultation.id}
                         onClick={() => void printHistoryPrescription(consultation)}
@@ -521,6 +570,16 @@ export function PatientDetailPage() {
         onCreated={() => void queryClient.invalidateQueries({ queryKey: ['patient', routePatientId] })}
       />
       <PatientFormDialog open={editOpen} onClose={() => setEditOpen(false)} patient={patient} onCreated={() => void queryClient.invalidateQueries({ queryKey: ['patient', routePatientId] })} />
+      <Modal
+        open={Boolean(consultationToDelete)}
+        onClose={() => { if (!deleteConsultation.isPending) setConsultationToDelete(null); }}
+        title="Eliminar consulta"
+        description="La consulta se eliminará del expediente del paciente."
+        footer={<><Button variant="secondary" disabled={deleteConsultation.isPending} onClick={() => setConsultationToDelete(null)}>Cancelar</Button><Button variant="danger" loading={deleteConsultation.isPending} onClick={() => consultationToDelete && deleteConsultation.mutate(consultationToDelete.id)}>Eliminar definitivamente</Button></>}
+      >
+        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Deseas eliminar esta consulta definitivamente?</p>
+        {deleteConsultation.isError ? <p role="alert" className="mt-3 text-sm font-semibold text-red-700">{deleteConsultation.error instanceof Error ? deleteConsultation.error.message : 'No se pudo eliminar la consulta.'}</p> : null}
+      </Modal>
       <Modal
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}

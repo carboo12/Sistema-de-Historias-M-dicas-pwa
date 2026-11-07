@@ -24,6 +24,7 @@ import {
   Textarea
 } from '../components/ui';
 import { api, ApiError } from '../lib/data';
+import { cacheOfflinePatientDetail, createOfflineConsultation, getOfflinePatientDetail, isNetworkUnavailable, registerOfflineConsultationSync, saveOfflineConsultation } from '../lib/offline-consultations';
 import {
   ageFromBirthDate,
   currentTimeInput,
@@ -50,7 +51,19 @@ export function NewConsultationPage() {
 
   const patientQuery = useQuery({
     queryKey: ['patient', initialPatientId],
-    queryFn: () => api.patients.get(initialPatientId as string),
+    queryFn: async () => {
+      try {
+        const response = await api.patients.get(initialPatientId as string);
+        if (user?.id) void cacheOfflinePatientDetail(user.id, response).catch(() => undefined);
+        return response;
+      } catch (cause) {
+        if (user?.id && isNetworkUnavailable(cause)) {
+          const cached = await getOfflinePatientDetail(user.id, initialPatientId as string);
+          if (cached) return cached;
+        }
+        throw cause;
+      }
+    },
     enabled: Boolean(initialPatientId)
   });
 
@@ -67,15 +80,25 @@ export function NewConsultationPage() {
   }, [professionalId, catalogs.data, user?.professionalId]);
 
   const mutation = useMutation({
-    mutationFn: () =>
-      api.consultations.create({
+    mutationFn: async () => {
+      const payload = {
         patientId: patient?.id,
         professionalId: professionalId || undefined,
         consultationType,
         consultedAt: dateTimeToIso(date, time),
         reason,
         notes
-      }),
+      };
+      try {
+        return await api.consultations.create(payload);
+      } catch (cause) {
+        if (!isNetworkUnavailable(cause) || !patient || !user) throw cause;
+        const local = createOfflineConsultation(patient, user, payload);
+        await saveOfflineConsultation(user.id, local, { pending: true });
+        await registerOfflineConsultationSync();
+        return { consultation: local, offlineCreated: true as const };
+      }
+    },
     onSuccess: (response) => navigate(`/consultas/${response.consultation.id}`),
     onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo iniciar la consulta')
   });

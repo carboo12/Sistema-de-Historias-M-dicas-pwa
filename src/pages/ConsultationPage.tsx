@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -37,6 +37,7 @@ import {
 } from '../lib/clinical-email';
 import { openClinicalPrintWindow, openPrescriptionPrintWindow, renderClinicalTextPrint, renderPrescriptionPrint } from '../lib/prescription-print';
 import { printConsultation } from '../lib/consultation-print';
+import { getOfflineConsultation, isNetworkUnavailable, registerOfflineConsultationSync, saveOfflineConsultation } from '../lib/offline-consultations';
 import {
   ageFromBirthDate,
   consultationStatusLabel,
@@ -92,6 +93,7 @@ function toDateInput(value: string | null) {
 export function ConsultationPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const timezone = user?.timezone ?? 'America/Managua';
@@ -107,6 +109,7 @@ export function ConsultationPage() {
   const [signOpen, setSignOpen] = useState(false);
   const [signError, setSignError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editingHistorical, setEditingHistorical] = useState(() => Boolean((location.state as { startInEdit?: boolean } | null)?.startInEdit));
   const [activeSection, setActiveSection] = useState<'evolution' | 'studies' | 'prescription'>('evolution');
   const [emailDialog, setEmailDialog] = useState<'evolution' | 'prescription' | null>(null);
   const [emailRecipient, setEmailRecipient] = useState('');
@@ -114,9 +117,39 @@ export function ConsultationPage() {
 
   const detail = useQuery({
     queryKey: ['consultation', id],
-    queryFn: () => api.consultations.get(id as string),
+    queryFn: async () => {
+      const ownerId = user?.id;
+      if (id?.startsWith('local-')) {
+        const consultation = ownerId ? await getOfflineConsultation(ownerId, id) : null;
+        if (!consultation) throw new Error('No encontramos el borrador guardado en este dispositivo.');
+        return { consultation, offlineCopy: true };
+      }
+      if (typeof navigator !== 'undefined' && !navigator.onLine && ownerId) {
+        const consultation = await getOfflineConsultation(ownerId, id as string);
+        if (consultation) return { consultation, offlineCopy: true };
+      }
+      try {
+        const response = await api.consultations.get(id as string);
+        if (ownerId) void saveOfflineConsultation(ownerId, response.consultation, { pending: false }).catch(() => undefined);
+        return { ...response, offlineCopy: false };
+      } catch (cause) {
+        if (ownerId && isNetworkUnavailable(cause)) {
+          const consultation = await getOfflineConsultation(ownerId, id as string);
+          if (consultation) return { consultation, offlineCopy: true };
+        }
+        throw cause;
+      }
+    },
     enabled: Boolean(id)
   });
+
+  useEffect(() => {
+    setInitialized(false);
+    setForm(null);
+    setNextVisitAt('');
+    setSavedSnapshot('');
+    setSavedNextVisit('');
+  }, [id]);
 
   useEffect(() => {
     if (!detail.data || initialized) return;
@@ -131,20 +164,79 @@ export function ConsultationPage() {
 
   const isDirty = form !== null && (JSON.stringify(form) !== savedSnapshot || nextVisitAt !== savedNextVisit);
 
+  useEffect(() => {
+    if (navigator.onLine || !isDirty || !form || !detail.data || !user?.id) return;
+    const timeout = window.setTimeout(() => {
+      const consultation = {
+        ...detail.data!.consultation,
+        ...form,
+        nextVisitAt: nextVisitAt ? `${nextVisitAt}T12:00:00.000Z` : null,
+        updatedAt: new Date().toISOString()
+      } as Consultation;
+      void saveOfflineConsultation(user.id, consultation, { pending: true })
+        .then(() => {
+          void registerOfflineConsultationSync();
+          queryClient.setQueryData(['consultation', id], { consultation, offlineCopy: true });
+          setSaveMessage('Guardado en este dispositivo · pendiente de sincronización');
+          setError(null);
+        })
+        .catch(() => setError('No se pudo guardar la copia local. Mantén esta pantalla abierta e inténtalo de nuevo.'));
+    }, 450);
+    return () => window.clearTimeout(timeout);
+  }, [detail.data, form, id, isDirty, nextVisitAt, queryClient, user?.id]);
+
+  useEffect(() => {
+    const onSynced = (event: Event) => {
+      const completed = (event as CustomEvent<{ completed: Array<{ fromId: string; toId: string }> }>).detail?.completed ?? [];
+      if (completed.some((item) => item.fromId === id || item.toId === id)) setSaveMessage('Sincronizado con la base de datos');
+    };
+    window.addEventListener('offline-consultations-synced', onSynced);
+    return () => {
+      window.removeEventListener('offline-consultations-synced', onSynced);
+    };
+  }, [id]);
+
   const buildPayload = () => ({
     ...(form ?? {}),
     nextVisitAt: nextVisitAt ? `${nextVisitAt}T12:00:00.000Z` : null,
   });
 
   const saveMutation = useMutation({
-    mutationFn: () => api.consultations.update(id as string, buildPayload()),
-    onSuccess: () => {
-      setSavedSnapshot(JSON.stringify(form));
-      setSavedNextVisit(nextVisitAt);
-      setSaveMessage('Guardado');
+    mutationFn: async () => {
+      const current = detail.data?.consultation;
+      if (!current) throw new Error('La consulta aún no está disponible para guardar.');
+      const saveLocally = async () => {
+        if (!user?.id) throw new Error('No se encontró la sesión para proteger el borrador local.');
+        const updated = { ...current, ...buildPayload(), updatedAt: new Date().toISOString() } as Consultation;
+        await saveOfflineConsultation(user.id, updated, { pending: true });
+        await registerOfflineConsultationSync();
+        return { consultation: updated, offlineSaved: true as const };
+      };
+      if (id?.startsWith('local-') || !navigator.onLine) return saveLocally();
+      try {
+        return { ...(await api.consultations.update(id as string, buildPayload())), offlineSaved: false as const };
+      } catch (cause) {
+        if (isNetworkUnavailable(cause)) return saveLocally();
+        throw cause;
+      }
+    },
+    onSuccess: (response) => {
+      const freshForm = toForm(response.consultation);
+      const freshDate = toDateInput(response.consultation.nextVisitAt);
+      setForm(freshForm);
+      setNextVisitAt(freshDate);
+      setSavedSnapshot(JSON.stringify(freshForm));
+      setSavedNextVisit(freshDate);
+      setEditingHistorical(false);
+      setSaveMessage(response.offlineSaved ? 'Guardado en este dispositivo · pendiente de sincronización' : 'Guardado');
       setError(null);
-      void queryClient.invalidateQueries({ queryKey: ['consultation', id] });
-      void queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      if (response.offlineSaved) {
+        queryClient.setQueryData(['consultation', id], { consultation: response.consultation, offlineCopy: true });
+      } else {
+        if (user?.id) void saveOfflineConsultation(user.id, response.consultation, { pending: false }).catch(() => undefined);
+        void queryClient.invalidateQueries({ queryKey: ['consultation', id] });
+        void queryClient.invalidateQueries({ queryKey: ['consultations'] });
+      }
     },
     onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo guardar la consulta')
   });
@@ -167,14 +259,16 @@ export function ConsultationPage() {
     onError: (cause) => setSignError(cause instanceof ApiError ? cause.message : 'No se pudo firmar la consulta')
   });
 
-  const archiveConsultation = useMutation({
+  const deleteConsultation = useMutation({
     mutationFn: () => api.consultations.delete(id as string),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['consultations'] });
-      await queryClient.invalidateQueries({ queryKey: ['patient'] });
+    onSuccess: () => {
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['consultations'] }),
+        queryClient.invalidateQueries({ queryKey: ['patient'] })
+      ]);
       navigate(`/pacientes/${consultation.patientId}`);
     },
-    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo archivar la consulta')
+    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo eliminar la consulta')
   });
 
   if (detail.isLoading || (!detail.isError && !initialized)) {
@@ -200,10 +294,11 @@ export function ConsultationPage() {
   }
 
   const { consultation } = detail.data;
+  const offlineCopy = detail.data.offlineCopy;
   const renderedForm = form;
-  const readOnly = justSigned || consultation.status !== 'borrador';
+  const readOnly = !editingHistorical && (justSigned || consultation.status !== 'borrador');
   const age = ageFromBirthDate(consultation.birthDate);
-  const localCanSign = !readOnly && Boolean(renderedForm.evolutionText.trim());
+  const localCanSign = consultation.status === 'borrador' && !justSigned && Boolean(renderedForm.evolutionText.trim());
 
   function update<K extends keyof ConsultationForm>(key: K, value: ConsultationForm[K]) {
     setForm((current) => (current ? { ...current, [key]: value } : current));
@@ -213,6 +308,10 @@ export function ConsultationPage() {
 
   function requestSign() {
     setSignError(null);
+    if (!navigator.onLine) {
+      setError('La firma requiere conexión. Guarda el borrador local y se sincronizará al volver internet.');
+      return;
+    }
     if (!form || !renderedForm.evolutionText.trim()) {
       setError('Agrega la evolución o nota médica antes de firmar');
       return;
@@ -307,11 +406,11 @@ export function ConsultationPage() {
       <div className="no-print flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
-          onClick={() => navigate('/consultas')}
+          onClick={() => navigate(`/pacientes/${consultation.patientId}`)}
           className="focus-ring inline-flex items-center gap-2 rounded-lg text-xs font-bold text-ink/45 transition hover:text-teal-800"
         >
           <ArrowLeft className="h-4 w-4" />
-          Volver a consultas
+          Volver al expediente
         </button>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" onClick={printPrescription} icon={<Printer className="h-4 w-4" />}>Imprimir receta</Button>
@@ -328,7 +427,9 @@ export function ConsultationPage() {
               </Badge>
             )
           ) : null}
-          {!readOnly ? <Button variant="danger" onClick={() => setDeleteOpen(true)} icon={<Trash2 className="h-4 w-4" />}>Eliminar borrador</Button> : null}
+          {readOnly ? <Button variant="secondary" onClick={() => { setEditingHistorical(true); setError(null); }} icon={<Save className="h-4 w-4" />}>Editar consulta</Button> : null}
+          {editingHistorical ? <Button variant="ghost" onClick={() => { const original = toForm(consultation); const originalDate = toDateInput(consultation.nextVisitAt); setForm(original); setNextVisitAt(originalDate); setSavedSnapshot(JSON.stringify(original)); setSavedNextVisit(originalDate); setEditingHistorical(false); setError(null); }}>Cancelar edición</Button> : null}
+          <Button variant="danger" onClick={() => setDeleteOpen(true)} icon={<Trash2 className="h-4 w-4" />}>Eliminar consulta</Button>
           {!readOnly ? (
             <>
               <Button
@@ -371,6 +472,13 @@ export function ConsultationPage() {
         </div>
       ) : null}
 
+      {offlineCopy || saveMessage?.includes('pendiente de sincronización') ? (
+        <div className="no-print rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
+          <p className="font-bold">Modo sin conexión</p>
+          <p className="mt-1 text-xs leading-relaxed">Los cambios se guardan cifrados en este dispositivo y se enviarán a la base de datos cuando vuelva la conexión. Mantén tu sesión abierta hasta ver “Sincronizado con la base de datos”.</p>
+        </div>
+      ) : null}
+
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <p className="eyebrow mb-1.5">
@@ -380,8 +488,8 @@ export function ConsultationPage() {
             <h1 className="font-display text-3xl font-medium tracking-tight text-ink sm:text-4xl">
               {consultation.patientName}
             </h1>
-            <Badge className={statusBadgeClass(readOnly ? 'firmada' : consultation.status)} dot>
-              {readOnly ? 'Firmada' : consultationStatusLabel(consultation.status)}
+            <Badge className={statusBadgeClass(consultation.status)} dot>
+              {consultationStatusLabel(consultation.status)}
             </Badge>
           </div>
           <p className="mt-1.5 text-sm text-ink/55">
@@ -464,7 +572,7 @@ export function ConsultationPage() {
               </h2>
             </div>
 
-            {readOnly ? (
+            {consultation.status !== 'borrador' || justSigned ? (
               <div className="mt-4 rounded-xl bg-teal-50 p-4">
                 <div className="flex items-center gap-2 text-teal-800">
                   <CheckCircle2 className="h-4 w-4" />
@@ -489,7 +597,7 @@ export function ConsultationPage() {
                 <Button
                   className="mt-4 w-full"
                   icon={<ClipboardCheck className="h-4 w-4" />}
-                  disabled={!localCanSign}
+                  disabled={!localCanSign || !navigator.onLine}
                   onClick={requestSign}
                 >
                   Firmar consulta
@@ -542,8 +650,8 @@ export function ConsultationPage() {
           ) : null}
         </div>
       </Modal>
-      <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Archivar consulta" description="Solo es posible archivar borradores. La nota firmada no se puede modificar ni eliminar." footer={<><Button variant="secondary" onClick={() => setDeleteOpen(false)}>Volver</Button><Button variant="danger" loading={archiveConsultation.isPending} onClick={() => archiveConsultation.mutate()}>Archivar borrador</Button></>}>
-        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Estás seguro de archivar este borrador? Se ocultará de las consultas activas, conservando el registro de auditoría.</p>
+      <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Eliminar consulta" description="La consulta y su información clínica dejarán de aparecer en el historial del paciente." footer={<><Button variant="secondary" onClick={() => setDeleteOpen(false)}>Cancelar</Button><Button variant="danger" loading={deleteConsultation.isPending} onClick={() => deleteConsultation.mutate()}>Eliminar definitivamente</Button></>}>
+        <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Deseas eliminar esta consulta definitivamente?</p>
       </Modal>
       <Modal open={emailDialog !== null} onClose={() => setEmailDialog(null)} title={emailDialog === 'prescription' ? 'Enviar receta por correo' : 'Enviar evolución por correo'} description="Revisa el destinatario y el contenido en tu aplicación de correo antes de enviarlo." footer={null}>
         <form className="space-y-4" onSubmit={sendEmailDraft}>
