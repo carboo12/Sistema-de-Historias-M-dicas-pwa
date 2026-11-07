@@ -69,14 +69,19 @@ export function PatientsPage() {
           total: Math.max(value.total - (value.patients.some((patient) => patient.id === patientId) ? 1 : 0), 0)
         });
       }
-      return { previous };
+      return { previous, wasLastRowOnPage: rows.length === 1 && page > 0 };
     },
     onError: (_cause, _patientId, context) => {
       for (const [queryKey, value] of context?.previous ?? []) queryClient.setQueryData(queryKey, value);
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['patients'] });
+    onSuccess: async (_result, _patientId, context) => {
       setDeleteTarget(null);
+      if (context?.wasLastRowOnPage) setPage((current) => Math.max(current - 1, 0));
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['patients'] }),
+        queryClient.invalidateQueries({ queryKey: ['reports'] }),
+        queryClient.invalidateQueries({ queryKey: ['summary'] })
+      ]);
     }
   });
 

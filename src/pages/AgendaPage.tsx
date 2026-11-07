@@ -106,7 +106,13 @@ export function AgendaPage() {
         reason: appointment.reason ?? undefined
       }),
     onSuccess: async (response) => {
-      await queryClient.invalidateQueries({ queryKey: ['agenda'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['agenda'] }),
+        queryClient.invalidateQueries({ queryKey: ['patient'] }),
+        queryClient.invalidateQueries({ queryKey: ['consultations'] }),
+        queryClient.invalidateQueries({ queryKey: ['reports'] }),
+        queryClient.invalidateQueries({ queryKey: ['summary'] })
+      ]);
       navigate(`/consultas/${response.consultation.id}`);
     },
     onError: (cause) => {
@@ -123,11 +129,29 @@ export function AgendaPage() {
 
   const cancelAppointment = useMutation({
     mutationFn: (appointment: Appointment) => api.agenda.updateStatus(appointment.id, 'cancelada'),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['agenda'] });
-      setCancelTarget(null);
+    onMutate: async (appointment) => {
+      await queryClient.cancelQueries({ queryKey: ['agenda'] });
+      const previous = queryClient.getQueriesData<{ appointments: Appointment[] }>({ queryKey: ['agenda'] });
+      for (const [queryKey, cached] of previous) {
+        if (cached) queryClient.setQueryData(queryKey, {
+          ...cached,
+          appointments: cached.appointments.map((item) => item.id === appointment.id ? { ...item, status: 'cancelada' } : item)
+        });
+      }
+      return { previous };
     },
-    onError: (cause) => setActionError(cause instanceof ApiError ? cause.message : 'No se pudo cancelar la cita')
+    onSuccess: async () => {
+      setCancelTarget(null);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['agenda'] }),
+        queryClient.invalidateQueries({ queryKey: ['patient'] }),
+        queryClient.invalidateQueries({ queryKey: ['summary'] })
+      ]);
+    },
+    onError: (cause, _appointment, context) => {
+      for (const [queryKey, cached] of context?.previous ?? []) queryClient.setQueryData(queryKey, cached);
+      setActionError(cause instanceof ApiError ? cause.message : 'No se pudo cancelar la cita');
+    }
   });
 
   const monthAppointments = (agenda.data?.appointments ?? []).filter((appointment) => isValidAppointmentDate(appointment?.startsAt));

@@ -119,12 +119,18 @@ export function PatientDetailPage() {
         return { consultation: local, offlineCreated: true as const };
       }
     },
-    onSuccess: async (response) => {
+    onSuccess: (response) => {
       if ('offlineCreated' in response && response.offlineCreated) {
         navigate(`/consultas/${response.consultation.id}`);
         return;
       }
-      await queryClient.invalidateQueries({ queryKey: ['patient', routePatientId] });
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['patient', routePatientId] }),
+        queryClient.invalidateQueries({ queryKey: ['consultations'] }),
+        queryClient.invalidateQueries({ queryKey: ['agenda'] }),
+        queryClient.invalidateQueries({ queryKey: ['reports'] }),
+        queryClient.invalidateQueries({ queryKey: ['summary'] })
+      ]);
       navigate(`/consultas/${response.consultation.id}`);
     },
     onError: (cause) => {
@@ -140,24 +146,66 @@ export function PatientDetailPage() {
 
   const deletePatient = useMutation({
     mutationFn: (id: string) => api.patients.delete(id),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['patients'] });
+    onMutate: async (patientId) => {
+      await queryClient.cancelQueries({ queryKey: ['patients'] });
+      const previous = queryClient.getQueriesData<{ patients: import('../types').Patient[]; total: number }>({ queryKey: ['patients'] });
+      for (const [queryKey, cached] of previous) {
+        if (!cached) continue;
+        const found = cached.patients.some((item) => item.id === patientId);
+        queryClient.setQueryData(queryKey, {
+          ...cached,
+          patients: cached.patients.filter((item) => item.id !== patientId),
+          total: Math.max(0, cached.total - (found ? 1 : 0))
+        });
+      }
+      return { previous };
+    },
+    onError: (cause, _patientId, context) => {
+      for (const [queryKey, cached] of context?.previous ?? []) queryClient.setQueryData(queryKey, cached);
+      setError(cause instanceof ApiError ? cause.message : 'No se pudo eliminar el paciente');
+    },
+    onSuccess: (_result, patientId) => {
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['patients'] }),
+        queryClient.invalidateQueries({ queryKey: ['reports'] }),
+        queryClient.invalidateQueries({ queryKey: ['summary'] })
+      ]);
+      queryClient.removeQueries({ queryKey: ['patient', patientId], exact: true });
       navigate('/pacientes');
     },
-    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo eliminar el paciente')
   });
 
   const deleteConsultation = useMutation({
     mutationFn: (consultationId: string) => api.consultations.delete(consultationId),
+    onMutate: async (consultationId) => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ['patient'] }),
+        queryClient.cancelQueries({ queryKey: ['consultations'] })
+      ]);
+      const patientSnapshots = queryClient.getQueriesData<PatientDetail>({ queryKey: ['patient'] });
+      const consultationSnapshots = queryClient.getQueriesData<{ consultations: ConsultationSummary[] }>({ queryKey: ['consultations'] });
+      for (const [queryKey, cached] of patientSnapshots) {
+        if (cached) queryClient.setQueryData(queryKey, { ...cached, consultations: cached.consultations.filter((item) => item.id !== consultationId) });
+      }
+      for (const [queryKey, cached] of consultationSnapshots) {
+        if (cached) queryClient.setQueryData(queryKey, { ...cached, consultations: cached.consultations.filter((item) => item.id !== consultationId) });
+      }
+      return { snapshots: [...patientSnapshots, ...consultationSnapshots] };
+    },
+    onError: (cause, _consultationId, context) => {
+      for (const [queryKey, cached] of context?.snapshots ?? []) queryClient.setQueryData(queryKey, cached);
+      setError(cause instanceof ApiError ? cause.message : 'No se pudo eliminar la consulta');
+    },
     onSuccess: () => {
       setConsultationToDelete(null);
       setError(null);
       void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['patient', routePatientId] }),
-        queryClient.invalidateQueries({ queryKey: ['consultations'] })
+        queryClient.invalidateQueries({ queryKey: ['consultations'] }),
+        queryClient.invalidateQueries({ queryKey: ['reports'] }),
+        queryClient.invalidateQueries({ queryKey: ['summary'] })
       ]);
-    },
-    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo eliminar la consulta')
+    }
   });
 
   if (detail.isLoading) {
@@ -598,6 +646,7 @@ export function PatientDetailPage() {
         footer={<><Button variant="secondary" onClick={() => setDeleteOpen(false)}>Cancelar</Button><Button variant="danger" loading={deletePatient.isPending} onClick={() => deletePatient.mutate(patient.id)}>Confirmar eliminación</Button></>}
       >
         <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">¿Confirmas retirar a {patient.fullName} del directorio activo? Su historial médico se conservará.</p>
+        {deletePatient.isError ? <p role="alert" className="mt-3 text-sm font-semibold text-red-700">{deletePatient.error instanceof Error ? deletePatient.error.message : 'No se pudo eliminar el paciente.'}</p> : null}
       </Modal>
       <Modal
         open={Boolean(emailTarget)}

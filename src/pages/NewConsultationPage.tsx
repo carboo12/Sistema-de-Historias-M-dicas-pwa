@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -37,6 +37,7 @@ import type { Patient } from '../types';
 export function NewConsultationPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const initialPatientId = searchParams.get('paciente');
   const timezone = user?.timezone ?? 'America/Managua';
@@ -99,7 +100,18 @@ export function NewConsultationPage() {
         return { consultation: local, offlineCreated: true as const };
       }
     },
-    onSuccess: (response) => navigate(`/consultas/${response.consultation.id}`),
+    onSuccess: (response) => {
+      if (!('offlineCreated' in response) || !response.offlineCreated) {
+        void Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['consultations'] }),
+          queryClient.invalidateQueries({ queryKey: ['patient', response.consultation.patientId] }),
+          queryClient.invalidateQueries({ queryKey: ['agenda'] }),
+          queryClient.invalidateQueries({ queryKey: ['reports'] }),
+          queryClient.invalidateQueries({ queryKey: ['summary'] })
+        ]);
+      }
+      navigate(`/consultas/${response.consultation.id}`);
+    },
     onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo iniciar la consulta')
   });
 

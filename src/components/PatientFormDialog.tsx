@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { UserPlus } from 'lucide-react';
 import { api, ApiError } from '../lib/data';
-import type { Patient } from '../types';
+import type { Patient, PatientDetail } from '../types';
 import { Button, Field, Input, Modal, Select, Textarea } from './ui';
 import { ageFromBirthDate } from '../lib/format';
 import { patientFormSchema } from '../lib/form-validation';
@@ -50,20 +50,95 @@ export function PatientFormDialog({
     mutationFn: (payload: ReturnType<typeof patientFormSchema.parse>) => {
       return patient ? api.patients.update(patient.id, payload) : api.patients.create(payload);
     },
+    onMutate: async (payload) => {
+      if (!patient) return { snapshots: [], detailSnapshot: undefined as PatientDetail | undefined };
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ['patients'] }),
+        queryClient.cancelQueries({ queryKey: ['patient', patient.id] })
+      ]);
+      const snapshots = queryClient.getQueriesData<{ patients: Patient[]; total: number; limit?: number; offset?: number }>({ queryKey: ['patients'] });
+      const detailSnapshot = queryClient.getQueryData<PatientDetail>(['patient', patient.id]);
+      const words = String(payload.fullName ?? '').trim().split(/\s+/);
+      const optimistic: Patient = {
+        ...patient,
+        ...payload,
+        firstName: words[0] ?? '',
+        lastName: words.slice(1).join(' ') || null,
+        phone: payload.phone || null,
+        mobile: payload.phone || null,
+        email: payload.email || null,
+        birthDate: payload.birthDate || null,
+        ageOverride: payload.ageOverride == null ? null : Number(payload.ageOverride),
+        documentType: payload.documentType || null,
+        documentNumber: payload.documentNumber || null,
+        currentDiagnosisSummary: payload.currentDiagnosisSummary || null,
+        updatedAt: new Date().toISOString()
+      };
+      const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
+      const text = normalize([optimistic.fullName, optimistic.documentNumber, optimistic.recordNumber].filter(Boolean).join(' '));
+      for (const [queryKey, cached] of snapshots) {
+        if (!cached) continue;
+        const search = normalize(String(queryKey[1] ?? '').trim());
+        const matches = !search || search.split(/\s+/).every((word) => text.includes(word));
+        const exists = cached.patients.some((item) => item.id === patient.id);
+        if (!exists) continue;
+        queryClient.setQueryData(queryKey, matches
+          ? { ...cached, patients: cached.patients.map((item) => item.id === patient.id ? optimistic : item) }
+          : { ...cached, patients: cached.patients.filter((item) => item.id !== patient.id), total: Math.max(0, cached.total - 1) });
+      }
+      if (detailSnapshot) queryClient.setQueryData<PatientDetail>(['patient', patient.id], { ...detailSnapshot, patient: optimistic });
+      return { snapshots, detailSnapshot };
+    },
     onSuccess: (response) => {
-      // Keep the SPA responsive: refresh caches in the background so the user
-      // can move straight to the new patient's chart without waiting on lists.
+      const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
+      const patientText = normalize([
+        response.patient.fullName,
+        response.patient.documentNumber,
+        response.patient.recordNumber
+      ].filter(Boolean).join(' '));
+      for (const [queryKey, current] of queryClient.getQueriesData<{ patients: Patient[]; total: number; limit?: number; offset?: number }>({ queryKey: ['patients'] })) {
+        if (!current) continue;
+        const search = normalize(String(queryKey[1] ?? '').trim());
+        const matches = !search || search.split(/\s+/).every((term) => patientText.includes(term));
+        const existingIndex = current.patients.findIndex((item) => item.id === response.patient.id);
+        const editing = Boolean(patient);
+        if (existingIndex >= 0 && !matches) {
+          queryClient.setQueryData(queryKey, {
+            ...current,
+            patients: current.patients.filter((item) => item.id !== response.patient.id),
+            total: Math.max(0, current.total - 1)
+          });
+          continue;
+        }
+        if (existingIndex >= 0 && matches) {
+          const updated = current.patients.map((item) => item.id === response.patient.id ? response.patient : item)
+            .sort((a, b) => a.fullName.localeCompare(b.fullName, 'es', { sensitivity: 'base' }));
+          queryClient.setQueryData(queryKey, { ...current, patients: updated });
+          continue;
+        }
+        if (!editing && matches && Number(current.offset ?? queryKey[2] ?? 0) === 0) {
+          const limit = current.limit ?? 15;
+          const patients = [...current.patients, response.patient]
+            .sort((a, b) => a.fullName.localeCompare(b.fullName, 'es', { sensitivity: 'base' }))
+            .slice(0, limit);
+          queryClient.setQueryData(queryKey, { ...current, patients, total: current.total + 1 });
+        }
+      }
       void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['patients'] }),
-        queryClient.invalidateQueries({ queryKey: ['patient', patient?.id] })
+        queryClient.invalidateQueries({ queryKey: ['patient', response.patient.id] }),
+        queryClient.invalidateQueries({ queryKey: ['reports'] }),
+        queryClient.invalidateQueries({ queryKey: ['summary'] })
       ]);
       onCreated?.(response.patient);
       onClose();
     },
-      onError: (cause) => {
-        console.error('Error al guardar el paciente:', cause);
-        setError(cause instanceof ApiError ? cause.message : cause instanceof Error ? cause.message : 'No se pudo guardar el paciente');
-      }
+    onError: (cause, _payload, context) => {
+      for (const [queryKey, cached] of context?.snapshots ?? []) queryClient.setQueryData(queryKey, cached);
+      if (patient && context?.detailSnapshot) queryClient.setQueryData(['patient', patient.id], context.detailSnapshot);
+      console.error('Error al guardar el paciente:', cause);
+      setError(cause instanceof ApiError ? cause.message : cause instanceof Error ? cause.message : 'No se pudo guardar el paciente');
+    }
   });
 
   function onSubmit(event: FormEvent) {

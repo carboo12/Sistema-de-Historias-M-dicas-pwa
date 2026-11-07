@@ -46,7 +46,7 @@ import {
   sexLabel,
   statusBadgeClass
 } from '../lib/format';
-import type { Consultation } from '../types';
+import type { Consultation, ConsultationSummary, PatientDetail } from '../types';
 
 interface ConsultationForm {
   reason: string;
@@ -88,6 +88,23 @@ function toForm(consultation: Consultation): ConsultationForm {
 
 function toDateInput(value: string | null) {
   return value ? value.slice(0, 10) : '';
+}
+
+function toConsultationSummary(consultation: Consultation, previous?: ConsultationSummary): ConsultationSummary {
+  return {
+    ...previous,
+    id: consultation.id,
+    consulted_at: consultation.consultedAt,
+    status: consultation.status,
+    reason: consultation.reason,
+    current_illness: consultation.currentIllness,
+    treatment_plan: consultation.treatmentPlan,
+    signed_at: consultation.signedAt,
+    updated_at: consultation.updatedAt,
+    professional_name: consultation.professionalName,
+    patient_name: consultation.patientName,
+    record_number: consultation.recordNumber
+  };
 }
 
 export function ConsultationPage() {
@@ -237,9 +254,22 @@ export function ConsultationPage() {
       if (response.offlineSaved) {
         queryClient.setQueryData(['consultation', id], { consultation: response.consultation, offlineCopy: true });
       } else {
+        queryClient.setQueriesData<PatientDetail>({ queryKey: ['patient'] }, (previous) => previous
+          ? { ...previous, consultations: previous.consultations.map((item) => item.id === response.consultation.id
+            ? toConsultationSummary(response.consultation, item)
+            : item) }
+          : previous);
+        queryClient.setQueriesData<{ consultations: ConsultationSummary[] }>({ queryKey: ['consultations'] }, (previous) => previous
+          ? { ...previous, consultations: previous.consultations.map((item) => item.id === response.consultation.id
+            ? toConsultationSummary(response.consultation, item)
+            : item) }
+          : previous);
         if (user?.id) void saveOfflineConsultation(user.id, response.consultation, { pending: false }).catch(() => undefined);
         void queryClient.invalidateQueries({ queryKey: ['consultation', id] });
         void queryClient.invalidateQueries({ queryKey: ['consultations'] });
+        void queryClient.invalidateQueries({ queryKey: ['patient', response.consultation.patientId] });
+        void queryClient.invalidateQueries({ queryKey: ['reports'] });
+        void queryClient.invalidateQueries({ queryKey: ['summary'] });
       }
     },
     onError: (cause) => {
@@ -276,10 +306,22 @@ export function ConsultationPage() {
       queryClient.setQueryData(['consultation', id], (previous: typeof detail.data) => previous
         ? { ...previous, consultation: response.consultation, offlineCopy: false }
         : previous);
+      queryClient.setQueriesData<PatientDetail>({ queryKey: ['patient'] }, (previous) => previous
+        ? { ...previous, consultations: previous.consultations.map((item) => item.id === response.consultation.id
+          ? toConsultationSummary(response.consultation, item)
+          : item) }
+        : previous);
+      queryClient.setQueriesData<{ consultations: ConsultationSummary[] }>({ queryKey: ['consultations'] }, (previous) => previous
+        ? { ...previous, consultations: previous.consultations.map((item) => item.id === response.consultation.id
+          ? toConsultationSummary(response.consultation, item)
+          : item) }
+        : previous);
       void queryClient.invalidateQueries({ queryKey: ['consultation', id] });
       void queryClient.invalidateQueries({ queryKey: ['consultations'] });
       void queryClient.invalidateQueries({ queryKey: ['patient'] });
       void queryClient.invalidateQueries({ queryKey: ['agenda'] });
+      void queryClient.invalidateQueries({ queryKey: ['reports'] });
+      void queryClient.invalidateQueries({ queryKey: ['summary'] });
     },
     onError: (cause) => {
       const failure = cause as { code?: string; message?: string; details?: unknown } | null;
@@ -297,14 +339,23 @@ export function ConsultationPage() {
 
   const deleteConsultation = useMutation({
     mutationFn: () => api.consultations.delete(id as string),
-    onSuccess: () => {
-      void Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['consultations'] }),
-        queryClient.invalidateQueries({ queryKey: ['patient'] })
+    onMutate: async () => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ['patient'] }),
+        queryClient.cancelQueries({ queryKey: ['consultations'] })
       ]);
-      navigate(`/pacientes/${consultation.patientId}`);
+      const patientSnapshots = queryClient.getQueriesData<PatientDetail>({ queryKey: ['patient'] });
+      const consultationSnapshots = queryClient.getQueriesData<{ consultations: ConsultationSummary[] }>({ queryKey: ['consultations'] });
+      for (const [queryKey, cached] of patientSnapshots) {
+        if (cached) queryClient.setQueryData(queryKey, { ...cached, consultations: cached.consultations.filter((item) => item.id !== id) });
+      }
+      for (const [queryKey, cached] of consultationSnapshots) {
+        if (cached) queryClient.setQueryData(queryKey, { ...cached, consultations: cached.consultations.filter((item) => item.id !== id) });
+      }
+      return { snapshots: [...patientSnapshots, ...consultationSnapshots] };
     },
-    onError: (cause) => {
+    onError: (cause, _variables, context) => {
+      for (const [queryKey, cached] of context?.snapshots ?? []) queryClient.setQueryData(queryKey, cached);
       const failure = cause as { code?: string; message?: string; details?: unknown } | null;
       console.error('Error al eliminar la consulta:', {
         consultationId: id,
@@ -315,6 +366,16 @@ export function ConsultationPage() {
         cause
       });
       setError(cause instanceof ApiError ? cause.message : failure?.message || 'No se pudo eliminar la consulta');
+    },
+    onSuccess: () => {
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['consultations'] }),
+        queryClient.invalidateQueries({ queryKey: ['patient'] }),
+        queryClient.invalidateQueries({ queryKey: ['agenda'] }),
+        queryClient.invalidateQueries({ queryKey: ['reports'] }),
+        queryClient.invalidateQueries({ queryKey: ['summary'] })
+      ]);
+      navigate(`/pacientes/${consultation.patientId}`);
     }
   });
 

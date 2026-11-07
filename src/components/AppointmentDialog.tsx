@@ -4,7 +4,7 @@ import { CalendarPlus } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { api, ApiError } from '../lib/data';
 import { dateTimeToIso, todayInTimeZone } from '../lib/format';
-import type { Appointment, Patient } from '../types';
+import type { AgendaResponse, Appointment, Patient } from '../types';
 import { PatientPicker } from './PatientPicker';
 import { Button, Field, Input, Modal, Select, Textarea } from './ui';
 import { appointmentFormSchema } from '../lib/form-validation';
@@ -76,8 +76,68 @@ export function AppointmentDialog({
         reason,
         notes
       })),
-    onSuccess: async () => {
-      await Promise.all([
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['agenda'] });
+      const previous = queryClient.getQueriesData<AgendaResponse>({ queryKey: ['agenda'] });
+      const startsAt = dateTimeToIso(date, time);
+      const durationMinutes = Number(duration);
+      const endsAt = new Date(new Date(startsAt).getTime() + durationMinutes * 60_000).toISOString();
+      const professional = catalogs.data?.professionals.find((item) => item.id === professionalId);
+      const optimistic: Appointment = {
+        id: appointment?.id ?? `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        patientId: patient?.id ?? appointment?.patientId ?? '',
+        patientName: patient?.fullName ?? appointment?.patientName ?? '',
+        patientRecord: patient?.recordNumber ?? appointment?.patientRecord ?? '',
+        patientPhone: patient?.phone ?? appointment?.patientPhone ?? null,
+        professionalId: professionalId || appointment?.professionalId || '',
+        professionalName: professional?.full_name ?? appointment?.professionalName ?? '',
+        specialtyName: appointment?.specialtyName ?? null,
+        officeName: appointment?.officeName ?? null,
+        startsAt,
+        endsAt,
+        durationMinutes,
+        reason: reason || null,
+        status: appointment?.status ?? 'programada',
+        notes: notes || null,
+        consultationId: appointment?.consultationId ?? null
+      };
+      const targetMonth = date.slice(0, 7);
+      for (const [queryKey, cached] of previous) {
+        if (!cached) continue;
+        const currentMonth = String(queryKey[2] ?? '');
+        const nextAppointments = cached.appointments.filter((item) => item.id !== optimistic.id);
+        if (currentMonth === targetMonth) nextAppointments.push(optimistic);
+        nextAppointments.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+        queryClient.setQueryData(queryKey, {
+          ...cached,
+          appointments: nextAppointments,
+          stats: {
+            total: nextAppointments.length,
+            scheduled: nextAppointments.filter((item) => ['programada', 'confirmada', 'reprogramada'].includes(item.status)).length,
+            waiting: nextAppointments.filter((item) => item.status === 'en_espera').length,
+            attended: nextAppointments.filter((item) => item.status === 'atendida').length,
+            cancelled: nextAppointments.filter((item) => ['cancelada', 'no_asistio'].includes(item.status)).length
+          }
+        });
+      }
+      return { previous, optimistic };
+    },
+    onError: (cause, _variables, context) => {
+      for (const [queryKey, cached] of context?.previous ?? []) queryClient.setQueryData(queryKey, cached);
+      setError(cause instanceof ApiError ? cause.message : 'No se pudo agendar la cita');
+    },
+    onSuccess: (response, _variables, context) => {
+      if (context?.optimistic) {
+        for (const [queryKey, cached] of queryClient.getQueriesData<AgendaResponse>({ queryKey: ['agenda'] })) {
+          if (!cached) continue;
+          const persisted = { ...response.appointment, ...context.optimistic, id: response.appointment.id } as Appointment;
+          queryClient.setQueryData(queryKey, {
+            ...cached,
+            appointments: cached.appointments.map((item) => item.id === context.optimistic.id ? persisted : item)
+          });
+        }
+      }
+      void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['agenda'] }),
         queryClient.invalidateQueries({ queryKey: ['patient'] }),
         queryClient.invalidateQueries({ queryKey: ['summary'] })
@@ -85,7 +145,6 @@ export function AppointmentDialog({
       onCreated?.();
       onClose();
     },
-    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo agendar la cita')
   });
 
   function onSubmit(event: FormEvent) {
