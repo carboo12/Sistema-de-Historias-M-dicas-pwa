@@ -590,7 +590,7 @@ export const firebaseApi = {
       const notes = payload.prescriptionItems
         ? `__HM_RX_V1__${JSON.stringify({ notes: payload.notes ?? null, prescriptionItems: payload.prescriptionItems })}`
         : (payload.notes as string | null) ?? null;
-      await updateConsultation(dc(), {
+      const variables = {
         id,
         nextVisitAt: (payload.nextVisitAt as string | null) ?? null,
         reason: (payload.reason as string | null) ?? null,
@@ -607,9 +607,22 @@ export const firebaseApi = {
         plan: (payload.plan as string | null) ?? null,
         notes,
         vitals: payload.vitals ?? {}
-      });
-      const record = await fetchConsultation(id);
-      return { consultation: mapConsultation(record) };
+      };
+      try {
+        await updateConsultation(dc(), variables);
+        const record = await fetchConsultation(id);
+        return { consultation: mapConsultation(record) };
+      } catch (cause) {
+        const error = cause as { code?: string; message?: string } | null;
+        console.error('Data Connect UpdateConsultation falló', {
+          consultationId: id,
+          sentFields: Object.keys(variables),
+          code: error?.code,
+          message: error?.message ?? String(cause),
+          cause
+        });
+        throw cause;
+      }
     },
     async delete(id: string) {
       await deleteConsultation(dc(), { id });

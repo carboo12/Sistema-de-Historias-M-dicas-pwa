@@ -43,7 +43,8 @@ async function processPendingConsultations(ownerId: string) {
       evolution: consultation.evolution,
       plan: consultation.plan,
       notes: consultation.notes,
-      vitals: consultation.vitals
+      vitals: consultation.vitals,
+      allowHistoricalEdit: true
     });
 
     await saveOfflineConsultation(ownerId, updated.consultation, { pending: false });

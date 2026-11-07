@@ -25,6 +25,9 @@ function mapConsultation(row) {
     physicalExam: row.physical_exam,
     functionalExam: row.functional_exam,
     studies: row.studies,
+    evolutionText: row.evolution_text ?? null,
+    studiesText: row.studies_text ?? null,
+    prescriptionText: row.prescription_text ?? null,
     diagnosisNotes: row.diagnosis_notes,
     treatmentPlan: row.treatment_plan,
     evolution: row.evolution,
@@ -242,11 +245,12 @@ export async function consultationRoutes(app) {
     async (request) => {
       const id = uuid(request.params.id, 'consulta');
       const before = await loadConsultation(request, id);
-      if (before.status !== 'borrador') {
+      const body = request.body ?? {};
+      const historicalEdit = body.allowHistoricalEdit === true;
+      if (before.status !== 'borrador' && !historicalEdit) {
         throw new HttpError(409, 'consultation_signed', 'Una consulta firmada no se puede editar');
       }
 
-      const body = request.body ?? {};
       const prescriptionItems = body.prescriptionItems === undefined
         ? null
         : normalizePrescriptionItems(body.prescriptionItems);
@@ -263,6 +267,9 @@ export async function consultationRoutes(app) {
         ['physicalExam', 'physical_exam', 6000],
         ['functionalExam', 'functional_exam', 4000],
         ['studies', 'studies', 4000],
+        ['evolutionText', 'evolution_text', 16000],
+        ['studiesText', 'studies_text', 12000],
+        ['prescriptionText', 'prescription_text', 12000],
         ['diagnosisNotes', 'diagnosis_notes', 4000],
         ['treatmentPlan', 'treatment_plan', 6000],
         ['evolution', 'evolution', 6000],

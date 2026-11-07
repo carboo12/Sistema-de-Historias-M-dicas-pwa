@@ -214,7 +214,7 @@ export function ConsultationPage() {
       };
       if (id?.startsWith('local-') || !navigator.onLine) return saveLocally();
       try {
-        return { ...(await api.consultations.update(id as string, buildPayload())), offlineSaved: false as const };
+        return { ...(await api.consultations.update(id as string, { ...buildPayload(), allowHistoricalEdit: editingHistorical })), offlineSaved: false as const };
       } catch (cause) {
         if (isNetworkUnavailable(cause)) return saveLocally();
         throw cause;
@@ -238,7 +238,18 @@ export function ConsultationPage() {
         void queryClient.invalidateQueries({ queryKey: ['consultations'] });
       }
     },
-    onError: (cause) => setError(cause instanceof ApiError ? cause.message : 'No se pudo guardar la consulta')
+    onError: (cause) => {
+      const failure = cause as { code?: string; message?: string; details?: unknown } | null;
+      console.error('Error al actualizar la consulta:', {
+        consultationId: id,
+        online: navigator.onLine,
+        code: failure?.code,
+        message: failure?.message ?? String(cause),
+        details: failure?.details,
+        cause
+      });
+      setError(cause instanceof ApiError ? cause.message : failure?.message || 'No se pudo guardar la consulta');
+    }
   });
 
   const signMutation = useMutation({
@@ -303,6 +314,17 @@ export function ConsultationPage() {
   function update<K extends keyof ConsultationForm>(key: K, value: ConsultationForm[K]) {
     setForm((current) => (current ? { ...current, [key]: value } : current));
     setSaveMessage(null);
+    setError(null);
+  }
+
+  function cancelHistoricalEdit() {
+    const original = toForm(consultation);
+    const originalDate = toDateInput(consultation.nextVisitAt);
+    setForm(original);
+    setNextVisitAt(originalDate);
+    setSavedSnapshot(JSON.stringify(original));
+    setSavedNextVisit(originalDate);
+    setEditingHistorical(false);
     setError(null);
   }
 
@@ -428,7 +450,7 @@ export function ConsultationPage() {
             )
           ) : null}
           {readOnly ? <Button variant="secondary" onClick={() => { setEditingHistorical(true); setError(null); }} icon={<Save className="h-4 w-4" />}>Editar consulta</Button> : null}
-          {editingHistorical ? <Button variant="ghost" onClick={() => { const original = toForm(consultation); const originalDate = toDateInput(consultation.nextVisitAt); setForm(original); setNextVisitAt(originalDate); setSavedSnapshot(JSON.stringify(original)); setSavedNextVisit(originalDate); setEditingHistorical(false); setError(null); }}>Cancelar edición</Button> : null}
+          {editingHistorical ? <Button variant="ghost" onClick={cancelHistoricalEdit}>Cancelar edición</Button> : null}
           <Button variant="danger" onClick={() => setDeleteOpen(true)} icon={<Trash2 className="h-4 w-4" />}>Eliminar consulta</Button>
           {!readOnly ? (
             <>
