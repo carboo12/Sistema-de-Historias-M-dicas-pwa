@@ -10,7 +10,10 @@ const today = new Date();
 const datePart = (date: Date) => date.toISOString().slice(0, 10);
 const monthStart = datePart(new Date(today.getFullYear(), today.getMonth(), 1));
 const todayPart = datePart(today);
-const formatDate = (value: string) => new Date(value).toLocaleDateString('es-NI', { dateStyle: 'medium' });
+const formatDate = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Fecha no disponible' : date.toLocaleDateString('es-NI', { dateStyle: 'medium' });
+};
 
 function csvCell(value: unknown) {
   return `"${String(value ?? '').replaceAll('"', '""')}"`;
@@ -49,7 +52,10 @@ export function ReportsPage() {
     queryFn: () => api.reports.get(from, to),
     enabled: Boolean(from && to && from <= to)
   });
-  const dataset: ReportsDataset = query.data ?? { consultations: [], patients: [] };
+  const dataset: ReportsDataset = {
+    consultations: Array.isArray(query.data?.consultations) ? query.data.consultations : [],
+    patients: Array.isArray(query.data?.patients) ? query.data.patients : []
+  };
   const unauthorized = query.error instanceof ApiError && query.error.status === 401;
   const isEmpty = !query.isLoading && (!query.isError || unauthorized)
     && dataset.consultations.length === 0 && dataset.patients.length === 0;

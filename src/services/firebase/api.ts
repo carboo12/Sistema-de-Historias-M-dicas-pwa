@@ -833,23 +833,25 @@ export const firebaseApi = {
         const fromTimestamp = `${from.slice(0, 10)}T00:00:00.000Z`;
         const toTimestamp = `${to.slice(0, 10)}T23:59:59.999Z`;
         const { data } = await clinicReports(dc(), { from: fromTimestamp, to: toTimestamp, limit, offset }, serverOnly);
-        consultations.push(...data.consultations.map((record) => ({
+        const consultationRecords = Array.isArray(data?.consultations) ? data.consultations : [];
+        const patientRecords = Array.isArray(data?.patients) ? data.patients : [];
+        consultations.push(...consultationRecords.map((record) => ({
           id: record.id,
           consultedAt: record.consultedAt,
           reason: record.reason ?? null,
-          patientName: record.patient.fullName,
-          recordNumber: record.patient.recordNumber,
-          sex: record.patient.sex,
-          birthDate: record.patient.birthDate ?? null,
-          professionalName: record.professional.fullName
+          patientName: record.patient?.fullName ?? 'Paciente sin nombre',
+          recordNumber: record.patient?.recordNumber ?? '',
+          sex: record.patient?.sex ?? 'U',
+          birthDate: record.patient?.birthDate ?? null,
+          professionalName: record.professional?.fullName ?? ''
         })));
-        patients.push(...data.patients.map((patient) => ({
+        patients.push(...patientRecords.map((patient) => ({
           id: patient.id,
           createdAt: patient.createdAt,
-          sex: patient.sex,
+          sex: patient.sex ?? 'U',
           birthDate: patient.birthDate ?? null
         })));
-        if (data.consultations.length < limit && data.patients.length < limit) break;
+        if (consultationRecords.length < limit && patientRecords.length < limit) break;
       }
       return { consultations, patients };
     }
