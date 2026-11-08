@@ -8,6 +8,7 @@ import {
   linkCurrentUser,
   type GetSessionData
 } from '@historias/dataconnect';
+import { QueryFetchPolicy } from 'firebase/data-connect';
 import { ApiError } from '../../lib/api';
 import type { Role, User } from '../../types';
 import { requireFirebase } from './client';
@@ -63,7 +64,7 @@ function mapSession(record: SessionRecord): User {
 
 async function readSession(): Promise<User | null> {
   const { dataConnect } = requireFirebase();
-  const { data } = await getSession(dataConnect);
+  const { data } = await getSession(dataConnect, { fetchPolicy: QueryFetchPolicy.SERVER_ONLY });
   const record = data.users[0];
   return record ? mapSession(record) : null;
 }

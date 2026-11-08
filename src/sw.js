@@ -2,10 +2,19 @@ import { clientsClaim } from 'workbox-core';
 import { precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 import { createHandlerBoundToURL } from 'workbox-precaching';
+import { NetworkOnly } from 'workbox-strategies';
 
 self.skipWaiting();
 clientsClaim();
 precacheAndRoute(self.__WB_MANIFEST);
+// Data Connect responses are clinical records: never read or write them via
+// Cache Storage. Queries go to the server on every execution.
+registerRoute(
+  ({ url }) => url.hostname === 'firebasedataconnect.googleapis.com'
+    || ((url.hostname === 'localhost' || url.hostname === '127.0.0.1') && /execute(Query|Mutation)$/.test(url.pathname)),
+  new NetworkOnly(),
+  'POST'
+);
 registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html'), {
   denylist: [/^\/api\//, /^\/assets\//]
 }));

@@ -23,6 +23,7 @@ import {
   updatePatientWithClinicContext,
   saveConsultationWithClinicContext,
 } from '@historias/dataconnect';
+import { QueryFetchPolicy } from 'firebase/data-connect';
 import { ApiError } from '../../lib/api';
 import type {
   AgendaResponse,
@@ -45,6 +46,8 @@ function dc() {
   return requireFirebase().dataConnect;
 }
 
+const serverOnly = { fetchPolicy: QueryFetchPolicy.SERVER_ONLY };
+
 function iso(value: string | null | undefined) {
   return value ?? null;
 }
@@ -62,7 +65,7 @@ function normalizeUuid(value: unknown): string | null {
 }
 
 async function sessionContext() {
-  const { data } = await getSession(dc());
+  const { data } = await getSession(dc(), serverOnly);
   const user = data.users[0];
   if (!user) throw new ApiError('Sesión clínica no encontrada', 401, 'anonymous');
   return {
@@ -277,7 +280,7 @@ function agendaBounds(dateOrMonth: string, timezone: string) {
 }
 
 async function fetchPatientDetail(id: string): Promise<PatientDetail> {
-  const { data } = await getPatient(dc(), { id });
+  const { data } = await getPatient(dc(), { id }, serverOnly);
   const record = data.patients?.[0];
   if (!record) throw new ApiError('No encontramos al paciente', 404, 'not_found');
 
@@ -305,7 +308,7 @@ async function fetchPatientDetail(id: string): Promise<PatientDetail> {
 }
 
 async function fetchConsultation(id: string) {
-  const { data } = await getConsultation(dc(), { id });
+  const { data } = await getConsultation(dc(), { id }, serverOnly);
   const record = data.consultations[0];
   if (!record) throw new ApiError('No encontramos la consulta', 404, 'not_found');
   return record;
@@ -322,8 +325,8 @@ export const firebaseApi = {
     async list(q = '', limit = 25, offset = 0) {
       if (!q.trim()) {
         const [{ data }, count] = await Promise.all([
-          listPatients(dc(), { q: '', limit, offset }),
-          countPatients(dc(), { q: '' })
+          listPatients(dc(), { q: '', limit, offset }, serverOnly),
+          countPatients(dc(), { q: '' }, serverOnly)
         ]);
         return {
           patients: data.patients.map(mapPatient),
@@ -336,8 +339,8 @@ export const firebaseApi = {
       const lastTerm = searchTerms.at(-1) ?? '';
       const variables = Object.fromEntries(Array.from({ length: 6 }, (_, index) => [`q${index + 1}`, searchTerms[index] ?? lastTerm])) as Record<string, string>;
       const [{ data }, count] = await Promise.all([
-        listPatientsByTerms(dc(), { ...variables, limit, offset }),
-        countPatientsByTerms(dc(), variables)
+        listPatientsByTerms(dc(), { ...variables, limit, offset }, serverOnly),
+        countPatientsByTerms(dc(), variables, serverOnly)
       ]);
       return {
         patients: data.patients.map(mapPatient),
@@ -449,7 +452,8 @@ export const firebaseApi = {
     async delete(id: string) {
       const clinicId = await authenticatedClinicId();
       try {
-        await deletePatientWithClinicContext(dc(), { id, clinicId });
+        const result = await deletePatientWithClinicContext(dc(), { id, clinicId });
+        console.info('Data Connect DeletePatient confirmado', { patientId: id, clinicId, result: result.data });
         return { id };
       } catch (cause) {
         const error = cause as { code?: string; message?: string } | null;
@@ -469,7 +473,7 @@ export const firebaseApi = {
       const context = await sessionContext();
       const clinicId = normalizeUuid(context.clinicId);
       if (!clinicId) throw new ApiError('La clínica de la sesión tiene un identificador inválido', 400, 'invalid_clinic_id');
-      const { data } = await listAgendaForClinic(dc(), { clinicId, ...agendaBounds(date, context.timezone) });
+      const { data } = await listAgendaForClinic(dc(), { clinicId, ...agendaBounds(date, context.timezone) }, serverOnly);
       const appointments = (data.appointments ?? []).map(mapAppointment);
       return {
         date,
@@ -583,7 +587,7 @@ export const firebaseApi = {
         const detail = await fetchPatientDetail(patientId);
         return { consultations: detail.consultations };
       }
-      const { data } = await listConsultations(dc());
+      const { data } = await listConsultations(dc(), serverOnly);
       return { consultations: (data.consultations ?? []).map(mapConsultationSummary) };
     },
     async get(id: string) {
@@ -599,7 +603,7 @@ export const firebaseApi = {
       if (!clinicId) throw new ApiError('La clínica de la sesión tiene un identificador inválido', 400, 'invalid_clinic_id');
       if (!patientId) throw new ApiError('El expediente no tiene un identificador de paciente válido', 400, 'invalid_patient_id');
 
-      const { data } = await getCatalogs(dc());
+      const { data } = await getCatalogs(dc(), serverOnly);
       const professionals = data.users[0]?.clinic.professionals_on_clinic ?? [];
       const professionalsById = new Map(
         professionals.flatMap((professional) => {
@@ -767,7 +771,7 @@ export const firebaseApi = {
   },
   studies: {
     async list(patientId: string): Promise<{ studies: PatientStudy[] }> {
-      const { data } = await listPatientStudies(dc(), { patientId, limit: 1000, offset: 0 });
+      const { data } = await listPatientStudies(dc(), { patientId, limit: 1000, offset: 0 }, serverOnly);
       const studies = data.patientStudies.flatMap((record) => {
         const metadata = (record.metadata ?? {}) as Record<string, unknown>;
         const fileUrl = typeof metadata.fileUrl === 'string' ? metadata.fileUrl : '';
@@ -828,7 +832,7 @@ export const firebaseApi = {
       for (let offset = 0; ; offset += limit) {
         const fromTimestamp = `${from.slice(0, 10)}T00:00:00.000Z`;
         const toTimestamp = `${to.slice(0, 10)}T23:59:59.999Z`;
-        const { data } = await clinicReports(dc(), { from: fromTimestamp, to: toTimestamp, limit, offset });
+        const { data } = await clinicReports(dc(), { from: fromTimestamp, to: toTimestamp, limit, offset }, serverOnly);
         consultations.push(...data.consultations.map((record) => ({
           id: record.id,
           consultedAt: record.consultedAt,
@@ -851,7 +855,7 @@ export const firebaseApi = {
     }
   },
   async catalogs(): Promise<Catalogs> {
-    const { data } = await getCatalogs(dc());
+    const { data } = await getCatalogs(dc(), serverOnly);
     const clinic = data.users[0]?.clinic;
     return {
       professionals: (clinic?.professionals_on_clinic ?? []).map((professional) => ({
