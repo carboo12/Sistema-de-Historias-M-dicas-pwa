@@ -17,7 +17,7 @@ import { notifyUpcomingAppointments, requestAppointmentNotifications } from '../
 import { api } from '../lib/api';
 import { cn } from '../lib/format';
 import { Avatar, Button } from './ui';
-import { useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 
 const primaryNavigation = [
   { to: '/agenda', label: 'Agenda', icon: CalendarDays },
@@ -46,8 +46,10 @@ function sectionTitle(pathname: string) {
 export function AppShell() {
   const { user, logout } = useAuth();
   const online = useOnline();
-  const location = useLocation();
   const navigate = useNavigate();
+  const handleLogout = useCallback(() => {
+    void logout().then(() => navigate('/login'));
+  }, [logout, navigate]);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(() =>
     'Notification' in window ? Notification.permission : 'unsupported'
   );
@@ -74,60 +76,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen lg:pl-[264px]">
-      <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[264px] flex-col bg-teal-950 px-4 py-5 text-white lg:flex">
-        <Brand />
-        <div className="mt-8">
-          <p className="px-3 text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/35">Espacio clínico</p>
-          <nav className="mt-2 space-y-1">
-            {primaryNavigation.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) => cn('nav-link', isActive && 'nav-link-active')}
-              >
-                <item.icon className="h-[18px] w-[18px]" />
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
-
-        <div className="mt-7">
-          <p className="px-3 text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/35">Sistema</p>
-          <nav className="mt-2 space-y-1">
-            {secondaryNavigation.map((item) => (
-              <NavLink
-                key={item.label}
-                to={item.to}
-                className={({ isActive }) => cn('nav-link', isActive && 'nav-link-active')}
-              >
-                <item.icon className="h-[18px] w-[18px]" />
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
-
-        <div className="mt-auto rounded-2xl border border-white/10 bg-white/5 p-3">
-          <div className="flex items-center gap-3">
-            <Avatar name={user?.fullName ?? 'Usuario'} size="sm" className="bg-white/15 text-white ring-white/10" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold">{user?.fullName}</p>
-              <p className="truncate text-[11px] capitalize text-white/45">{user?.role}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => void logout().then(() => navigate('/login'))}
-              className="rounded-lg p-2 text-white/45 transition hover:bg-white/10 hover:text-white"
-              aria-label="Cerrar sesión"
-              title="Cerrar sesión"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </aside>
-
+      <DesktopSidebar userName={user?.fullName} userRole={user?.role} onLogout={handleLogout} />
       <header className="no-print sticky top-0 z-30 border-b border-line/60 bg-canvas/85 backdrop-blur-xl lg:bg-canvas/70">
         <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-10">
           <div className="lg:hidden">
@@ -137,7 +86,7 @@ export function AppShell() {
             <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-ink/35">
               {user?.clinicName ?? 'Clínica'}
             </p>
-            <h1 className="truncate text-sm font-bold text-ink">{sectionTitle(location.pathname)}</h1>
+            <RouteSectionTitle />
           </div>
           <div className="ml-auto flex items-center gap-2">
             {notificationPermission === 'default' ? <Button size="sm" variant="secondary" className="hidden sm:inline-flex" onClick={() => void enableAppointmentNotifications()}>Activar avisos</Button> : null}
@@ -201,6 +150,59 @@ export function AppShell() {
       </nav>
     </div>
   );
+}
+
+const DesktopSidebar = memo(function DesktopSidebar({
+  userName,
+  userRole,
+  onLogout
+}: {
+  userName?: string;
+  userRole?: string;
+  onLogout: () => void;
+}) {
+  return (
+    <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[264px] flex-col bg-teal-950 px-4 py-5 text-white lg:flex">
+      <Brand />
+      <div className="mt-8">
+        <p className="px-3 text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/35">Espacio clínico</p>
+        <nav className="mt-2 space-y-1">
+          {primaryNavigation.map((item) => (
+            <NavLink key={item.to} to={item.to} className={({ isActive }) => cn('nav-link', isActive && 'nav-link-active')}>
+              <item.icon className="h-[18px] w-[18px]" />{item.label}
+            </NavLink>
+          ))}
+        </nav>
+      </div>
+      <div className="mt-7">
+        <p className="px-3 text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/35">Sistema</p>
+        <nav className="mt-2 space-y-1">
+          {secondaryNavigation.map((item) => (
+            <NavLink key={item.label} to={item.to} className={({ isActive }) => cn('nav-link', isActive && 'nav-link-active')}>
+              <item.icon className="h-[18px] w-[18px]" />{item.label}
+            </NavLink>
+          ))}
+        </nav>
+      </div>
+      <div className="mt-auto rounded-2xl border border-white/10 bg-white/5 p-3">
+        <div className="flex items-center gap-3">
+          <Avatar name={userName ?? 'Usuario'} size="sm" className="bg-white/15 text-white ring-white/10" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold">{userName}</p>
+            <p className="truncate text-[11px] capitalize text-white/45">{userRole}</p>
+          </div>
+          <button type="button" onClick={onLogout} className="rounded-lg p-2 text-white/45 transition hover:bg-white/10 hover:text-white" aria-label="Cerrar sesión" title="Cerrar sesión">
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+});
+
+function RouteSectionTitle() {
+  const location = useLocation();
+  return <h1 className="truncate text-sm font-bold text-ink">{sectionTitle(location.pathname)}</h1>;
 }
 
 function Brand({ compact = false }: { compact?: boolean }) {
