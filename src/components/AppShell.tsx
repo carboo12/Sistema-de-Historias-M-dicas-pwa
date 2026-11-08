@@ -1,7 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   CalendarDays,
-  ChartNoAxesCombined,
   CircleHelp,
   ClipboardPlus,
   FileText,
@@ -22,8 +21,7 @@ import { memo, useCallback, useEffect, useState } from 'react';
 const primaryNavigation = [
   { to: '/agenda', label: 'Agenda', icon: CalendarDays },
   { to: '/pacientes', label: 'Pacientes', icon: Users },
-  { to: '/consultas', label: 'Consultas', icon: FileText },
-  { to: '/reportes', label: 'Reportes', icon: ChartNoAxesCombined }
+  { to: '/consultas', label: 'Consultas', icon: FileText }
 ];
 
 const secondaryNavigation = [
@@ -36,7 +34,6 @@ function sectionTitle(pathname: string) {
   if (pathname.startsWith('/pacientes')) return 'Pacientes';
   if (pathname.startsWith('/consultas/')) return 'Consulta médica';
   if (pathname.startsWith('/consultas')) return 'Consultas';
-  if (pathname.startsWith('/reportes')) return 'Reportes';
   if (pathname.startsWith('/agenda')) return 'Agenda';
   if (pathname.startsWith('/configuracion')) return 'Configuración';
   if (pathname.startsWith('/ayuda')) return 'Ayuda y soporte';
