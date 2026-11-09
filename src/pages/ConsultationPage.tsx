@@ -68,7 +68,7 @@ interface ConsultationForm {
 function toForm(consultation: Consultation): ConsultationForm {
   return {
     reason: consultation.reason ?? '',
-    evolutionText: consultation.evolutionText ?? [consultation.reason, consultation.currentIllness, consultation.physicalExam, consultation.functionalExam, consultation.diagnosisNotes, consultation.treatmentPlan, consultation.evolution, consultation.plan].filter(Boolean).join('\n\n'),
+    evolutionText: consultation.evolutionText ?? (consultation.status === 'borrador' ? '' : [consultation.reason, consultation.currentIllness, consultation.physicalExam, consultation.functionalExam, consultation.diagnosisNotes, consultation.treatmentPlan, consultation.evolution, consultation.plan].filter(Boolean).join('\n\n')),
     studiesText: consultation.studiesText ?? consultation.studies ?? '',
     prescriptionText: consultation.prescriptionText ?? consultation.prescriptionItems?.map((item) => [item.medication, item.presentation, item.dose, item.frequency, item.route, item.duration, item.quantity, item.instructions].filter(Boolean).join(' · ')).filter(Boolean).join('\n') ?? [consultation.plan, consultation.treatmentPlan].filter(Boolean).join('\n\n'),
     currentIllness: consultation.currentIllness ?? '',

@@ -212,7 +212,7 @@ function mapConsultation(record: Record<string, any>): Consultation {
     physicalExam: record.physicalExam ?? null,
     functionalExam: record.functionalExam ?? null,
     studies: record.studies ?? null,
-    evolutionText: record.evolutionText ?? [record.reason, record.currentIllness, record.physicalExam, record.functionalExam, record.diagnosisNotes, record.treatmentPlan, record.evolution, record.plan].filter(Boolean).join('\n\n'),
+    evolutionText: record.evolutionText ?? (record.status === 'borrador' ? '' : [record.reason, record.currentIllness, record.physicalExam, record.functionalExam, record.diagnosisNotes, record.treatmentPlan, record.evolution, record.plan].filter(Boolean).join('\n\n')),
     studiesText: record.studiesText ?? record.studies ?? null,
     prescriptionText: record.prescriptionText ?? ((prescriptionItems ?? []).length ? (prescriptionItems ?? []).map((item) => [item.medication, item.presentation, item.dose, item.frequency, item.route, item.duration, item.quantity, item.instructions].filter(Boolean).join(' · ')).join('\n') : [record.plan, record.treatmentPlan].filter(Boolean).join('\n\n')),
     diagnosisNotes: record.diagnosisNotes ?? null,
